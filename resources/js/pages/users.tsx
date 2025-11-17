@@ -14,7 +14,7 @@ export default function Users() {
     ];
 
   return (
-     <AppLayout breadcrumbs={breadcrumbs}>
+     <AppLayout title="Users" breadcrumbs={breadcrumbs}>
             <Head title="Users" />
             <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
 
