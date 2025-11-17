@@ -15,7 +15,7 @@ export function AppSidebarHeader({
             <div className="flex items-center gap-2">
                 <SidebarTrigger className="-ml-1" />
                 {title && (
-                    <div className="text-2xl font-bold text-primary">{title}</div>
+                    <div className="text-xl font-semibold ">{title}</div>
                 )}
                 <Breadcrumbs breadcrumbs={breadcrumbs} />
             </div>
