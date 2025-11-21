@@ -1,3 +1,5 @@
+import { AnimatedDialog } from '@/components/animated-dialog';
+import { PhTdsChart } from '@/components/ph-tds-chart';
 import { Card, CardDescription, CardTitle } from '@/components/ui/card';
 import AppLayout from '@/layouts/app-layout';
 import { Head } from '@inertiajs/react';
@@ -49,12 +51,17 @@ export default function Dashboard() {
 
 
     </div>
-    <Card>1</Card>
+
+        <PhTdsChart/>
+
+
   </div>
 
   <div className='sm:w-[40%]'>
 
     RIGHT SIDE
+
+    <AnimatedDialog/>
   </div>
 
 
