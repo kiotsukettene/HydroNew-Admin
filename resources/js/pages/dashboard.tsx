@@ -1,9 +1,8 @@
-import { AnimatedDialog } from '@/components/animated-dialog';
 import { PhTdsChart } from '@/components/ph-tds-chart';
 import { Card, CardDescription, CardTitle } from '@/components/ui/card';
 import AppLayout from '@/layouts/app-layout';
 import { Head } from '@inertiajs/react';
-import { Cast,User } from 'lucide-react';
+import { Cast,Leaf,User } from 'lucide-react';
 
 
 
@@ -40,10 +39,10 @@ export default function Dashboard() {
 
          </Card>
            <Card className='p-6 w-full'>
-            <CardTitle className='text-sm font-semibold text-muted-foreground'>Total Devices</CardTitle>
+            <CardTitle className='text-sm font-semibold text-muted-foreground'>Total Harvested Crops</CardTitle>
             <div className="flex flex-row items-center justify-between ">
-                <div className='text-5xl font-medium'>14</div>
-                <Cast className='text-primary/70' size={40} strokeWidth={1}/>
+                <div className='text-5xl font-medium'>23</div>
+                <Leaf className='text-primary/70' size={40} strokeWidth={1}/>
             </div>
 
          </Card>
@@ -61,7 +60,7 @@ export default function Dashboard() {
 
     RIGHT SIDE
 
-    <AnimatedDialog/>
+
   </div>
 
 
