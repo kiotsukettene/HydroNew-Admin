@@ -7,12 +7,15 @@
 namespace App\Models;
 
 use Carbon\Carbon;
+use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Auth\Authenticatable as AuthenticatableTrait;
 
 /**
  * Class User
- * 
+ *
  * @property int $id
  * @property string $first_name
  * @property string $last_name
@@ -29,15 +32,17 @@ use Illuminate\Database\Eloquent\Model;
  * @property string|null $remember_token
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
- * 
+ *
  * @property Collection|Device[] $devices
  * @property Collection|LoginHistory[] $login_histories
  * @property Collection|Notification[] $notifications
  *
  * @package App\Models
  */
-class User extends Model
+class User extends Model implements Authenticatable
 {
+	use HasFactory, AuthenticatableTrait;
+
 	protected $table = 'users';
 
 	protected $casts = [

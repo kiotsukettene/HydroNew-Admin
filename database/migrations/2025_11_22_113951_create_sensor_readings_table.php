@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('sensor_readings', function (Blueprint $table) {
             $table->bigInteger('id', true);
-            $table->bigInteger('sensor_id')->index('sensor_id');
+            $table->bigInteger('sensor_id')->index('sensor_readings_sensor_id_index');
             $table->decimal('reading_value', 10);
             $table->dateTime('reading_time')->nullable()->useCurrent();
         });

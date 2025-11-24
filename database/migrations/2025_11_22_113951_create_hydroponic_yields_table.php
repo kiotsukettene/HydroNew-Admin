@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('hydroponic_yields', function (Blueprint $table) {
             $table->bigInteger('id', true);
-            $table->bigInteger('hydroponic_setup_id')->index('hydroponic_setup_id');
+            $table->bigInteger('hydroponic_setup_id')->index('hydroponic_yields_setup_id_index');
             $table->enum('harvest_status', ['not_harvested', 'harvested', 'partial'])->nullable()->default('not_harvested');
             $table->enum('growth_stage', ['seedling', 'vegetative', 'flowering', 'harvest-ready'])->nullable()->default('seedling');
             $table->enum('health_status', ['good', 'moderate', 'poor']);
