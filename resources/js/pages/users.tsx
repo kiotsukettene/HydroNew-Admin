@@ -13,7 +13,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { ArrowUpDown, MoreHorizontal, Pencil, Archive } from 'lucide-react'
+import { ArrowUpDown, MoreHorizontal, Pencil, Archive, Check, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -21,11 +21,12 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { Badge } from '@/components/ui/badge'
 import SearchInput from '@/components/search-input'
 
 export default function Users() {
 
-    const columnsHeader = ['Name', 'Email', 'Contact Number', 'Address'];
+    const columnsHeader = ['Name', 'Email', 'Contact Number', 'Address', 'Status', 'Verified'];
 
     const users = [
   {
@@ -34,6 +35,8 @@ export default function Users() {
     contactNumber: "123-456-7890",
     address: "123 Main St, Cityville",
     accountCreated: "2022-01-15",
+    status: "active",
+    verified: true,
   },
   {
     name: "Jane Smith",
@@ -41,12 +44,16 @@ export default function Users() {
     contactNumber: "987-654-3210",
     address: "456 Elm St, Townsville",
     accountCreated: "2023-03-22",
+    status: "inactive",
+    verified: false,
   },
 {    name: "Alice Johnson",
     email: "alice.johnson@example.com",
     contactNumber: "555-123-4567",
     address: "789 Oak St, Villageville",
     accountCreated: "2024-05-10",
+    status: "active",
+    verified: true,
   },
 ];
 
@@ -84,6 +91,23 @@ export default function Users() {
             <TableCell>{user.email}</TableCell>
             <TableCell>{user.contactNumber}</TableCell>
             <TableCell className="">{user.address}</TableCell>
+            <TableCell>
+              <Badge
+                className={user.status === 'active'
+                  ? 'bg-amber-100 border-amber-500 text-amber-600 '
+                  : 'bg-gray-100 border-gray-400 text-gray-500 '
+                }
+              >
+                {user.status.charAt(0).toUpperCase() + user.status.slice(1)}
+              </Badge>
+            </TableCell>
+            <TableCell>
+              {user.verified ? (
+                <Check className="h-5 w-5 text-green-600" />
+              ) : (
+                <X className="h-5 w-5 text-red-500" />
+              )}
+            </TableCell>
             <TableCell>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
