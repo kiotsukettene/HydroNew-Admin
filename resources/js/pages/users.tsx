@@ -52,12 +52,17 @@ export default function Users() {
 
 
   return (
-     <AppLayout title="Users Management">
+     <AppLayout title="">
             <Head title="Users" />
             <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
+
+                <div className='mb-6'>
+        <h1 className="text-2xl font-bold">Registered Users</h1>
+        <p className="text-muted-foreground">Manage your application's users</p>
+                </div>
                  <SearchInput placeholder="Search users..." />
                  <Table className='border'>
-      <TableCaption>A list of your recent invoices.</TableCaption>
+
       <TableHeader>
         <TableRow>
           {columnsHeader.map((column) => (
