@@ -31,6 +31,7 @@ class UserFactory extends Factory
             'profile_picture' => null,
             'address' => fake()->address(),
             'first_time_login' => false,
+            'role' => 'admin',
             'remember_token' => Str::random(10),
         ];
     }
@@ -42,6 +43,26 @@ class UserFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'email_verified_at' => null,
+        ]);
+    }
+
+    /**
+     * Indicate that the model is a regular user (not admin).
+     */
+    public function user(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role' => 'user',
+        ]);
+    }
+
+    /**
+     * Indicate that the model is an admin user.
+     */
+    public function admin(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role' => 'admin',
         ]);
     }
 

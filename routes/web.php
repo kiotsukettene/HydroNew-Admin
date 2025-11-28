@@ -10,21 +10,22 @@ Route::get('/', function () {
     ]);
 })->name('home');
 
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware(['auth', 'verified', 'admin'])->group(function () {
     Route::get('dashboard', function () {
         return Inertia::render('dashboard', [
             'stats' => [
-                'devices' => \App\Models\Device::where('user_id', auth()->id())->count(),
-                'sensors' => \App\Models\Sensor::whereHas('device', function ($query) {
-                    $query->where('user_id', auth()->id());
-                })->count(),
-                'setups' => \App\Models\HydroponicSetup::where('user_id', auth()->id())->count(),
+                'devices' => \App\Models\Device::count(),
+                'sensors' => \App\Models\Sensor::count(),
+                'setups' => \App\Models\HydroponicSetup::count(),
             ],
         ]);
     })->name('dashboard');
 
     // Device routes
     Route::resource('devices', \App\Http\Controllers\DeviceController::class);
+
+    // User routes
+    Route::resource('users', \App\Http\Controllers\UserController::class);
 });
 
 require __DIR__.'/settings.php';

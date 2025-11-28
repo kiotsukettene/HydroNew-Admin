@@ -17,10 +17,12 @@ class UsersTableSeeder extends Seeder
         User::create([
             'first_name' => 'Admin',
             'last_name' => 'User',
-            'email' => 'admin@hydroponics.com',
-            'password' => Hash::make('password'),
+            'email' => 'hydronew@gmail.com',
+            'password' => Hash::make('hydronew'),
             'email_verified_at' => now(),
             'first_time_login' => false,
+            'role' => 'admin',
+            'status' => 'active',
         ]);
 
         User::create([
@@ -30,6 +32,8 @@ class UsersTableSeeder extends Seeder
             'password' => Hash::make('password'),
             'email_verified_at' => now(),
             'first_time_login' => false,
+            'role' => 'user',
+            'status' => 'active',
         ]);
 
         User::factory()->count(8)->create();

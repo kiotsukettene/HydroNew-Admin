@@ -17,29 +17,35 @@ class DeviceTest extends TestCase
         $this->get(route('devices.index'))->assertRedirect(route('login'));
     }
 
-    public function test_authenticated_users_can_view_devices_list()
+    public function test_non_admin_users_cannot_view_devices_list()
     {
-        $user = User::factory()->create();
+        $user = User::factory()->user()->create();
 
-        $this->actingAs($user)->get(route('devices.index'))->assertInertia(fn ($page) => $page
+        $this->actingAs($user)->get(route('devices.index'))->assertForbidden();
+    }
+
+    public function test_admin_users_can_view_devices_list()
+    {
+        $admin = User::factory()->admin()->create();
+
+        $this->actingAs($admin)->get(route('devices.index'))->assertInertia(fn ($page) => $page
             ->component('devices/index')
         );
     }
 
-    public function test_user_only_sees_their_own_devices()
+    public function test_admin_sees_all_devices()
     {
-        $user = User::factory()->create();
-        $otherUser = User::factory()->create();
+        $admin = User::factory()->admin()->create();
+        $user = User::factory()->user()->create();
 
+        $adminDevice = Device::factory()->create(['user_id' => $admin->id]);
         $userDevice = Device::factory()->create(['user_id' => $user->id]);
-        $otherDevice = Device::factory()->create(['user_id' => $otherUser->id]);
 
-        $response = $this->actingAs($user)->get(route('devices.index'));
+        $response = $this->actingAs($admin)->get(route('devices.index'));
 
         $response->assertInertia(fn ($page) => $page
             ->component('devices/index')
         );
-        // Device with ID of userDevice should be in the list, otherDevice should not be
     }
 
     // ===== CREATE TESTS =====
@@ -48,11 +54,18 @@ class DeviceTest extends TestCase
         $this->get(route('devices.create'))->assertRedirect(route('login'));
     }
 
-    public function test_authenticated_users_can_view_create_device_form()
+    public function test_non_admin_users_cannot_view_create_device_form()
     {
-        $user = User::factory()->create();
+        $user = User::factory()->user()->create();
 
-        $this->actingAs($user)->get(route('devices.create'))->assertInertia(fn ($page) => $page
+        $this->actingAs($user)->get(route('devices.create'))->assertForbidden();
+    }
+
+    public function test_admin_users_can_view_create_device_form()
+    {
+        $admin = User::factory()->admin()->create();
+
+        $this->actingAs($admin)->get(route('devices.create'))->assertInertia(fn ($page) => $page
             ->component('devices/create')
         );
     }
@@ -67,18 +80,28 @@ class DeviceTest extends TestCase
         ])->assertRedirect(route('login'));
     }
 
-    public function test_authenticated_user_can_create_device()
+    public function test_non_admin_user_cannot_create_device()
     {
-        $user = User::factory()->create();
+        $user = User::factory()->user()->create();
 
-        $response = $this->actingAs($user)->post(route('devices.store'), [
+        $this->actingAs($user)->post(route('devices.store'), [
+            'name' => 'Test Device',
+            'serial_number' => 'SN-12345',
+            'status' => 'connected',
+        ])->assertForbidden();
+    }
+
+    public function test_admin_user_can_create_device()
+    {
+        $admin = User::factory()->admin()->create();
+
+        $response = $this->actingAs($admin)->post(route('devices.store'), [
             'name' => 'Test Device',
             'serial_number' => 'SN-12345',
             'status' => 'connected',
         ]);
 
         $this->assertDatabaseHas('devices', [
-            'user_id' => $user->id,
             'name' => 'Test Device',
             'serial_number' => 'SN-12345',
             'status' => 'connected',
@@ -89,9 +112,9 @@ class DeviceTest extends TestCase
 
     public function test_device_name_is_required()
     {
-        $user = User::factory()->create();
+        $admin = User::factory()->admin()->create();
 
-        $response = $this->actingAs($user)->post(route('devices.store'), [
+        $response = $this->actingAs($admin)->post(route('devices.store'), [
             'name' => '',
             'serial_number' => 'SN-12345',
             'status' => 'connected',
@@ -102,9 +125,9 @@ class DeviceTest extends TestCase
 
     public function test_device_serial_number_is_required()
     {
-        $user = User::factory()->create();
+        $admin = User::factory()->admin()->create();
 
-        $response = $this->actingAs($user)->post(route('devices.store'), [
+        $response = $this->actingAs($admin)->post(route('devices.store'), [
             'name' => 'Test Device',
             'serial_number' => '',
             'status' => 'connected',
@@ -115,9 +138,9 @@ class DeviceTest extends TestCase
 
     public function test_device_status_is_required()
     {
-        $user = User::factory()->create();
+        $admin = User::factory()->admin()->create();
 
-        $response = $this->actingAs($user)->post(route('devices.store'), [
+        $response = $this->actingAs($admin)->post(route('devices.store'), [
             'name' => 'Test Device',
             'serial_number' => 'SN-12345',
             'status' => '',
@@ -128,10 +151,10 @@ class DeviceTest extends TestCase
 
     public function test_serial_number_must_be_unique()
     {
-        $user = User::factory()->create();
+        $admin = User::factory()->admin()->create();
         Device::factory()->create(['serial_number' => 'SN-12345']);
 
-        $response = $this->actingAs($user)->post(route('devices.store'), [
+        $response = $this->actingAs($admin)->post(route('devices.store'), [
             'name' => 'Test Device',
             'serial_number' => 'SN-12345',
             'status' => 'connected',
@@ -142,9 +165,9 @@ class DeviceTest extends TestCase
 
     public function test_device_status_must_be_valid()
     {
-        $user = User::factory()->create();
+        $admin = User::factory()->admin()->create();
 
-        $response = $this->actingAs($user)->post(route('devices.store'), [
+        $response = $this->actingAs($admin)->post(route('devices.store'), [
             'name' => 'Test Device',
             'serial_number' => 'SN-12345',
             'status' => 'invalid_status',
@@ -161,12 +184,20 @@ class DeviceTest extends TestCase
         $this->get(route('devices.show', $device))->assertRedirect(route('login'));
     }
 
-    public function test_authenticated_user_can_view_their_device()
+    public function test_non_admin_user_cannot_view_device()
     {
-        $user = User::factory()->create();
-        $device = Device::factory()->create(['user_id' => $user->id]);
+        $user = User::factory()->user()->create();
+        $device = Device::factory()->create();
 
-        $response = $this->actingAs($user)->get(route('devices.show', $device));
+        $this->actingAs($user)->get(route('devices.show', $device))->assertForbidden();
+    }
+
+    public function test_admin_user_can_view_device()
+    {
+        $admin = User::factory()->admin()->create();
+        $device = Device::factory()->create();
+
+        $response = $this->actingAs($admin)->get(route('devices.show', $device));
 
         $response->assertOk();
         $response->assertInertia(fn ($page) => $page
@@ -174,10 +205,10 @@ class DeviceTest extends TestCase
         );
     }
 
-    public function test_user_cannot_view_other_users_device()
+    public function test_non_admin_user_cannot_view_other_device()
     {
-        $user = User::factory()->create();
-        $otherUser = User::factory()->create();
+        $user = User::factory()->user()->create();
+        $otherUser = User::factory()->user()->create();
         $device = Device::factory()->create(['user_id' => $otherUser->id]);
 
         $response = $this->actingAs($user)->get(route('devices.show', $device));
@@ -193,28 +224,27 @@ class DeviceTest extends TestCase
         $this->get(route('devices.edit', $device))->assertRedirect(route('login'));
     }
 
-    public function test_authenticated_user_can_view_edit_form_for_their_device()
+    public function test_non_admin_user_cannot_view_edit_form()
     {
-        $user = User::factory()->create();
-        $device = Device::factory()->create(['user_id' => $user->id]);
+        $user = User::factory()->user()->create();
+        $device = Device::factory()->create();
 
         $response = $this->actingAs($user)->get(route('devices.edit', $device));
+
+        $response->assertForbidden();
+    }
+
+    public function test_admin_user_can_view_edit_form()
+    {
+        $admin = User::factory()->admin()->create();
+        $device = Device::factory()->create();
+
+        $response = $this->actingAs($admin)->get(route('devices.edit', $device));
 
         $response->assertOk();
         $response->assertInertia(fn ($page) => $page
             ->component('devices/edit')
         );
-    }
-
-    public function test_user_cannot_view_edit_form_for_other_users_device()
-    {
-        $user = User::factory()->create();
-        $otherUser = User::factory()->create();
-        $device = Device::factory()->create(['user_id' => $otherUser->id]);
-
-        $response = $this->actingAs($user)->get(route('devices.edit', $device));
-
-        $response->assertForbidden();
     }
 
     // ===== UPDATE TESTS =====
@@ -249,11 +279,10 @@ class DeviceTest extends TestCase
         $response->assertRedirect();
     }
 
-    public function test_user_cannot_update_other_users_device()
+    public function test_non_admin_user_cannot_update_device()
     {
-        $user = User::factory()->create();
-        $otherUser = User::factory()->create();
-        $device = Device::factory()->create(['user_id' => $otherUser->id]);
+        $user = User::factory()->user()->create();
+        $device = Device::factory()->create();
 
         $response = $this->actingAs($user)->put(route('devices.update', $device), [
             'name' => 'Updated Device',
@@ -266,10 +295,10 @@ class DeviceTest extends TestCase
 
     public function test_update_requires_valid_data()
     {
-        $user = User::factory()->create();
-        $device = Device::factory()->create(['user_id' => $user->id]);
+        $admin = User::factory()->admin()->create();
+        $device = Device::factory()->create();
 
-        $response = $this->actingAs($user)->put(route('devices.update', $device), [
+        $response = $this->actingAs($admin)->put(route('devices.update', $device), [
             'name' => '',
             'serial_number' => $device->serial_number,
             'status' => 'not connected',
@@ -313,11 +342,10 @@ class DeviceTest extends TestCase
         $response->assertRedirect();
     }
 
-    public function test_user_cannot_delete_other_users_device()
+    public function test_non_admin_user_cannot_delete_device()
     {
-        $user = User::factory()->create();
-        $otherUser = User::factory()->create();
-        $device = Device::factory()->create(['user_id' => $otherUser->id]);
+        $user = User::factory()->user()->create();
+        $device = Device::factory()->create();
 
         $response = $this->actingAs($user)->delete(route('devices.destroy', $device));
 
