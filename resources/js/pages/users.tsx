@@ -94,8 +94,8 @@ export default function Users() {
             <TableCell>
               <Badge
                 className={user.status === 'active'
-                  ? 'bg-amber-100 border-amber-500 text-amber-600 '
-                  : 'bg-gray-100 border-gray-400 text-gray-500 '
+                  ? 'bg-amber-100 border-amber-300 text-amber-500 '
+                  : 'bg-gray-100 border-gray-300 text-gray-500 '
                 }
               >
                 {user.status.charAt(0).toUpperCase() + user.status.slice(1)}
