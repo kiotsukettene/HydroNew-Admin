@@ -21,6 +21,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import SearchInput from '@/components/search-input'
 
 export default function Users() {
 
@@ -54,6 +55,7 @@ export default function Users() {
      <AppLayout title="Users Management">
             <Head title="Users" />
             <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
+                 <SearchInput placeholder="Search users..." />
                  <Table className='border'>
       <TableCaption>A list of your recent invoices.</TableCaption>
       <TableHeader>
