@@ -13,7 +13,15 @@ class UserController extends Controller
      */
     public function index()
     {
-        return Inertia::render('users');
+        return Inertia::render('users/index');
+    }
+
+    /**
+     * Display archived users.
+     */
+    public function archived()
+    {
+        return Inertia::render('users/archive-user');
     }
 
     /**
