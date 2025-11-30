@@ -14,7 +14,7 @@ import { dashboard } from '@/routes';
 import users from '@/routes/users';
 import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/react';
-import { BookOpen, Folder, LayoutGrid, Leaf, Star, Users } from 'lucide-react';
+import { BookOpen, ChartBar, Folder, LayoutGrid, Leaf, Star, Users } from 'lucide-react';
 import AppLogo from './app-logo';
 import { Card } from './ui/card';
 
@@ -29,6 +29,12 @@ const mainNavItems: NavItem[] = [
         href: users.index(),
         icon: Users,
     },
+      {
+        title: 'Analytics',
+        href: '#',
+        icon: ChartBar,
+    }
+
 ];
 
 // const footerNavItems: NavItem[] = [
