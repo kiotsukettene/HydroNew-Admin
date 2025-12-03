@@ -1,6 +1,4 @@
-import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
-import { NavUser } from '@/components/nav-user';
 import {
     Sidebar,
     SidebarContent,
@@ -14,9 +12,9 @@ import { dashboard } from '@/routes';
 import users from '@/routes/users';
 import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/react';
-import { BookOpen, ChartBar, Folder, LayoutGrid, Leaf, Star, Users } from 'lucide-react';
+import { ChartBar,  LayoutGrid,  Users } from 'lucide-react';
 import AppLogo from './app-logo';
-import { Card } from './ui/card';
+import analytics from '@/routes/analytics';
 
 const mainNavItems: NavItem[] = [
     {
@@ -31,7 +29,7 @@ const mainNavItems: NavItem[] = [
     },
       {
         title: 'Analytics',
-        href: '#',
+        href: analytics.index(),
         icon: ChartBar,
     }
 

@@ -85,8 +85,8 @@ export default function Users() {
                 <div className='mb-6'>
         <h1 className="text-2xl font-bold">Registered Users</h1>
         <p className="text-muted-foreground">Manage your application's users</p>
-                </div>
 
+                </div>
 
                 {/* Total Users Card */}
                 <div className="bg-orange-100/60  rounded-lg p-4 w-fit mb-4">
