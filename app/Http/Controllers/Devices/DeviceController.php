@@ -16,6 +16,12 @@ class DeviceController extends Controller
         return Inertia::render('devices/index');
     }
 
+      public function archived()
+    {
+        return Inertia::render('devices/archive-devices');
+    }
+
+
     /**
      * Show the form for creating a new resource.
      */

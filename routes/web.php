@@ -22,6 +22,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('users', UserController::class);
 
     Route::resource('analytics', \App\Http\Controllers\Analytics\AnalyticsController::class);
+
+    Route::get('devices/archived', [DeviceController::class, 'archived'])->name('devices.archived');
     Route::resource('devices', DeviceController::class);
 });
 

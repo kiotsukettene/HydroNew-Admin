@@ -26,7 +26,6 @@ const devices = [
     id: 1,
     deviceId: 'DEV-001',
     connectedUsers: 3,
-    deviceName: 'pH Sensor Alpha',
     serialNumber: 'SN-PH-20240101',
     status: 'connected',
     dateRegistered: '2025-01-15',
@@ -35,7 +34,6 @@ const devices = [
     id: 2,
     deviceId: 'DEV-002',
     connectedUsers: 5,
-    deviceName: 'TDS Monitor Pro',
     serialNumber: 'SN-TDS-20240102',
     status: 'connected',
     dateRegistered: '2025-01-20',
@@ -44,7 +42,6 @@ const devices = [
     id: 3,
     deviceId: 'DEV-003',
     connectedUsers: 0,
-    deviceName: 'Water Pump Unit',
     serialNumber: 'SN-WP-20240103',
     status: 'not_connected',
     dateRegistered: '2025-02-05',
@@ -53,7 +50,6 @@ const devices = [
     id: 4,
     deviceId: 'DEV-004',
     connectedUsers: 2,
-    deviceName: 'Temperature Sensor',
     serialNumber: 'SN-TEMP-20240104',
     status: 'connected',
     dateRegistered: '2025-02-10',
@@ -62,7 +58,6 @@ const devices = [
     id: 5,
     deviceId: 'DEV-005',
     connectedUsers: 0,
-    deviceName: 'Light Controller',
     serialNumber: 'SN-LC-20240105',
     status: 'not_connected',
     dateRegistered: '2025-02-15',
@@ -71,7 +66,6 @@ const devices = [
     id: 6,
     deviceId: 'DEV-006',
     connectedUsers: 4,
-    deviceName: 'Humidity Sensor',
     serialNumber: 'SN-HUM-20240106',
     status: 'connected',
     dateRegistered: '2025-03-01',
@@ -141,16 +135,7 @@ export default function Devices() {
                   <ArrowUpDown className="h-4 w-4" />
                 </Button>
               </TableHead>
-              <TableHead>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="flex items-center gap-1"
-                >
-                  Device Name
-                  <ArrowUpDown className="h-4 w-4" />
-                </Button>
-              </TableHead>
+
               <TableHead>
                 <Button
                   variant="ghost"
@@ -204,7 +189,6 @@ export default function Devices() {
                 <TableCell className="text-center">
                   <span className="font-medium text-base">{device.connectedUsers}</span>
                 </TableCell>
-                <TableCell>{device.deviceName}</TableCell>
                 <TableCell className="font-mono text-sm">
                   {device.serialNumber}
                 </TableCell>
