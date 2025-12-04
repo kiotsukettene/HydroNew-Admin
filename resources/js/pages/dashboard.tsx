@@ -1,35 +1,69 @@
-import { PlaceholderPattern } from '@/components/ui/placeholder-pattern';
+import { PhTdsChart } from '@/components/ph-tds-chart';
+import { Card, CardDescription, CardTitle } from '@/components/ui/card';
 import AppLayout from '@/layouts/app-layout';
-import { dashboard } from '@/routes';
-import { type BreadcrumbItem } from '@/types';
 import { Head } from '@inertiajs/react';
+import { Cast,Leaf,User } from 'lucide-react';
 
-const breadcrumbs: BreadcrumbItem[] = [
-    {
-        title: 'Dashboard',
-        href: dashboard().url,
-    },
-];
+
 
 export default function Dashboard() {
     return (
-        <AppLayout breadcrumbs={breadcrumbs}>
+        <AppLayout title="Dashboard">
+
             <Head title="Dashboard" />
-            <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
-                <div className="grid auto-rows-min gap-4 md:grid-cols-3">
-                    <div className="relative aspect-video overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border">
-                        <PlaceholderPattern className="absolute inset-0 size-full stroke-neutral-900/20 dark:stroke-neutral-100/20" />
-                    </div>
-                    <div className="relative aspect-video overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border">
-                        <PlaceholderPattern className="absolute inset-0 size-full stroke-neutral-900/20 dark:stroke-neutral-100/20" />
-                    </div>
-                    <div className="relative aspect-video overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border">
-                        <PlaceholderPattern className="absolute inset-0 size-full stroke-neutral-900/20 dark:stroke-neutral-100/20" />
-                    </div>
-                </div>
-                <div className="relative min-h-[100vh] flex-1 overflow-hidden rounded-xl border border-sidebar-border/70 md:min-h-min dark:border-sidebar-border">
-                    <PlaceholderPattern className="absolute inset-0 size-full stroke-neutral-900/20 dark:stroke-neutral-100/20" />
-                </div>
+<div className="w-full p-4 gap-5 overflow-hidden flex flex-col sm:flex-row">
+            {/* <div className="text-2xl font-bold text-primary">Dashboard</div> */}
+
+
+  <div className='sm:w-[60%] flex flex-col flex-wrap gap-4'>
+    <Card className='bg-[#EFFFDD] shadow-none absolute sm:relative w-full overflow-hidden p-0'>
+       <div className='px-8 pt-4 pb-0 mt-7'>
+         <CardTitle className='text-3xl text-primary font-semibold'>Welcome to Dashboard!</CardTitle>
+         <CardDescription className='text-md  font-light'>Project activity will be updated here. Click on the name section to set your configuration</CardDescription>
+       </div>
+       <div className='w-full'>
+        <img src="/assets/dashboard-bg.svg" alt="Dashboard Illustration" className='w-full object-cover'/>
+       </div>
+    </Card>
+
+
+    <div className=' flex flex-col gap-2 w-full'>
+        <div className='font-medium text-lg'>Overview</div>
+       <div className='flex flex-row space-x-4'>
+         <Card className='p-6 w-full'>
+            <CardTitle className='text-sm font-semibold text-muted-foreground'>Total Users</CardTitle>
+            <div className="flex flex-row items-center justify-between ">
+                <div className='text-5xl font-medium'>14</div>
+                <User className='text-primary/70' size={40} strokeWidth={1}/>
+            </div>
+
+         </Card>
+           <Card className='p-6 w-full'>
+            <CardTitle className='text-sm font-semibold text-muted-foreground'>Total Harvested Crops</CardTitle>
+            <div className="flex flex-row items-center justify-between ">
+                <div className='text-5xl font-medium'>23</div>
+                <Leaf className='text-primary/70' size={40} strokeWidth={1}/>
+            </div>
+
+         </Card>
+       </div>
+
+
+    </div>
+
+        <PhTdsChart/>
+
+
+  </div>
+
+  <div className='sm:w-[40%]'>
+
+    RIGHT SIDE
+
+
+  </div>
+
+
             </div>
         </AppLayout>
     );
