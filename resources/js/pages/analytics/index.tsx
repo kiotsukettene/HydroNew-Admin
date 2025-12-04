@@ -1,5 +1,6 @@
 import AppLayout from '@/layouts/app-layout'
 import { Head } from '@inertiajs/react'
+import { useState } from 'react'
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, RadarChart, PolarAngleAxis, PolarGrid, Radar, Rectangle } from 'recharts'
 import { TrendingUp, Leaf, Waves, Sparkles } from 'lucide-react'
@@ -9,6 +10,7 @@ import {
 } from '@/components/ui/texture-card'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { FiltrationCyclesCard } from '@/components/filtration-cycles-card'
 
 // Monthly harvest data with fill colors
@@ -72,19 +74,81 @@ const filtrationChartConfig = {
   filtered: { label: 'Water Filtered (L)', color: '#60A5FA' }
 }
 
-// Clean vs Dirty Water Comparison Data
-const waterComparisonData = [
-  { month: 'Jan', dirty: 85, clean: 12, improvement: 86 },
-  { month: 'Feb', dirty: 92, clean: 10, improvement: 89 },
-  { month: 'Mar', dirty: 78, clean: 8, improvement: 90 },
-  { month: 'Apr', dirty: 88, clean: 11, improvement: 87 },
-  { month: 'May', dirty: 95, clean: 9, improvement: 91 },
-  { month: 'Jun', dirty: 82, clean: 7, improvement: 91 }
+
+
+const months = [
+  { value: 'january', label: 'January' },
+  { value: 'february', label: 'February' },
+  { value: 'march', label: 'March' },
+  { value: 'april', label: 'April' },
+  { value: 'may', label: 'May' },
+  { value: 'june', label: 'June' },
+  { value: 'july', label: 'July' },
+  { value: 'august', label: 'August' },
+  { value: 'september', label: 'September' },
+  { value: 'october', label: 'October' },
+  { value: 'november', label: 'November' },
+  { value: 'december', label: 'December' }
 ]
 
-const waterComparisonConfig = {
-  dirty: { label: 'Dirty Water (NTU)', color: '#F97316' },
-  clean: { label: 'Clean Water (NTU)', color: '#22C55E' }
+// Water Filtered Chart Component
+function WaterFilteredChart() {
+  const [selectedMonth, setSelectedMonth] = useState('december')
+
+  return (
+    <Card className="lg:col-span-2 rounded-2xl">
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle>Water Filtered</CardTitle>
+            <CardDescription>Total liters filtered per week</CardDescription>
+          </div>
+          <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+            <SelectTrigger className="w-[140px]">
+              <SelectValue placeholder="Select month" />
+            </SelectTrigger>
+            <SelectContent>
+              {months.map((month) => (
+                <SelectItem key={month.value} value={month.value}>
+                  {month.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <ChartContainer config={filtrationChartConfig} className="h-[200px]">
+          <BarChart data={filtrationData} barCategoryGap="20%">
+            <CartesianGrid vertical={false} strokeDasharray="3 3" />
+            <XAxis
+              dataKey="week"
+              tickLine={false}
+              tickMargin={10}
+              axisLine={false}
+              tick={{ fontSize: 12 }}
+            />
+            <YAxis
+              tickLine={false}
+              axisLine={false}
+              tick={{ fontSize: 12 }}
+              tickFormatter={(value) => `${value}L`}
+            />
+            <ChartTooltip
+              cursor={false}
+              content={<ChartTooltipContent />}
+            />
+            <Bar
+              dataKey="filtered"
+              fill="#60A5FA"
+              radius={12}
+              maxBarSize={60}
+            />
+          </BarChart>
+        </ChartContainer>
+      </CardContent>
+    </Card>
+  )
 }
 
 export default function Analytics() {
@@ -127,93 +191,10 @@ export default function Analytics() {
                 <FiltrationCyclesCard />
 
                 {/* Filtration Bar Chart */}
-                <Card className="lg:col-span-2 rounded-2xl">
-                  <CardHeader>
-                    <CardTitle>Water Filtered Per Week</CardTitle>
-                    <CardDescription>Total liters filtered this month</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <ChartContainer config={filtrationChartConfig} className="h-[200px]">
-                      <BarChart data={filtrationData} barCategoryGap="20%">
-                        <CartesianGrid vertical={false} strokeDasharray="3 3" />
-                        <XAxis
-                          dataKey="week"
-                          tickLine={false}
-                          tickMargin={10}
-                          axisLine={false}
-                          tick={{ fontSize: 12 }}
-                        />
-                        <YAxis
-                          tickLine={false}
-                          axisLine={false}
-                          tick={{ fontSize: 12 }}
-                          tickFormatter={(value) => `${value}L`}
-                        />
-                        <ChartTooltip
-                          cursor={false}
-                          content={<ChartTooltipContent />}
-                        />
-                        <Bar
-                          dataKey="filtered"
-                          fill="#60A5FA"
-                          radius={12}
-                          maxBarSize={60}
-                        />
-                      </BarChart>
-                    </ChartContainer>
-                  </CardContent>
-                </Card>
+                <WaterFilteredChart />
               </div>
 
-              {/* Row 2: Clean vs Dirty Water Comparison */}
-              <Card className="rounded-2xl">
-                <CardHeader>
-                  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                    <div>
-                      <CardTitle className="flex items-center gap-2">
-                        Clean vs Dirty Water Comparison
-                      </CardTitle>
-                      <CardDescription>Monthly turbidity levels (NTU) before and after filtration</CardDescription>
-                    </div>
-                    <div className="flex items-center gap-4 text-sm">
-                      <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 rounded-full bg-orange-500" />
-                        <span className="text-muted-foreground">Dirty Water</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 rounded-full bg-emerald-500" />
-                        <span className="text-muted-foreground">Clean Water</span>
-                      </div>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <ChartContainer config={waterComparisonConfig} className="h-[280px]">
-                    <BarChart data={waterComparisonData} barCategoryGap="25%">
-                      <CartesianGrid vertical={false} strokeDasharray="3 3" />
-                      <XAxis
-                        dataKey="month"
-                        tickLine={false}
-                        tickMargin={10}
-                        axisLine={false}
-                      />
-                      <YAxis
-                        tickLine={false}
-                        axisLine={false}
-                        tickFormatter={(value) => `${value}`}
-                        label={{ value: 'NTU', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle' } }}
-                      />
-                      <ChartTooltip
-                        cursor={false}
-                        content={<ChartTooltipContent />}
-                      />
-                      <Bar dataKey="dirty" fill="#F97316" radius={8} maxBarSize={35} name="Dirty Water" />
-                      <Bar dataKey="clean" fill="#22C55E" radius={8} maxBarSize={35} name="Clean Water" />
-                    </BarChart>
-                  </ChartContainer>
 
-                </CardContent>
-              </Card>
             </div>
           </TabsContent>
 
