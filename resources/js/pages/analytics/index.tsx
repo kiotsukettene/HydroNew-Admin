@@ -11,6 +11,7 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { FiltrationCyclesCard } from '@/components/filtration-cycles-card'
 
 // Monthly harvest data with fill colors
@@ -74,7 +75,15 @@ const filtrationChartConfig = {
   filtered: { label: 'Water Filtered (L)', color: '#60A5FA' }
 }
 
-
+// Filtration Activity Log Data
+const filtrationLogs = [
+  { id: 1, date: 'Dec 05, 2025', liters: 48, status: 'Completed' },
+  { id: 2, date: 'Dec 04, 2025', liters: 35, status: 'Completed' },
+  { id: 3, date: 'Dec 03, 2025', liters: 42, status: 'Completed' },
+  { id: 4, date: 'Dec 02, 2025', liters: 55, status: 'Completed' },
+  { id: 5, date: 'Dec 01, 2025', liters: 38, status: 'Completed' },
+  { id: 6, date: 'Nov 30, 2025', liters: 45, status: 'Completed' },
+]
 
 const months = [
   { value: 'january', label: 'January' },
@@ -194,6 +203,43 @@ export default function Analytics() {
                 <WaterFilteredChart />
               </div>
 
+              {/* Filtration Activity Log */}
+              <Card className="rounded-2xl">
+                <CardHeader>
+                  <CardTitle>Filtration Activity Log</CardTitle>
+                  <CardDescription>Recent filtration cycles and their status</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Date</TableHead>
+                        <TableHead>Liters</TableHead>
+                        <TableHead>Status</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filtrationLogs.map((log) => (
+                        <TableRow key={log.id}>
+                          <TableCell className="font-medium">{log.date}</TableCell>
+                          <TableCell>{log.liters} L</TableCell>
+                          <TableCell>
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                              log.status === 'Completed'
+                                ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+                                : log.status === 'In Progress'
+                                ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                                : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+                            }`}>
+                              {log.status}
+                            </span>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
 
             </div>
           </TabsContent>
