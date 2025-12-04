@@ -171,7 +171,6 @@ export default function Analytics() {
                   <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                     <div>
                       <CardTitle className="flex items-center gap-2">
-                        <Sparkles className="w-5 h-5 text-emerald-500" />
                         Clean vs Dirty Water Comparison
                       </CardTitle>
                       <CardDescription>Monthly turbidity levels (NTU) before and after filtration</CardDescription>
