@@ -1,9 +1,10 @@
 import { PhTdsChart } from '@/components/ph-tds-chart';
 import { Card, CardDescription, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import AppLayout from '@/layouts/app-layout';
 import { Head } from '@inertiajs/react';
 import { Cast, Leaf, User, Droplet, Calendar, Sprout } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+
 
 
 export default function Dashboard() {
@@ -28,10 +29,13 @@ export default function Dashboard() {
 
         {/* White Pill Button - Crop Info */}
         <div className='absolute bottom-4 left-6'>
-          <Button className=' rounded-full px-4 py-2 flex items-center transition-shadow'>
+          {/* <Button className=' rounded-full px-4 py-2 flex items-center transition-shadow'>
             <span className='text-sm font-medium '>🥬 Romaine Lettuce</span>
             <span className='text-xs '>• Day 23</span>
-          </Button>
+          </Button> */}
+
+          <Button size='sm'>HEY</Button>
+
         </div>
       </Card>
 
