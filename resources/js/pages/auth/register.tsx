@@ -27,36 +27,19 @@ export default function Register() {
                     <>
                         <div className="grid gap-6">
                             <div className="grid gap-2">
-                                <Label htmlFor="first_name">First Name</Label>
+                                <Label htmlFor="name">Name</Label>
                                 <Input
-                                    id="first_name"
+                                    id="name"
                                     type="text"
                                     required
                                     autoFocus
                                     tabIndex={1}
-                                    autoComplete="given-name"
-                                    name="first_name"
-                                    placeholder="First name"
+                                    autoComplete="name"
+                                    name="name"
+                                    placeholder="Full name"
                                 />
                                 <InputError
-                                    message={errors.first_name}
-                                    className="mt-2"
-                                />
-                            </div>
-
-                            <div className="grid gap-2">
-                                <Label htmlFor="last_name">Last Name</Label>
-                                <Input
-                                    id="last_name"
-                                    type="text"
-                                    required
-                                    tabIndex={2}
-                                    autoComplete="family-name"
-                                    name="last_name"
-                                    placeholder="Last name"
-                                />
-                                <InputError
-                                    message={errors.last_name}
+                                    message={errors.name}
                                     className="mt-2"
                                 />
                             </div>
@@ -67,7 +50,7 @@ export default function Register() {
                                     id="email"
                                     type="email"
                                     required
-                                    tabIndex={3}
+                                    tabIndex={2}
                                     autoComplete="email"
                                     name="email"
                                     placeholder="email@example.com"
@@ -81,7 +64,7 @@ export default function Register() {
                                     id="password"
                                     type="password"
                                     required
-                                    tabIndex={4}
+                                    tabIndex={3}
                                     autoComplete="new-password"
                                     name="password"
                                     placeholder="Password"
@@ -97,7 +80,7 @@ export default function Register() {
                                     id="password_confirmation"
                                     type="password"
                                     required
-                                    tabIndex={5}
+                                    tabIndex={4}
                                     autoComplete="new-password"
                                     name="password_confirmation"
                                     placeholder="Confirm password"
@@ -110,7 +93,7 @@ export default function Register() {
                             <Button
                                 type="submit"
                                 className="mt-2 w-full"
-                                tabIndex={6}
+                                tabIndex={5}
                                 data-test="register-user-button"
                             >
                                 {processing && <Spinner />}
@@ -120,7 +103,7 @@ export default function Register() {
 
                         <div className="text-center text-sm text-muted-foreground">
                             Already have an account?{' '}
-                            <TextLink href={login()} tabIndex={7}>
+                            <TextLink href={login()} tabIndex={6}>
                                 Log in
                             </TextLink>
                         </div>

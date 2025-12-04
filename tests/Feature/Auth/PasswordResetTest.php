@@ -14,8 +14,6 @@ class PasswordResetTest extends TestCase
 
     public function test_reset_password_link_screen_can_be_rendered()
     {
-        $this->markTestSkipped('Password reset not configured for admin-only system');
-
         $response = $this->get(route('password.request'));
 
         $response->assertStatus(200);
@@ -23,8 +21,6 @@ class PasswordResetTest extends TestCase
 
     public function test_reset_password_link_can_be_requested()
     {
-        $this->markTestSkipped('Password reset not configured for admin-only system');
-
         Notification::fake();
 
         $user = User::factory()->create();
@@ -36,8 +32,6 @@ class PasswordResetTest extends TestCase
 
     public function test_reset_password_screen_can_be_rendered()
     {
-        $this->markTestSkipped('Password reset not configured for admin-only system');
-
         Notification::fake();
 
         $user = User::factory()->create();
@@ -55,8 +49,6 @@ class PasswordResetTest extends TestCase
 
     public function test_password_can_be_reset_with_valid_token()
     {
-        $this->markTestSkipped('Password reset not configured for admin-only system');
-
         Notification::fake();
 
         $user = User::factory()->create();

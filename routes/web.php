@@ -13,15 +13,9 @@ Route::get('/', function () {
     ]);
 })->name('home');
 
-Route::middleware(['auth', 'verified', 'admin'])->group(function () {
+Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', function () {
-        return Inertia::render('dashboard', [
-            'stats' => [
-                'devices' => \App\Models\Device::count(),
-                'sensors' => \App\Models\Sensor::count(),
-                'setups' => \App\Models\HydroponicSetup::count(),
-            ],
-        ]);
+        return Inertia::render('dashboard');
     })->name('dashboard');
 
     Route::get('users/archived', [UserController::class, 'archived'])->name('users.archived');

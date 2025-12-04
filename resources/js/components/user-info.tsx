@@ -10,22 +10,17 @@ export function UserInfo({
     showEmail?: boolean;
 }) {
     const getInitials = useInitials();
-    
-    // Combine first_name and last_name, or fall back to name if it exists
-    const fullName = user.first_name && user.last_name 
-        ? `${user.first_name} ${user.last_name}` 
-        : (user.name || 'User');
 
     return (
         <>
             <Avatar className="h-8 w-8 overflow-hidden rounded-full">
-                <AvatarImage src={user.avatar} alt={fullName} />
+                <AvatarImage src={user.avatar} alt={user.name} />
                 <AvatarFallback className="rounded-lg bg-neutral-200 text-black dark:bg-neutral-700 dark:text-white">
-                    {getInitials(fullName)}
+                    {getInitials(user.name)}
                 </AvatarFallback>
             </Avatar>
             <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-medium">{fullName}</span>
+                <span className="truncate font-medium">{user.name}</span>
                 {showEmail && (
                     <span className="truncate text-xs text-muted-foreground">
                         {user.email}
