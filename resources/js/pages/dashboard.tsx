@@ -9,7 +9,15 @@ import { index as devicesIndex } from '@/routes/devices';
 
 
 
-export default function Dashboard() {
+interface DashboardProps {
+    stats?: {
+        devices: number;
+        sensors: number;
+        setups: number;
+    };
+}
+
+export default function Dashboard({ stats }: DashboardProps) {
     return (
         <AppLayout title="Dashboard">
 

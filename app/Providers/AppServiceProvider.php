@@ -2,6 +2,11 @@
 
 namespace App\Providers;
 
+use App\Models\Device;
+use App\Models\User;
+use App\Policies\DevicePolicy;
+use App\Policies\UserPolicy;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -19,6 +24,15 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        $this->registerPolicies();
+    }
+
+    /**
+     * Register model policies.
+     */
+    protected function registerPolicies(): void
+    {
+        Gate::policy(Device::class, DevicePolicy::class);
+        Gate::policy(User::class, UserPolicy::class);
     }
 }

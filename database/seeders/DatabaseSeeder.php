@@ -13,15 +13,19 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
-
-        User::firstOrCreate(
-            ['email' => 'test@example.com'],
-            [
-                'name' => 'Test User',
-                'password' => 'password',
-                'email_verified_at' => now(),
-            ]
-        );
+        $this->call([
+            UsersTableSeeder::class,
+            DevicesTableSeeder::class,
+            SensorsTableSeeder::class,
+            SensorReadingsTableSeeder::class,
+            HydroponicSetupTableSeeder::class,
+            HydroponicYieldsTableSeeder::class,
+            HelpCentersTableSeeder::class,
+            TipsSuggestionsTableSeeder::class,
+            TreatmentReportsTableSeeder::class,
+            TreatmentStagesTableSeeder::class,
+            NotificationsTableSeeder::class,
+            LoginHistoriesTableSeeder::class,
+        ]);
     }
 }
