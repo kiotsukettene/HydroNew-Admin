@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import AppLayout from '@/layouts/app-layout';
 import { Head } from '@inertiajs/react';
 import { Cast, Leaf, User, Droplet, Calendar, Sprout } from 'lucide-react';
+import TextureCard from '@/components/ui/texture-card';
 
 
 
@@ -39,6 +40,9 @@ export default function Dashboard() {
         </div>
       </Card>
 
+
+
+
       {/* Overview Stats - Right Side */}
       <div className='flex flex-col gap-3 w-full lg:w-[35%]'>
         <Card className='p-4 w-full flex-1'>
@@ -66,6 +70,8 @@ export default function Dashboard() {
     </div>
 
         <PhTdsChart className="flex-1"/>
+
+
 
 
   </div>
