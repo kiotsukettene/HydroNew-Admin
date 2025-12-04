@@ -1,239 +1,363 @@
 import AppLayout from '@/layouts/app-layout'
 import { Head } from '@inertiajs/react'
-import { useState, useMemo } from 'react'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { useState } from 'react'
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart'
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, ReferenceArea, ResponsiveContainer } from 'recharts'
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, RadarChart, PolarAngleAxis, PolarGrid, Radar, Rectangle } from 'recharts'
+import { TrendingUp, Leaf, Waves, Sparkles } from 'lucide-react'
+import {
+  TextureCardContent,
+  TextureCardStyled
+} from '@/components/ui/texture-card'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { FiltrationCyclesCard } from '@/components/filtration-cycles-card'
 
-type DateRange = 'today' | '24h' | '7d' | '30d' | 'custom'
+// Monthly harvest data with fill colors
+const harvestData = [
+  { month: 'Jan', harvested: 28, fill: 'var(--color-jan)' },
+  { month: 'Feb', harvested: 35, fill: 'var(--color-feb)' },
+  { month: 'Mar', harvested: 42, fill: 'var(--color-mar)' },
+  { month: 'Apr', harvested: 38, fill: 'var(--color-apr)' },
+  { month: 'May', harvested: 52, fill: 'var(--color-may)' },
+  { month: 'Jun', harvested: 48, fill: 'var(--color-jun)' },
+  { month: 'Jul', harvested: 55, fill: 'var(--color-jul)' },
+  { month: 'Aug', harvested: 45, fill: 'var(--color-aug)' },
+  { month: 'Sep', harvested: 40, fill: 'var(--color-sep)' },
+  { month: 'Oct', harvested: 35, fill: 'var(--color-oct)' },
+  { month: 'Nov', harvested: 30, fill: 'var(--color-nov)' },
+  { month: 'Dec', harvested: 25, fill: 'var(--color-dec)' }
+]
 
-// Mock data generator for realistic sensor readings
-const generateMockData = (hours: number) => {
-  const data = []
-  const now = new Date()
+// Chart config for harvest data
+const harvestChartConfig = {
+  harvested: { label: 'Harvested' },
+  jan: { label: 'Jan', color: '#cadbb7' },
+  feb: { label: 'Feb', color: '#cadbb7' },
+  mar: { label: 'Mar', color: '#cadbb7' },
+  apr: { label: 'Apr', color: '#cadbb7' },
+  may: { label: 'May', color: '#cadbb7' },
+  jun: { label: 'Jun', color: '#cadbb7' },
+  jul: { label: 'Jul', color: '#cadbb7' },
+  aug: { label: 'Aug', color: '#cadbb7' },
+  sep: { label: 'Sep', color: '#cadbb7' },
+  oct: { label: 'Oct', color: '#cadbb7' },
+  nov: { label: 'Nov', color: '#cadbb7' },
+  dec: { label: 'Dec', color: '#cadbb7' }
+}
 
-  for (let i = hours; i >= 0; i--) {
-    const time = new Date(now.getTime() - i * 60 * 60 * 1000)
+// Crop Type Radar Data
+const cropRadarData = [
+  { crop: 'Romaine', harvested: 112 },
+  { crop: 'Basil', harvested: 80 },
+  { crop: 'Iceberg', harvested: 64 },
+  { crop: 'Kale', harvested: 38 },
+  { crop: 'Spinach', harvested: 24 }
+]
 
-    // Generate realistic pH values (5.5-6.5 is optimal for hydroponics)
-    const baselinePh = 6.0
-    const phVariation = (Math.random() - 0.5) * 0.8
-    const ph = +(baselinePh + phVariation).toFixed(2)
-
-    // Generate realistic TDS values (800-1500 ppm is typical)
-    const baselineTds = 1150
-    const tdsVariation = (Math.random() - 0.5) * 400
-    const tds = Math.round(baselineTds + tdsVariation)
-
-    data.push({
-      time: time.toLocaleTimeString('en-US', {
-        hour: '2-digit',
-        minute: '2-digit',
-        ...(hours > 24 ? { month: 'short', day: 'numeric' } : {})
-      }),
-      timestamp: time.getTime(),
-      ph,
-      tds
-    })
+const cropRadarConfig = {
+  harvested: {
+    label: 'Harvested',
+    color: 'hsl(142, 76%, 36%)'
   }
+}
 
-  return data
+// Filtration History Data (weekly)
+const filtrationData = [
+  { week: 'Week 1', filtered: 120, cycles: 8 },
+  { week: 'Week 2', filtered: 145, cycles: 10 },
+  { week: 'Week 3', filtered: 98, cycles: 7 },
+  { week: 'Week 4', filtered: 167, cycles: 12 }
+]
+
+const filtrationChartConfig = {
+  filtered: { label: 'Water Filtered (L)', color: '#60A5FA' }
+}
+
+// Filtration Activity Log Data
+const filtrationLogs = [
+  { id: 1, date: 'Dec 05, 2025', liters: 48, status: 'Completed' },
+  { id: 2, date: 'Dec 04, 2025', liters: 35, status: 'Completed' },
+  { id: 3, date: 'Dec 03, 2025', liters: 42, status: 'Completed' },
+  { id: 4, date: 'Dec 02, 2025', liters: 55, status: 'Completed' },
+  { id: 5, date: 'Dec 01, 2025', liters: 38, status: 'Completed' },
+  { id: 6, date: 'Nov 30, 2025', liters: 45, status: 'Completed' },
+]
+
+const months = [
+  { value: 'january', label: 'January' },
+  { value: 'february', label: 'February' },
+  { value: 'march', label: 'March' },
+  { value: 'april', label: 'April' },
+  { value: 'may', label: 'May' },
+  { value: 'june', label: 'June' },
+  { value: 'july', label: 'July' },
+  { value: 'august', label: 'August' },
+  { value: 'september', label: 'September' },
+  { value: 'october', label: 'October' },
+  { value: 'november', label: 'November' },
+  { value: 'december', label: 'December' }
+]
+
+// Water Filtered Chart Component
+function WaterFilteredChart() {
+  const [selectedMonth, setSelectedMonth] = useState('december')
+
+  return (
+    <Card className="lg:col-span-2 rounded-2xl">
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle>Water Filtered</CardTitle>
+            <CardDescription>Total liters filtered per week</CardDescription>
+          </div>
+          <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+            <SelectTrigger className="w-[140px]">
+              <SelectValue placeholder="Select month" />
+            </SelectTrigger>
+            <SelectContent>
+              {months.map((month) => (
+                <SelectItem key={month.value} value={month.value}>
+                  {month.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <ChartContainer config={filtrationChartConfig} className="h-[200px]">
+          <BarChart data={filtrationData} barCategoryGap="20%">
+            <CartesianGrid vertical={false} strokeDasharray="3 3" />
+            <XAxis
+              dataKey="week"
+              tickLine={false}
+              tickMargin={10}
+              axisLine={false}
+              tick={{ fontSize: 12 }}
+            />
+            <YAxis
+              tickLine={false}
+              axisLine={false}
+              tick={{ fontSize: 12 }}
+              tickFormatter={(value) => `${value}L`}
+            />
+            <ChartTooltip
+              cursor={false}
+              content={<ChartTooltipContent />}
+            />
+            <Bar
+              dataKey="filtered"
+              fill="#60A5FA"
+              radius={12}
+              maxBarSize={60}
+            />
+          </BarChart>
+        </ChartContainer>
+      </CardContent>
+    </Card>
+  )
 }
 
 export default function Analytics() {
-  const [selectedRange, setSelectedRange] = useState<DateRange>('24h')
-
-  const sensorData = useMemo(() => {
-    switch (selectedRange) {
-      case 'today':
-        return generateMockData(24)
-      case '24h':
-        return generateMockData(24)
-      case '7d':
-        return generateMockData(168) // 7 days
-      case '30d':
-        return generateMockData(720) // 30 days
-      case 'custom':
-        return generateMockData(24) // Default to 24h for custom
-      default:
-        return generateMockData(24)
-    }
-  }, [selectedRange])
-
-  const phChartConfig = {
-    ph: {
-      label: "pH Level",
-      color: "hsl(var(--chart-1))",
-    },
-  }
-
-  const tdsChartConfig = {
-    tds: {
-      label: "TDS (ppm)",
-      color: "hsl(var(--chart-2))",
-    },
-  }
-
   return (
     <AppLayout title="">
       <Head title="Analytics" />
-      <div className="flex h-full flex-1 flex-col gap-6 overflow-x-auto rounded-xl p-4">
+      <div className="flex h-full flex-1 flex-col gap-6 rounded-xl p-4 md:p-6">
 
         {/* Header */}
         <div>
-          <h1 className="text-2xl font-bold">Sensor Data Analytics</h1>
-          <p className="text-muted-foreground">Historical charts and performance data of all sensor readings.</p>
+          <h1 className="text-2xl font-bold text-foreground">Analytics Overview</h1>
+          <p className="text-sm text-muted-foreground mt-1">Track your system performance and insights</p>
         </div>
 
-        {/* Date Filter Row */}
-        <div className="flex flex-wrap items-center gap-2">
-          <Button
-            variant={selectedRange === 'today' ? 'default' : 'outline'}
-            onClick={() => setSelectedRange('today')}
-          >
-            Today
-          </Button>
-          <Button
-            variant={selectedRange === '24h' ? 'default' : 'outline'}
-            onClick={() => setSelectedRange('24h')}
-          >
-            Last 24 Hours
-          </Button>
-          <Button
-            variant={selectedRange === '7d' ? 'default' : 'outline'}
-            onClick={() => setSelectedRange('7d')}
-          >
-            Last 7 Days
-          </Button>
-          <Button
-            variant={selectedRange === '30d' ? 'default' : 'outline'}
-            onClick={() => setSelectedRange('30d')}
-          >
-            Last 30 Days
-          </Button>
-          <Button
-            variant={selectedRange === 'custom' ? 'default' : 'outline'}
-            onClick={() => setSelectedRange('custom')}
-          >
-            Custom Range
-          </Button>
-        </div>
+        {/* Tabs */}
+        <Tabs defaultValue="water-quality" className="w-full">
+          <TabsList className="h-12 p-1 bg-muted/60 rounded-xl">
+            <TabsTrigger
+              value="water-quality"
+              className="h-10 px-6 text-sm font-medium rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md"
+            >
+              <Waves className="w-4 h-4 mr-2" />
+              Water Quality
+            </TabsTrigger>
+            <TabsTrigger
+              value="crops-harvest"
+              className="h-10 px-6 text-sm font-medium rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md"
+            >
+              <Leaf className="w-4 h-4 mr-2" />
+              Crops & Harvest
+            </TabsTrigger>
+          </TabsList>
 
-        {/* pH Level Graph */}
-        <Card>
-          <CardHeader>
-            <CardTitle>pH Level</CardTitle>
-            <CardDescription>
-              pH readings over selected time range (Optimal: 5.5-6.5)
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ChartContainer config={phChartConfig} className="h-[400px] w-full">
-              <LineChart data={sensorData} margin={{ top: 5, right: 30, left: 0, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+          {/* Water Quality Tab Content */}
+          <TabsContent value="water-quality" className="mt-6">
+            <div className="flex flex-col gap-6">
+              {/* Row 1: Filtration Cycle History */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Filtration Stats Cards */}
+                <FiltrationCyclesCard />
 
-                {/* Safe pH range background */}
-                <ReferenceArea
-                  y1={5.5}
-                  y2={6.5}
-                  fill="hsl(var(--chart-1))"
-                  fillOpacity={0.1}
-                  label={{ value: 'Optimal Range', position: 'insideTopRight', fill: 'hsl(var(--muted-foreground))' }}
-                />
+                {/* Filtration Bar Chart */}
+                <WaterFilteredChart />
+              </div>
 
-                <XAxis
-                  dataKey="time"
-                  tick={{ fontSize: 12 }}
-                  angle={-45}
-                  textAnchor="end"
-                  height={80}
-                />
-                <YAxis
-                  domain={[4, 8]}
-                  tick={{ fontSize: 12 }}
-                  label={{ value: 'pH', angle: -90, position: 'insideLeft' }}
-                />
-                <ChartTooltip content={<ChartTooltipContent />} />
-                <Line
-                  type="monotone"
-                  dataKey="ph"
-                  stroke="var(--color-ph)"
-                  strokeWidth={2}
-                  dot={{ r: 3 }}
-                  activeDot={{ r: 5 }}
-                />
-              </LineChart>
-            </ChartContainer>
-          </CardContent>
-        </Card>
+              {/* Filtration Activity Log */}
+              <Card className="rounded-2xl">
+                <CardHeader>
+                  <CardTitle>Filtration Activity Log</CardTitle>
+                  <CardDescription>Recent filtration cycles and their status</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Date</TableHead>
+                        <TableHead>Liters</TableHead>
+                        <TableHead>Status</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filtrationLogs.map((log) => (
+                        <TableRow key={log.id}>
+                          <TableCell className="font-medium">{log.date}</TableCell>
+                          <TableCell>{log.liters} L</TableCell>
+                          <TableCell>
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                              log.status === 'Completed'
+                                ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+                                : log.status === 'In Progress'
+                                ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                                : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+                            }`}>
+                              {log.status}
+                            </span>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
 
-        {/* TDS (ppm) Graph */}
-        <Card>
-          <CardHeader>
-            <CardTitle>TDS (ppm)</CardTitle>
-            <CardDescription>
-              Nutrient concentration over selected time range (Optimal: 800-1500 ppm)
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ChartContainer config={tdsChartConfig} className="h-[400px] w-full">
-              <LineChart data={sensorData} margin={{ top: 5, right: 30, left: 0, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+            </div>
+          </TabsContent>
 
-                {/* Low range (below optimal) */}
-                <ReferenceArea
-                  y1={0}
-                  y2={800}
-                  fill="hsl(var(--destructive))"
-                  fillOpacity={0.05}
-                />
+          {/* Crops & Harvest Tab Content */}
+          <TabsContent value="crops-harvest" className="mt-6">
+            <div className="flex flex-col gap-6">
+              {/* Summary Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <TextureCardStyled className="rounded-2xl">
+                  <TextureCardContent className="flex items-center gap-4">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Total Harvest This Month</p>
+                      <p className="text-2xl font-bold text-foreground">42 <span className="text-sm font-normal text-muted-foreground">crops</span></p>
+                    </div>
+                  </TextureCardContent>
+                </TextureCardStyled>
 
-                {/* Safe TDS range */}
-                <ReferenceArea
-                  y1={800}
-                  y2={1500}
-                  fill="hsl(var(--chart-2))"
-                  fillOpacity={0.1}
-                  label={{ value: 'Optimal Range', position: 'insideTopRight', fill: 'hsl(var(--muted-foreground))' }}
-                />
+                <TextureCardStyled className="rounded-2xl">
+                  <TextureCardContent className="flex items-center gap-4">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Total Harvest This Year</p>
+                      <p className="text-2xl font-bold text-foreground">318 <span className="text-sm font-normal text-muted-foreground">total</span></p>
+                    </div>
+                  </TextureCardContent>
+                </TextureCardStyled>
 
-                {/* High range (above optimal) */}
-                <ReferenceArea
-                  y1={1500}
-                  y2={2000}
-                  fill="hsl(var(--destructive))"
-                  fillOpacity={0.05}
-                />
+                <TextureCardStyled className="rounded-2xl">
+                  <TextureCardContent className="flex items-center gap-4">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Most Grown Crop Type</p>
+                      <p className="text-2xl font-bold text-foreground">Romaine</p>
+                    </div>
+                  </TextureCardContent>
+                </TextureCardStyled>
+              </div>
 
-                <XAxis
-                  dataKey="time"
-                  tick={{ fontSize: 12 }}
-                  angle={-45}
-                  textAnchor="end"
-                  height={80}
-                />
-                <YAxis
-                  domain={[0, 2000]}
-                  tick={{ fontSize: 12 }}
-                  label={{ value: 'ppm', angle: -90, position: 'insideLeft' }}
-                />
-                <ChartTooltip content={<ChartTooltipContent />} />
-                <Line
-                  type="monotone"
-                  dataKey="tds"
-                  stroke="var(--color-tds)"
-                  strokeWidth={2}
-                  dot={{ r: 3 }}
-                  activeDot={{ r: 5 }}
-                />
-              </LineChart>
-            </ChartContainer>
-          </CardContent>
-        </Card>
+              {/* Row 1: Harvest Bar Chart + Crop Type Distribution Radar */}
+              <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+                {/* Harvest Bar Chart */}
+                <Card className="lg:col-span-3 rounded-2xl">
+                  <CardHeader>
+                    <CardTitle>Harvest Insights</CardTitle>
+                    <CardDescription>January - December 2025</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <ChartContainer config={harvestChartConfig}>
+                      <BarChart accessibilityLayer data={harvestData} barCategoryGap="8%">
+                        <CartesianGrid vertical={false} />
+                        <XAxis
+                          dataKey="month"
+                          tickLine={false}
+                          tickMargin={10}
+                          axisLine={false}
+                        />
+                        <ChartTooltip
+                          cursor={false}
+                          content={<ChartTooltipContent hideLabel />}
+                        />
+                        <Bar
+                          dataKey="harvested"
+                          strokeWidth={2}
+                          radius={20}
+                          maxBarSize={80}
+                          activeIndex={6}
+                          activeBar={({ ...props }) => {
+                            return (
+                              <Rectangle
+                                {...props}
+                                fillOpacity={0.8}
+                                stroke={props.payload.fill}
+                                strokeDasharray={4}
+                                strokeDashoffset={4}
+                              />
+                            )
+                          }}
+                        />
+                      </BarChart>
+                    </ChartContainer>
+                  </CardContent>
+                </Card>
+
+                {/* Crop Type Distribution - Radar Chart */}
+                <Card className="lg:col-span-2 rounded-2xl">
+                  <CardHeader className="items-center pb-4">
+                    <CardTitle>Crop Type Distribution</CardTitle>
+                    <CardDescription>
+                      Harvested crops by type
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="pb-0">
+                    <ChartContainer
+                      config={cropRadarConfig}
+                      className="mx-auto aspect-square max-h-[350px]"
+                    >
+                      <RadarChart data={cropRadarData}>
+                        <ChartTooltip
+                          cursor={false}
+                          content={<ChartTooltipContent hideLabel />}
+                        />
+                        <PolarGrid className="fill-[hsl(142,76%,36%)] opacity-20" />
+                        <PolarAngleAxis dataKey="crop" />
+                        <Radar
+                          dataKey="harvested"
+                          fill="hsl(142, 76%, 36%)"
+                          fillOpacity={0.5}
+                        />
+                      </RadarChart>
+                    </ChartContainer>
+                  </CardContent>
+
+                </Card>
+              </div>
+            </div>
+          </TabsContent>
+        </Tabs>
 
       </div>
     </AppLayout>
   )
 }
-

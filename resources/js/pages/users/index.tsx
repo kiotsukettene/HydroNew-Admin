@@ -23,29 +23,10 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Badge } from '@/components/ui/badge'
 import SearchInput from '@/components/search-input'
-import { Checkbox } from '@/components/ui/checkbox'
 
 export default function Users() {
 
-    const [selectedUsers, setSelectedUsers] = React.useState<string[]>([]);
-
     const columnsHeader = ['Name', 'Email', 'Contact Number', 'Address', 'Status', 'Verified'];
-
-    const handleSelectAll = (checked: boolean) => {
-        if (checked) {
-            setSelectedUsers(users.map(user => user.email));
-        } else {
-            setSelectedUsers([]);
-        }
-    };
-
-    const handleSelectUser = (email: string, checked: boolean) => {
-        if (checked) {
-            setSelectedUsers([...selectedUsers, email]);
-        } else {
-            setSelectedUsers(selectedUsers.filter(e => e !== email));
-        }
-    };
 
     const users = [
   {
@@ -85,7 +66,6 @@ export default function Users() {
                 <div className='mb-6'>
         <h1 className="text-2xl font-bold">Registered Users</h1>
         <p className="text-muted-foreground">Manage your application's users</p>
-
                 </div>
 
                 {/* Total Users Card */}
@@ -109,14 +89,6 @@ export default function Users() {
 
       <TableHeader>
         <TableRow>
-          <TableHead className="w-12">
-            <Checkbox
-            className='border-gray-300'
-              checked={selectedUsers.length === users.length}
-              onCheckedChange={handleSelectAll}
-              aria-label="Select all"
-            />
-          </TableHead>
           {columnsHeader.map((column) => (
             <TableHead key={column}>
               <Button variant="ghost" size="sm" className="flex items-center gap-1">
@@ -132,14 +104,6 @@ export default function Users() {
       <TableBody>
         {users.map((user) => (
           <TableRow key={user.email}>
-            <TableCell className="w-12">
-              <Checkbox
-              className='border-gray-300'
-                checked={selectedUsers.includes(user.email)}
-                onCheckedChange={(checked) => handleSelectUser(user.email, checked as boolean)}
-                aria-label={`Select ${user.name}`}
-              />
-            </TableCell>
             <TableCell className="font-medium">{user.name}</TableCell>
             <TableCell>{user.email}</TableCell>
             <TableCell>{user.contactNumber}</TableCell>

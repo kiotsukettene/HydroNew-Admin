@@ -10,6 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
+import { cn } from "@/lib/utils"
 import {
   ChartConfig,
   ChartContainer,
@@ -136,7 +137,11 @@ const chartConfig = {
   },
 } satisfies ChartConfig
 
-export function PhTdsChart() {
+interface PhTdsChartProps {
+  className?: string
+}
+
+export function PhTdsChart({ className }: PhTdsChartProps) {
   const [timeRange, setTimeRange] = React.useState("7d")
 
   const filteredData = chartData.filter((item) => {
@@ -154,38 +159,38 @@ export function PhTdsChart() {
   })
 
   return (
-    <Card className="pt-0">
-      <CardHeader className="flex items-center gap-2 space-y-0 border-b py-5 sm:flex-row">
-        <div className="grid flex-1 gap-1">
-          <CardTitle>pH & TDS Levels Overview</CardTitle>
-          <CardDescription>
-            Showing total water acidity and nutrient concentration for the last 3 months
+    <Card className={cn("pt-0 gap-0 flex flex-col", className)}>
+      <CardHeader className="flex items-center gap-2 space-y-0 border-b py-3 sm:flex-row">
+        <div className="grid flex-1 gap-0.5">
+          <CardTitle className="text-lg">pH & TDS Levels</CardTitle>
+          <CardDescription className="text-xs">
+            Water acidity & nutrient concentration
           </CardDescription>
         </div>
         <Select value={timeRange} onValueChange={setTimeRange}>
           <SelectTrigger
-            className="hidden w-[160px] rounded-lg sm:ml-auto sm:flex"
+            className="hidden h-8 w-[130px] rounded-lg text-xs sm:ml-auto sm:flex"
             aria-label="Select a value"
           >
             <SelectValue placeholder="Last 3 months" />
           </SelectTrigger>
           <SelectContent className="rounded-xl">
-            <SelectItem value="90d" className="rounded-lg">
+            <SelectItem value="90d" className="rounded-lg text-xs">
               Last 3 months
             </SelectItem>
-            <SelectItem value="15d" className="rounded-lg">
+            <SelectItem value="15d" className="rounded-lg text-xs">
               Last 15 days
             </SelectItem>
-            <SelectItem value="7d" className="rounded-lg">
+            <SelectItem value="7d" className="rounded-lg text-xs">
               Last 7 days
             </SelectItem>
           </SelectContent>
         </Select>
       </CardHeader>
-      <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
+      <CardContent className="px-2 pt-3 sm:px-4 sm:pt-3 flex-1 flex flex-col">
         <ChartContainer
           config={chartConfig}
-          className="aspect-auto h-[250px] w-full"
+          className="aspect-auto min-h-[280px] h-full w-full flex-1"
         >
           <AreaChart data={filteredData}>
             <defs>
