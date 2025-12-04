@@ -3,6 +3,9 @@
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Laravel\Fortify\Features;
+use App\Http\Controllers\User\UserController;
+use App\Http\Controllers\Analytics\AnalyticsController;
+use App\Http\Controllers\Devices\DeviceController;
 
 Route::get('/', function () {
     return Inertia::render('welcome', [
@@ -21,11 +24,13 @@ Route::middleware(['auth', 'verified', 'admin'])->group(function () {
         ]);
     })->name('dashboard');
 
-    // Device routes
-    Route::resource('devices', \App\Http\Controllers\DeviceController::class);
+    Route::get('users/archived', [UserController::class, 'archived'])->name('users.archived');
+    Route::resource('users', UserController::class);
 
-    // User routes
-    Route::resource('users', \App\Http\Controllers\UserController::class);
+    Route::resource('analytics', \App\Http\Controllers\Analytics\AnalyticsController::class);
+
+    Route::get('devices/archived', [DeviceController::class, 'archived'])->name('devices.archived');
+    Route::resource('devices', DeviceController::class);
 });
 
 require __DIR__.'/settings.php';
