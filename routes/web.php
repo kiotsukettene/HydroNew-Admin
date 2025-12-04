@@ -16,6 +16,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         return Inertia::render('dashboard');
     })->name('dashboard');
 
+    Route::get('users/archived', [UserController::class, 'archived'])->name('users.archived');
     Route::resource('users', UserController::class);
 });
 
