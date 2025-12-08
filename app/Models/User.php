@@ -1,52 +1,86 @@
 <?php
 
+/**
+ * Created by Reliese Model.
+ */
+
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Notifications\Notifiable;
-use Laravel\Fortify\TwoFactorAuthenticatable;
+use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Model;
 
-class User extends Authenticatable
+/**
+ * Class User
+ * 
+ * @property int $id
+ * @property string $first_name
+ * @property string $last_name
+ * @property string $email
+ * @property Carbon|null $email_verified_at
+ * @property string|null $password
+ * @property string|null $profile_picture
+ * @property string|null $address
+ * @property bool|null $first_time_login
+ * @property Carbon|null $last_login_at
+ * @property string|null $verification_code
+ * @property Carbon|null $verification_expires_at
+ * @property Carbon|null $last_otp_sent_at
+ * @property string|null $remember_token
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
+ * 
+ * @property Collection|Device[] $devices
+ * @property Collection|LoginHistory[] $login_histories
+ * @property Collection|Notification[] $notifications
+ *
+ * @package App\Models
+ */
+class User extends Model
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable, TwoFactorAuthenticatable;
+	protected $table = 'users';
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
-     */
-    protected $fillable = [
-        'name',
-        'email',
-        'password',
-    ];
+	protected $casts = [
+		'email_verified_at' => 'datetime',
+		'first_time_login' => 'bool',
+		'last_login_at' => 'datetime',
+		'verification_expires_at' => 'datetime',
+		'last_otp_sent_at' => 'datetime'
+	];
 
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var list<string>
-     */
-    protected $hidden = [
-        'password',
-        'two_factor_secret',
-        'two_factor_recovery_codes',
-        'remember_token',
-    ];
+	protected $hidden = [
+		'password',
+		'remember_token'
+	];
 
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
-    protected function casts(): array
-    {
-        return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-            'two_factor_confirmed_at' => 'datetime',
-        ];
-    }
+	protected $fillable = [
+		'first_name',
+		'last_name',
+		'email',
+		'email_verified_at',
+		'password',
+		'profile_picture',
+		'address',
+		'first_time_login',
+		'last_login_at',
+		'verification_code',
+		'verification_expires_at',
+		'last_otp_sent_at',
+		'remember_token'
+	];
+
+	public function devices()
+	{
+		return $this->hasMany(Device::class);
+	}
+
+	public function login_histories()
+	{
+		return $this->hasMany(LoginHistory::class);
+	}
+
+	public function notifications()
+	{
+		return $this->hasMany(Notification::class);
+	}
 }
