@@ -7,6 +7,7 @@
 namespace App\Models;
 
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 
 /**
@@ -14,18 +15,15 @@ use Illuminate\Database\Eloquent\Model;
  * 
  * @property int $id
  * @property int $hydroponic_setup_id
- * @property string|null $harvest_status
- * @property string|null $growth_stage
- * @property string $health_status
- * @property float|null $predicted_yield
- * @property float|null $actual_yield
- * @property Carbon|null $harvest_date
- * @property bool $system_generated
+ * @property float|null $total_weight
+ * @property int|null $total_count
  * @property string|null $notes
+ * @property bool $is_archived
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * 
  * @property HydroponicSetup $hydroponic_setup
+ * @property Collection|HydroponicYieldGrade[] $hydroponic_yield_grades
  *
  * @package App\Models
  */
@@ -35,26 +33,26 @@ class HydroponicYield extends Model
 
 	protected $casts = [
 		'hydroponic_setup_id' => 'int',
-		'predicted_yield' => 'float',
-		'actual_yield' => 'float',
-		'harvest_date' => 'datetime',
-		'system_generated' => 'bool'
+		'total_weight' => 'float',
+		'total_count' => 'int',
+		'is_archived' => 'bool'
 	];
 
 	protected $fillable = [
 		'hydroponic_setup_id',
-		'harvest_status',
-		'growth_stage',
-		'health_status',
-		'predicted_yield',
-		'actual_yield',
-		'harvest_date',
-		'system_generated',
-		'notes'
+		'total_weight',
+		'total_count',
+		'notes',
+		'is_archived'
 	];
 
 	public function hydroponic_setup()
 	{
 		return $this->belongsTo(HydroponicSetup::class);
+	}
+
+	public function hydroponic_yield_grades()
+	{
+		return $this->hasMany(HydroponicYieldGrade::class);
 	}
 }
