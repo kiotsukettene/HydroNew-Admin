@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string('last_name', 100);
             $table->string('email', 150)->unique('email');
             $table->dateTime('email_verified_at')->nullable();
-            $table->text('password');
+            $table->string('password')->nullable();
             $table->string('profile_picture')->nullable();
             $table->text('address')->nullable();
             $table->boolean('first_time_login')->nullable()->default(true);

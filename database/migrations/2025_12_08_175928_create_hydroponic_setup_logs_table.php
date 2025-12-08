@@ -11,14 +11,15 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('hydroponic_yields', function (Blueprint $table) {
+        Schema::create('hydroponic_setup_logs', function (Blueprint $table) {
             $table->bigInteger('id', true);
-            $table->bigInteger('hydroponic_setup_id')->index('hydroponic_setup_id');
-            $table->enum('harvest_status', ['not_harvested', 'harvested', 'partial'])->nullable()->default('not_harvested');
+            $table->bigInteger('hydroponic_setup_id')->index('hydroponic_setup_logs_ibfk_1');
             $table->enum('growth_stage', ['seedling', 'vegetative', 'flowering', 'harvest-ready'])->nullable()->default('seedling');
+            $table->decimal('ph_status', 4)->nullable();
+            $table->decimal('tds_status', 6)->nullable();
+            $table->decimal('ec_status', 6)->nullable();
+            $table->decimal('humidity_status', 5)->nullable();
             $table->enum('health_status', ['good', 'moderate', 'poor']);
-            $table->decimal('predicted_yield', 10)->nullable();
-            $table->decimal('actual_yield', 10)->nullable();
             $table->dateTime('harvest_date')->nullable();
             $table->boolean('system_generated')->default(true);
             $table->text('notes')->nullable();
@@ -31,6 +32,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('hydroponic_yields');
+        Schema::dropIfExists('hydroponic_setup_logs');
     }
 };

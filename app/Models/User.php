@@ -18,7 +18,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property string $last_name
  * @property string $email
  * @property Carbon|null $email_verified_at
- * @property string $password
+ * @property string|null $password
  * @property string|null $profile_picture
  * @property string|null $address
  * @property bool|null $first_time_login
