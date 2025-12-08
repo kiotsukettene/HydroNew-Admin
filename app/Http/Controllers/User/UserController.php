@@ -28,7 +28,7 @@ class UserController extends Controller
     }
 
     /**
-     * Display archived users.
+     * Display archived (Users)
      */
     public function archived()
     {
