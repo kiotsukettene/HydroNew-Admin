@@ -30,7 +30,8 @@ export default function Users() {
 
     const users = [
   {
-    name: "John Doe",
+    first_name: "John",
+    last_name: "Doe",
     email: "john.doe@example.com",
     contactNumber: "123-456-7890",
     address: "123 Main St, Cityville",
@@ -39,7 +40,8 @@ export default function Users() {
     verified: true,
   },
   {
-    name: "Jane Smith",
+    first_name: "Jane",
+    last_name: "Smith",
     email: "jane.smith@example.com",
     contactNumber: "987-654-3210",
     address: "456 Elm St, Townsville",
@@ -47,7 +49,9 @@ export default function Users() {
     status: "inactive",
     verified: false,
   },
-{    name: "Alice Johnson",
+  {
+    first_name: "Alice",
+    last_name: "Johnson",
     email: "alice.johnson@example.com",
     contactNumber: "555-123-4567",
     address: "789 Oak St, Villageville",
@@ -104,7 +108,7 @@ export default function Users() {
       <TableBody>
         {users.map((user) => (
           <TableRow key={user.email}>
-            <TableCell className="font-medium">{user.name}</TableCell>
+            <TableCell className="font-medium">{user.first_name} {user.last_name}</TableCell>
             <TableCell>{user.email}</TableCell>
             <TableCell>{user.contactNumber}</TableCell>
             <TableCell className="">{user.address}</TableCell>

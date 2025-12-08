@@ -32,7 +32,9 @@ export interface SharedData {
 
 export interface User {
     id: number;
-    name: string;
+    first_name: string;
+    last_name: string;
+    name?: string; // Computed from first_name + last_name (for backwards compatibility)
     email: string;
     avatar?: string;
     email_verified_at: string | null;

@@ -6,13 +6,13 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\{Collection, Model};
 use Carbon\Carbon;
-use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Foundation\Auth\User as Authenticatable;
 
 /**
  * Class User
- * 
+ *
  * @property int $id
  * @property string $first_name
  * @property string $last_name
@@ -29,14 +29,14 @@ use Illuminate\Database\Eloquent\Model;
  * @property string|null $remember_token
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
- * 
+ *
  * @property Collection|Device[] $devices
  * @property Collection|LoginHistory[] $login_histories
  * @property Collection|Notification[] $notifications
  *
  * @package App\Models
  */
-class User extends Model
+class User extends Authenticatable
 {
 	protected $table = 'users';
 
@@ -69,6 +69,10 @@ class User extends Model
 		'remember_token'
 	];
 
+	protected $appends = [
+		'name'
+	];
+
 	public function devices()
 	{
 		return $this->hasMany(Device::class);
@@ -82,5 +86,15 @@ class User extends Model
 	public function notifications()
 	{
 		return $this->hasMany(Notification::class);
+	}
+
+	/**
+	 * Get the user's full name.
+	 *
+	 * @return string
+	 */
+	public function getNameAttribute(): string
+	{
+		return trim(($this->first_name ?? '') . ' ' . ($this->last_name ?? ''));
 	}
 }
