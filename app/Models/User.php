@@ -70,7 +70,8 @@ class User extends Authenticatable
 	];
 
 	protected $appends = [
-		'name'
+		'name',
+		'status'
 	];
 
 	public function devices()
@@ -97,4 +98,38 @@ class User extends Authenticatable
 	{
 		return trim(($this->first_name ?? '') . ' ' . ($this->last_name ?? ''));
 	}
+
+	/**
+	 * Get the user's status based on last login.
+	 * Active: logged in within the last 7 days
+	 * Inactive: not logged in for more than 7 days (or never logged in)
+	 *
+	 * @return string
+	 */
+	public function getStatusAttribute(): string
+	{
+		if (!$this->last_login_at) {
+			return 'inactive';
+		}
+
+		$daysSinceLastLogin = Carbon::now()->diffInDays($this->last_login_at);
+
+		return $daysSinceLastLogin <= 7 ? 'active' : 'inactive';
+	}
+
+    public function verified(): string
+    {
+        return $this->email_verified_at ? 'verified' : 'unverified';
+    }
+
+    public function scopeFilter($query, array $filters)
+    {
+        if (!empty($filters['search'] ?? '')) {
+            $query->where(function ($q) use ($filters) {
+                $q->where('first_name', 'like', '%' . $filters['search'] . '%')
+                      ->orWhere('last_name', 'like', '%' . $filters['search'] . '%')
+                      ->orWhere('email', 'like', '%' . $filters['search'] . '%');
+            });
+        }
+    }
 }
