@@ -10,7 +10,7 @@ use Inertia\Inertia;
 class UserController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * Display a listing of the resource (User).
      */
     public function index(Request $request)
     {
