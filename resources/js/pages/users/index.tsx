@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/table"
 import { ArrowUpDown, MoreHorizontal, Pencil, Archive, Check, X, Users as UsersIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Label } from '@/components/ui/label'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -26,8 +27,6 @@ import SearchInput from '@/components/search-input'
 import { Card } from '@/components/ui/card';
 
 export default function Users() {
-
-    const columnsHeader = ['Name', 'Email', 'Contact Number', 'Address', 'Status', 'Verified'];
 
     const users = [
   {
@@ -74,7 +73,7 @@ export default function Users() {
                     <div className="flex items-center gap-10">
                         <div className="flex items-center gap-2">
                             <span className="text-3xl font-bold ">{users.length}</span>
-                            <Badge className="bg-green-600 text-white hover:bg-green-700 text-xs px-2 py-0.5">
+                            <Badge className=" text-xs px-2 py-0.5">
                                 Total
                             </Badge>
                         </div>
@@ -88,14 +87,54 @@ export default function Users() {
 
       <TableHeader>
         <TableRow>
-          {columnsHeader.map((column) => (
-            <TableHead key={column}>
-              <Button variant="minimal" size="sm" className="flex items-center gap-1">
-                {column}
+          <TableHead>
+            <div className="flex items-center gap-1">
+              <Label className="text-sm font-medium">Name</Label>
+              <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Sort Name">
                 <ArrowUpDown className="h-4 w-4" />
               </Button>
-            </TableHead>
-          ))}
+            </div>
+          </TableHead>
+          <TableHead>
+            <div className="flex items-center gap-1">
+              <Label className="text-sm font-medium">Email</Label>
+              <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Sort Email">
+                <ArrowUpDown className="h-4 w-4" />
+              </Button>
+            </div>
+          </TableHead>
+          <TableHead>
+            <div className="flex items-center gap-1">
+              <Label className="text-sm font-medium">Contact Number</Label>
+              <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Sort Contact Number">
+                <ArrowUpDown className="h-4 w-4" />
+              </Button>
+            </div>
+          </TableHead>
+          <TableHead>
+            <div className="flex items-center gap-1">
+              <Label className="text-sm font-medium">Address</Label>
+              <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Sort Address">
+                <ArrowUpDown className="h-4 w-4" />
+              </Button>
+            </div>
+          </TableHead>
+          <TableHead>
+            <div className="flex items-center gap-1">
+              <Label className="text-sm font-medium">Status</Label>
+              <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Sort Status">
+                <ArrowUpDown className="h-4 w-4" />
+              </Button>
+            </div>
+          </TableHead>
+          <TableHead>
+            <div className="flex items-center gap-1">
+              <Label className="text-sm font-medium">Verified</Label>
+              <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Sort Verified">
+                <ArrowUpDown className="h-4 w-4" />
+              </Button>
+            </div>
+          </TableHead>
           <TableHead></TableHead>
         </TableRow>
       </TableHeader>
@@ -127,7 +166,7 @@ export default function Users() {
             <TableCell>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="minimal" size="sm">
+                  <Button variant="ghost" size="sm">
                     <MoreHorizontal className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>

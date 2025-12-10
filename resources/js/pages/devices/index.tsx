@@ -112,7 +112,7 @@ export default function Devices() {
                     <div className="flex items-center gap-10">
                         <div className="flex items-center gap-2">
                             <span className="text-3xl font-bold ">5</span>
-                            <Badge className="bg-green-600 text-white hover:bg-green-700 text-xs px-2 py-0.5">
+                            <Badge className=" text-xs px-2 py-0.5">
                                 Total
                             </Badge>
                         </div>
