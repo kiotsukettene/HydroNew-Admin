@@ -126,9 +126,9 @@ function WaterFilteredChart() {
           </Select>
         </div>
       </CardHeader>
-      <CardContent>
-        <ChartContainer config={filtrationChartConfig} className="h-[200px]">
-          <BarChart data={filtrationData} barCategoryGap="20%">
+      <CardContent className="pt-0">
+        <ChartContainer config={filtrationChartConfig} className="h-[240px] w-full aspect-auto">
+          <BarChart data={filtrationData} barCategoryGap="10%">
             <CartesianGrid vertical={false} strokeDasharray="3 3" />
             <XAxis
               dataKey="week"
@@ -151,7 +151,7 @@ function WaterFilteredChart() {
               dataKey="filtered"
               fill="#60A5FA"
               radius={12}
-              maxBarSize={60}
+              barSize={60}
             />
           </BarChart>
         </ChartContainer>

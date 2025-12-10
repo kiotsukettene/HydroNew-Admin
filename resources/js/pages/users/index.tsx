@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/table"
 import { ArrowUpDown, MoreHorizontal, Pencil, Archive, Check, X, Users as UsersIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Label } from '@/components/ui/label'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -23,10 +24,17 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Badge } from '@/components/ui/badge'
 import SearchInput from '@/components/search-input'
+import { Card } from '@/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 
 export default function Users() {
-
-    const columnsHeader = ['Name', 'Email', 'Contact Number', 'Address', 'Status', 'Verified'];
 
     const users = [
   {
@@ -57,6 +65,14 @@ export default function Users() {
   },
 ];
 
+  const [editingUser, setEditingUser] = React.useState<(typeof users)[number] | null>(null)
+  const [isEditOpen, setIsEditOpen] = React.useState(false)
+
+  const handleEdit = (user: (typeof users)[number]) => {
+    setEditingUser(user)
+    setIsEditOpen(true)
+  }
+
 
   return (
      <AppLayout title="">
@@ -69,34 +85,72 @@ export default function Users() {
                 </div>
 
                 {/* Total Users Card */}
-                <div className="bg-orange-100/60  rounded-lg p-4 w-fit mb-4">
+                <Card className="bg-orange-100/60  rounded-lg p-4 w-3xs mb-4 border-none">
                     <div className="flex items-center gap-10">
                         <div className="flex items-center gap-2">
                             <span className="text-3xl font-bold ">{users.length}</span>
-                            <Badge className="bg-green-600 text-white hover:bg-green-700 text-xs px-2 py-0.5">
+                            <Badge className=" text-xs px-2 py-0.5">
                                 Total
                             </Badge>
                         </div>
-                        <div className="bg-white rounded-md p-2">
-                            <UsersIcon className="size-8 text-orange-500" />
-                        </div>
+
                     </div>
                     <p className="text-sm text-gray-600 mt-2">Registered users</p>
-                </div>
+                </Card>
 
                  <SearchInput placeholder="Search users..." />
                  <Table className='border'>
 
       <TableHeader>
         <TableRow>
-          {columnsHeader.map((column) => (
-            <TableHead key={column}>
-              <Button variant="ghost" size="sm" className="flex items-center gap-1">
-                {column}
+          <TableHead>
+            <div className="flex items-center gap-1">
+              <Label className="text-sm font-medium">Name</Label>
+              <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Sort Name">
                 <ArrowUpDown className="h-4 w-4" />
               </Button>
-            </TableHead>
-          ))}
+            </div>
+          </TableHead>
+          <TableHead>
+            <div className="flex items-center gap-1">
+              <Label className="text-sm font-medium">Email</Label>
+              <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Sort Email">
+                <ArrowUpDown className="h-4 w-4" />
+              </Button>
+            </div>
+          </TableHead>
+          <TableHead>
+            <div className="flex items-center gap-1">
+              <Label className="text-sm font-medium">Contact Number</Label>
+              <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Sort Contact Number">
+                <ArrowUpDown className="h-4 w-4" />
+              </Button>
+            </div>
+          </TableHead>
+          <TableHead>
+            <div className="flex items-center gap-1">
+              <Label className="text-sm font-medium">Address</Label>
+              <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Sort Address">
+                <ArrowUpDown className="h-4 w-4" />
+              </Button>
+            </div>
+          </TableHead>
+          <TableHead>
+            <div className="flex items-center gap-1">
+              <Label className="text-sm font-medium">Status</Label>
+              <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Sort Status">
+                <ArrowUpDown className="h-4 w-4" />
+              </Button>
+            </div>
+          </TableHead>
+          <TableHead>
+            <div className="flex items-center gap-1">
+              <Label className="text-sm font-medium">Verified</Label>
+              <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Sort Verified">
+                <ArrowUpDown className="h-4 w-4" />
+              </Button>
+            </div>
+          </TableHead>
           <TableHead></TableHead>
         </TableRow>
       </TableHeader>
@@ -133,7 +187,7 @@ export default function Users() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleEdit(user)}>
                     <Pencil className="mr-2 h-4 w-4" />
                     Edit
                   </DropdownMenuItem>
@@ -149,6 +203,59 @@ export default function Users() {
       </TableBody>
 
     </Table>
+
+    {/* Edit User Modal */}
+    <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Edit User</DialogTitle>
+          <DialogDescription>
+            Update user details here.
+          </DialogDescription>
+        </DialogHeader>
+
+        {editingUser && (
+          <div className="space-y-3">
+            <div className="grid gap-1">
+              <Label className="text-sm font-medium">Name</Label>
+              <input
+                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+                defaultValue={editingUser.name}
+              />
+            </div>
+            <div className="grid gap-1">
+              <Label className="text-sm font-medium">Email</Label>
+              <input
+                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+                defaultValue={editingUser.email}
+              />
+            </div>
+            <div className="grid gap-1">
+              <Label className="text-sm font-medium">Contact Number</Label>
+              <input
+                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+                defaultValue={editingUser.contactNumber}
+              />
+            </div>
+            <div className="grid gap-1">
+              <Label className="text-sm font-medium">Address</Label>
+              <textarea
+                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+                defaultValue={editingUser.address}
+                rows={2}
+              />
+            </div>
+          </div>
+        )}
+
+        <DialogFooter>
+          <Button variant="secondary" onClick={() => setIsEditOpen(false)}>
+            Cancel
+          </Button>
+          <Button onClick={() => setIsEditOpen(false)}>Save changes</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
 
             </div>
         </AppLayout>
