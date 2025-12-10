@@ -76,7 +76,7 @@ const statusStyles: Record<FeedbackStatus, { card: string; pill: string; icon: R
   replied: {
     card: 'bg-muted/60',
     pill: 'bg-emerald-100 text-emerald-700 border-emerald-200',
-    icon: <CheckCircle2 className="h-4 w-4 text-emerald-600" />,
+    icon: <Circle className="h-4 w-4 fill-emerald-600 text-emerald-600" />,
     label: 'Replied'
   }
 }

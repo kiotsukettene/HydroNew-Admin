@@ -277,6 +277,7 @@ export default function Devices() {
             ))}
           </TableBody>
         </Table>
+
       </div>
     </AppLayout>
   )
