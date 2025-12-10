@@ -202,7 +202,8 @@ export default function Feedback() {
 
                   <div className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
                     <Mail className="h-3.5 w-3.5" />
-                    <span>{item.date}</span>
+
+                    <span>Sent: {item.date}</span>
                   </div>
 
 

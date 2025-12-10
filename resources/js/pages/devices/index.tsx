@@ -75,6 +75,7 @@ const devices = [
 export default function Devices() {
   const [selectedDevices, setSelectedDevices] = React.useState<string[]>([])
 
+
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
       setSelectedDevices(devices.map((device) => device.deviceId))
@@ -102,7 +103,25 @@ export default function Devices() {
           </p>
         </div>
 
-        <SearchInput placeholder="Search devices by serial number, name, or user..." />
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <SearchInput placeholder="Search devices by serial number, name, or user..." />
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button className="w-fit self-end " >
+                Filter
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">Sort</div>
+              <DropdownMenuItem>Newest to Oldest</DropdownMenuItem>
+              <DropdownMenuItem>Oldest to Newest</DropdownMenuItem>
+              <div className="px-2 pt-3 pb-1.5 text-xs font-semibold text-muted-foreground">Status</div>
+              <DropdownMenuItem>All</DropdownMenuItem>
+              <DropdownMenuItem>Connected</DropdownMenuItem>
+              <DropdownMenuItem>Disconnected</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
 
         <Table className="border">
           <TableHeader>
@@ -110,7 +129,7 @@ export default function Devices() {
               <TableHead className="w-12">
                 <Checkbox
                   className="border-gray-300"
-                  checked={selectedDevices.length === devices.length}
+                  checked={selectedDevices.length === devices.length && devices.length > 0}
                   onCheckedChange={handleSelectAll}
                   aria-label="Select all"
                 />
