@@ -6,6 +6,7 @@ use Laravel\Fortify\Features;
 use App\Http\Controllers\User\UserController;
 use App\Http\Controllers\Analytics\AnalyticsController;
 use App\Http\Controllers\Devices\DeviceController;
+use App\Http\Controllers\Feedback\FeedbackController;
 
 Route::get('/', function () {
     return Inertia::render('welcome', [
@@ -25,6 +26,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('devices/archived', [DeviceController::class, 'archived'])->name('devices.archived');
     Route::resource('devices', DeviceController::class);
+
+     Route::resource('feedback', FeedbackController::class);
+
+
 });
 
 require __DIR__.'/settings.php';

@@ -12,10 +12,11 @@ import { dashboard } from '@/routes';
 import users from '@/routes/users';
 import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/react';
-import { Airplay, ChartBar,  LayoutGrid,  Users } from 'lucide-react';
+import { Airplay, ChartBar,  LayoutGrid,  MessageCircleMore,  Users } from 'lucide-react';
 import AppLogo from './app-logo';
 import analytics from '@/routes/analytics';
 import devices from '@/routes/devices';
+import feedback from '@/routes/feedback';
 
 const mainNavItems: NavItem[] = [
     {
@@ -37,6 +38,11 @@ const mainNavItems: NavItem[] = [
         title: 'Analytics',
         href: analytics.index(),
         icon: ChartBar,
+    },
+    {
+        title: 'Feedback',
+        href: feedback.index(),
+        icon: MessageCircleMore,
     }
 
 ];
