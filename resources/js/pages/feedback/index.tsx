@@ -160,7 +160,7 @@ export default function Feedback() {
             </TabsList>
 
             <div className="relative">
-             <SearchInput placeholder="Search users..." />
+             <SearchInput placeholder="Search here..." />
 
             </div>
           </div>
