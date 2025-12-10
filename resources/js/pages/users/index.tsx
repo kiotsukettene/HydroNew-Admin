@@ -25,6 +25,14 @@ import {
 import { Badge } from '@/components/ui/badge'
 import SearchInput from '@/components/search-input'
 import { Card } from '@/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 
 export default function Users() {
 
@@ -56,6 +64,14 @@ export default function Users() {
     verified: true,
   },
 ];
+
+  const [editingUser, setEditingUser] = React.useState<(typeof users)[number] | null>(null)
+  const [isEditOpen, setIsEditOpen] = React.useState(false)
+
+  const handleEdit = (user: (typeof users)[number]) => {
+    setEditingUser(user)
+    setIsEditOpen(true)
+  }
 
 
   return (
@@ -171,7 +187,7 @@ export default function Users() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleEdit(user)}>
                     <Pencil className="mr-2 h-4 w-4" />
                     Edit
                   </DropdownMenuItem>
@@ -187,6 +203,59 @@ export default function Users() {
       </TableBody>
 
     </Table>
+
+    {/* Edit User Modal */}
+    <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Edit User</DialogTitle>
+          <DialogDescription>
+            Update user details here.
+          </DialogDescription>
+        </DialogHeader>
+
+        {editingUser && (
+          <div className="space-y-3">
+            <div className="grid gap-1">
+              <Label className="text-sm font-medium">Name</Label>
+              <input
+                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+                defaultValue={editingUser.name}
+              />
+            </div>
+            <div className="grid gap-1">
+              <Label className="text-sm font-medium">Email</Label>
+              <input
+                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+                defaultValue={editingUser.email}
+              />
+            </div>
+            <div className="grid gap-1">
+              <Label className="text-sm font-medium">Contact Number</Label>
+              <input
+                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+                defaultValue={editingUser.contactNumber}
+              />
+            </div>
+            <div className="grid gap-1">
+              <Label className="text-sm font-medium">Address</Label>
+              <textarea
+                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+                defaultValue={editingUser.address}
+                rows={2}
+              />
+            </div>
+          </div>
+        )}
+
+        <DialogFooter>
+          <Button variant="secondary" onClick={() => setIsEditOpen(false)}>
+            Cancel
+          </Button>
+          <Button onClick={() => setIsEditOpen(false)}>Save changes</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
 
             </div>
         </AppLayout>

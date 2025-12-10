@@ -114,7 +114,7 @@ export default function Dashboard() {
             <div className='flex-1'>
               <div className='text-white font-medium text-sm'>Water Tank Level</div>
               <div className='text-white/70 text-xs mt-1'>
-                Shows current water level at 85%
+                Water level at 85%
               </div>
             </div>
           </div>
@@ -127,7 +127,7 @@ export default function Dashboard() {
             <div className='flex-1'>
               <div className='text-white font-medium text-sm'>Current Growth Stage</div>
               <div className='text-white/70 text-xs mt-1'>
-                Displays "Vegetative" stage
+                Vegetative stage
               </div>
             </div>
           </div>
@@ -140,7 +140,7 @@ export default function Dashboard() {
             <div className='flex-1'>
               <div className='text-white font-medium text-sm'>Estimated Harvest Date</div>
               <div className='text-white/70 text-xs mt-1'>
-                Next harvest: Feb 12, 2025 • 14 days remaining
+                Feb 12, 2025 • 14 days remaining
               </div>
             </div>
           </div>
