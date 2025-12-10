@@ -99,16 +99,16 @@ export default function Dashboard() {
 
       {/* Overlay Content */}
       <div className='absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-[#2C5F5D] via-[#2C5F5D]/95 to-transparent'>
-        <CardTitle className='text-xl text-white font-semibold mb-1'>Harvest schedule</CardTitle>
+        <CardTitle className='text-xl text-white font-semibold mb-1'>Harvest Status</CardTitle>
         <CardDescription className='text-white/70 text-xs mb-4'>
-          Ask a question of the support question, Manage request, report an issue.
+         Monitor progress and estimated timeline for a successful harvest.
         </CardDescription>
 
         {/* Harvest Items */}
         <div className='flex flex-col gap-3'>
           {/* Water Tank Level */}
           <div className='flex items-center gap-3 bg-white/10 backdrop-blur-sm rounded-lg p-3 hover:bg-white/15 transition-colors'>
-            <div className='w-12 h-12 rounded-lg bg-blue-500/20 flex items-center justify-center flex-shrink-0'>
+            <div className='w-12 h-12 rounded-lg bg-green-400/20 flex items-center justify-center flex-shrink-0'>
               <Droplet className='text-white' size={24} fill="currentColor" />
             </div>
             <div className='flex-1'>
@@ -121,7 +121,7 @@ export default function Dashboard() {
 
           {/* Current Growth Stage */}
           <div className='flex items-center gap-3 bg-white/10 backdrop-blur-sm rounded-lg p-3 hover:bg-white/15 transition-colors'>
-            <div className='w-12 h-12 rounded-lg bg-orange-500/20 flex items-center justify-center flex-shrink-0'>
+            <div className='w-12 h-12 rounded-lg bg-green-400/20 flex items-center justify-center flex-shrink-0'>
               <Sprout className='text-white' size={24} />
             </div>
             <div className='flex-1'>
@@ -134,7 +134,7 @@ export default function Dashboard() {
 
           {/* Estimated Harvest Date */}
           <div className='flex items-center gap-3 bg-white/10 backdrop-blur-sm rounded-lg p-3 hover:bg-white/15 transition-colors'>
-            <div className='w-12 h-12 rounded-lg bg-green-500/20 flex items-center justify-center flex-shrink-0'>
+            <div className='w-12 h-12 rounded-lg bg-green-400/20 flex items-center justify-center flex-shrink-0'>
               <Calendar className='text-white' size={24} />
             </div>
             <div className='flex-1'>
