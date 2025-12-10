@@ -103,9 +103,6 @@ export default function Feedback() {
   const repliedCount = feedbackMessages.filter((item) => item.status === 'replied').length
   const allMessagesCount = feedbackMessages.length
 
-  const handleSearchChange = (event: ChangeEvent<HTMLInputElement>) => {
-    setSearch(event.target.value)
-  }
 
   const handleSelect = (message: FeedbackMessage) => {
     setSelectedMessage(message)
@@ -291,7 +288,7 @@ export default function Feedback() {
                     Cancel
                   </Button>
                   <Button
-                    variant=""
+
                     size="sm"
                     className="w-auto"
                     type="button"

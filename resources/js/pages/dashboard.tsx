@@ -41,6 +41,13 @@ export default function Dashboard() {
           </Button>
 
         </div>
+
+        {/* Illustration */}
+        <img
+          src="/assets/welcome-card.svg"
+          alt="Welcome Illustration"
+          className="absolute opacity-25 -bottom-3 right-0 w-xl max-w-[35%] object-contain pointer-events-none select-none"
+        />
       </Card>
 
 

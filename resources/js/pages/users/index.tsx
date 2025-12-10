@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Badge } from '@/components/ui/badge'
 import SearchInput from '@/components/search-input'
+import { Card } from '@/components/ui/card';
 
 export default function Users() {
 
@@ -69,7 +70,7 @@ export default function Users() {
                 </div>
 
                 {/* Total Users Card */}
-                <div className="bg-orange-100/60  rounded-lg p-4 w-fit mb-4">
+                <Card className="bg-orange-100/60  rounded-lg p-4 w-3xs mb-4 border-none">
                     <div className="flex items-center gap-10">
                         <div className="flex items-center gap-2">
                             <span className="text-3xl font-bold ">{users.length}</span>
@@ -77,12 +78,10 @@ export default function Users() {
                                 Total
                             </Badge>
                         </div>
-                        <div className="bg-white rounded-md p-2">
-                            <UsersIcon className="size-8 text-orange-500" />
-                        </div>
+
                     </div>
                     <p className="text-sm text-gray-600 mt-2">Registered users</p>
-                </div>
+                </Card>
 
                  <SearchInput placeholder="Search users..." />
                  <Table className='border'>
@@ -91,7 +90,7 @@ export default function Users() {
         <TableRow>
           {columnsHeader.map((column) => (
             <TableHead key={column}>
-              <Button variant="ghost" size="sm" className="flex items-center gap-1">
+              <Button variant="minimal" size="sm" className="flex items-center gap-1">
                 {column}
                 <ArrowUpDown className="h-4 w-4" />
               </Button>
@@ -128,7 +127,7 @@ export default function Users() {
             <TableCell>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm">
+                  <Button variant="minimal" size="sm">
                     <MoreHorizontal className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>

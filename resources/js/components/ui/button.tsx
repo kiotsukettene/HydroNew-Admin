@@ -48,6 +48,8 @@ const innerDivVariants = cva(
         minimal:
           "bg-gradient-to-b from-white to-neutral-50/50 dark:from-neutral-800 dark:to-neutral-700/50 text-sm transition duration-300 ease-in-out group-hover:bg-gradient-to-b group-hover:from-neutral-50/50 group-hover:to-neutral-100/60 dark:group-hover:from-neutral-700 dark:group-hover:to-neutral-700/60 group-active:bg-gradient-to-b group-active:from-neutral-100/60 group-active:to-neutral-100/90 dark:group-active:from-neutral-800 dark:group-active:to-neutral-700",
         icon: "bg-gradient-to-b from-white to-neutral-50/50 dark:from-neutral-800 dark:to-neutral-700/50 group-active:bg-neutral-200 dark:group-active:bg-neutral-800 rounded-full",
+        ghost:
+          "bg-transparent text-sm transition duration-300 ease-in-out group-hover:bg-gradient-to-b group-hover:from-neutral-50/50 group-hover:to-neutral-100/60 dark:group-hover:from-neutral-700 dark:group-hover:to-neutral-700/60 group-active:bg-gradient-to-b group-active:from-neutral-100/60 group-active:to-neutral-100/90 dark:group-active:from-neutral-800 dark:group-active:to-neutral-700",
       },
       size: {
         sm: "text-xs rounded-[4px] px-4 py-1",
@@ -72,6 +74,7 @@ export interface ButtonProps
     | "destructive"
     | "minimal"
     | "icon"
+    | "ghost"
   size?: "default" | "sm" | "lg" | "icon"
   asChild?: boolean
 }
