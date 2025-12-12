@@ -30,7 +30,8 @@ export default function ArchiveUser() {
 
     const archivedUsers = [
   {
-    name: "Michael Brown",
+    first_name: "Michael",
+    last_name: "Brown",
     email: "michael.brown@example.com",
     contactNumber: "555-987-6543",
     address: "321 Pine St, Hamletville",
@@ -40,7 +41,8 @@ export default function ArchiveUser() {
     verified: true,
   },
   {
-    name: "Sarah Williams",
+    first_name: "Sarah",
+    last_name: "Williams",
     email: "sarah.williams@example.com",
     contactNumber: "555-246-8135",
     address: "654 Maple Ave, Countryside",
@@ -81,7 +83,7 @@ export default function ArchiveUser() {
       <TableBody>
         {archivedUsers.map((user) => (
           <TableRow key={user.email}>
-            <TableCell className="font-medium">{user.name}</TableCell>
+            <TableCell className="font-medium">{user.first_name} {user.last_name}</TableCell>
             <TableCell>{user.email}</TableCell>
             <TableCell>{user.contactNumber}</TableCell>
             <TableCell className="">{user.address}</TableCell>

@@ -1,8 +1,28 @@
-import AppLayout from '@/layouts/app-layout'
-
-import { BreadcrumbItem } from '@/types';
-import { Head, router } from '@inertiajs/react'
-import React from 'react'
+import AppLayout from '@/layouts/app-layout';
+import PaginationComp from '@/components/pagination';
+import SearchInput from '@/components/search-input';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Pagination } from '@/types/pagination';
+import { User } from '@/types/user';
+import { Head, router, useForm, usePage } from '@inertiajs/react';
+import {
+    Archive,
+    ArrowUpDown,
+    Check,
+    MoreHorizontal,
+    Pencil,
+    Users as UsersIcon,
+    X,
+} from 'lucide-react';
+import { useEffect, useRef } from 'react';
+import { useDebounce } from 'use-debounce';
 import {
   Table,
   TableBody,
@@ -13,17 +33,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { ArrowUpDown, MoreHorizontal, Pencil, Archive, Check, X, Users as UsersIcon } from 'lucide-react'
-import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Badge } from '@/components/ui/badge'
-import SearchInput from '@/components/search-input'
 import { Card } from '@/components/ui/card';
 import {
   Dialog,
@@ -35,174 +45,177 @@ import {
 } from '@/components/ui/dialog'
 
 export default function Users() {
+    const columnsHeader = ['Name', 'Email', 'Address', 'Status', 'Verified'];
 
-    const users = [
-  {
-    name: "John Doe",
-    email: "john.doe@example.com",
-    contactNumber: "123-456-7890",
-    address: "123 Main St, Cityville",
-    accountCreated: "2022-01-15",
-    status: "active",
-    verified: true,
-  },
-  {
-    name: "Jane Smith",
-    email: "jane.smith@example.com",
-    contactNumber: "987-654-3210",
-    address: "456 Elm St, Townsville",
-    accountCreated: "2023-03-22",
-    status: "inactive",
-    verified: false,
-  },
-{    name: "Alice Johnson",
-    email: "alice.johnson@example.com",
-    contactNumber: "555-123-4567",
-    address: "789 Oak St, Villageville",
-    accountCreated: "2024-05-10",
-    status: "active",
-    verified: true,
-  },
-];
+    const { users, filters, userCount } = usePage<{
+        users: Pagination<User>;
+        filters: { search: string };
+        userCount: number;
+    }>().props;
 
-  const [editingUser, setEditingUser] = React.useState<(typeof users)[number] | null>(null)
-  const [isEditOpen, setIsEditOpen] = React.useState(false)
+    const { data, setData, get } = useForm({
+        search: filters.search || '',
+    });
+    const [debounceSearch] = useDebounce(data.search, 500);
+    const hasMounted = useRef(false);
 
-  const handleEdit = (user: (typeof users)[number]) => {
-    setEditingUser(user)
-    setIsEditOpen(true)
-  }
+    useEffect(() => {
+        if (!hasMounted.current) {
+            hasMounted.current = true;
+            return;
+        }
 
-
-  return (
-     <AppLayout title="">
+        if (debounceSearch !== undefined) {
+            router.get(
+                '/users',
+                { search: debounceSearch },
+                {
+                    preserveState: true,
+                    preserveScroll: true,
+                    replace: true,
+                },
+            );
+        }
+    }, [debounceSearch]);
+    return (
+        <AppLayout title="">
             <Head title="Users" />
             <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
-
-                <div className='mb-6'>
-        <h1 className="text-2xl font-bold">Registered Users</h1>
-        <p className="text-muted-foreground">Manage your application's users</p>
+                <div className="mb-6">
+                    <h1 className="text-2xl font-bold">Registered Users</h1>
+                    <p className="text-muted-foreground">
+                        Manage your application's users
+                    </p>
                 </div>
 
                 {/* Total Users Card */}
-                <Card className="bg-orange-100/60  rounded-lg p-4 w-3xs mb-4 border-none">
+                <div className="mb-4 w-fit rounded-lg bg-orange-100/60 p-4">
                     <div className="flex items-center gap-10">
                         <div className="flex items-center gap-2">
-                            <span className="text-3xl font-bold ">{users.length}</span>
-                            <Badge className=" text-xs px-2 py-0.5">
+                            <span className="text-3xl font-bold">
+                                {userCount}
+                            </span>
+                            <Badge className="bg-green-600 px-2 py-0.5 text-xs text-white hover:bg-green-700">
                                 Total
                             </Badge>
                         </div>
-
+                        <div className="rounded-md bg-white p-2">
+                            <UsersIcon className="size-8 text-orange-500" />
+                        </div>
                     </div>
-                    <p className="text-sm text-gray-600 mt-2">Registered users</p>
-                </Card>
+                    <p className="mt-2 text-sm text-gray-600">
+                        Registered users
+                    </p>
+                </div>
 
-                 <SearchInput placeholder="Search users..." />
-                 <Table className='border'>
+                <SearchInput
+                    value={data.search}
+                    onChange={(value) => setData('search', value)}
+                    placeholder="Search users..."
+                />
+                <Table className="border">
+                    <TableHeader>
+                        <TableRow>
+                            {columnsHeader.map((column) => (
+                                <TableHead key={column}>
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="flex items-center gap-1"
+                                    >
+                                        {column}
+                                        <ArrowUpDown className="h-4 w-4" />
+                                    </Button>
+                                </TableHead>
+                            ))}
+                            <TableHead></TableHead>
+                        </TableRow>
+                    </TableHeader>
 
-      <TableHeader>
-        <TableRow>
-          <TableHead>
-            <div className="flex items-center gap-1">
-              <Label className="text-sm font-medium">Name</Label>
-              <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Sort Name">
-                <ArrowUpDown className="h-4 w-4" />
-              </Button>
-            </div>
-          </TableHead>
-          <TableHead>
-            <div className="flex items-center gap-1">
-              <Label className="text-sm font-medium">Email</Label>
-              <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Sort Email">
-                <ArrowUpDown className="h-4 w-4" />
-              </Button>
-            </div>
-          </TableHead>
-          <TableHead>
-            <div className="flex items-center gap-1">
-              <Label className="text-sm font-medium">Contact Number</Label>
-              <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Sort Contact Number">
-                <ArrowUpDown className="h-4 w-4" />
-              </Button>
-            </div>
-          </TableHead>
-          <TableHead>
-            <div className="flex items-center gap-1">
-              <Label className="text-sm font-medium">Address</Label>
-              <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Sort Address">
-                <ArrowUpDown className="h-4 w-4" />
-              </Button>
-            </div>
-          </TableHead>
-          <TableHead>
-            <div className="flex items-center gap-1">
-              <Label className="text-sm font-medium">Status</Label>
-              <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Sort Status">
-                <ArrowUpDown className="h-4 w-4" />
-              </Button>
-            </div>
-          </TableHead>
-          <TableHead>
-            <div className="flex items-center gap-1">
-              <Label className="text-sm font-medium">Verified</Label>
-              <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Sort Verified">
-                <ArrowUpDown className="h-4 w-4" />
-              </Button>
-            </div>
-          </TableHead>
-          <TableHead></TableHead>
-        </TableRow>
-      </TableHeader>
-
-      <TableBody>
-        {users.map((user) => (
-          <TableRow key={user.email}>
-            <TableCell className="font-medium">{user.name}</TableCell>
-            <TableCell>{user.email}</TableCell>
-            <TableCell>{user.contactNumber}</TableCell>
-            <TableCell className="">{user.address}</TableCell>
-            <TableCell>
-              <Badge
-                className={user.status === 'active'
-                  ? 'bg-amber-100 border-amber-300 text-amber-500 '
-                  : 'bg-gray-100 border-gray-300 text-gray-500 '
-                }
-              >
-                {user.status.charAt(0).toUpperCase() + user.status.slice(1)}
-              </Badge>
-            </TableCell>
-            <TableCell>
-              {user.verified ? (
-                <Check className="h-5 w-5 text-green-600" />
-              ) : (
-                <X className="h-5 w-5 text-red-500" />
-              )}
-            </TableCell>
-            <TableCell>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm">
-                    <MoreHorizontal className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => handleEdit(user)}>
-                    <Pencil className="mr-2 h-4 w-4" />
-                    Edit
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => router.visit('/users/archived')}>
-                    <Archive className="mr-2 h-4 w-4" />
-                    Archive
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </TableCell>
-          </TableRow>
-        ))}
-      </TableBody>
-
-    </Table>
+                    <TableBody>
+                        {users.data.length === 0 ? (
+                            <TableRow>
+                                <TableCell
+                                    colSpan={columnsHeader.length + 1}
+                                    className="h-24 text-center text-gray-500"
+                                >
+                                    No registered users found.
+                                </TableCell>
+                            </TableRow>
+                        ) : (
+                            users.data.map((user) => (
+                                <TableRow key={user.email}>
+                                    <TableCell className="font-medium">
+                                        {user.first_name} {user.last_name}
+                                    </TableCell>
+                                    <TableCell>{user.email}</TableCell>
+                                    <TableCell className="font-medium">
+                                        {user.address}
+                                    </TableCell>
+                                    <TableCell>
+                                        <Badge
+                                            className={
+                                                user.status === 'active'
+                                                    ? 'border-amber-300 bg-amber-100 text-amber-500'
+                                                    : 'border-gray-300 bg-gray-100 text-gray-500'
+                                            }
+                                        >
+                                            {user.status
+                                                .charAt(0)
+                                                .toUpperCase() +
+                                                user.status.slice(1)}
+                                        </Badge>
+                                    </TableCell>
+                                    <TableCell>
+                                        {user.email_verified_at ? (
+                                            <Check className="h-5 w-5 text-green-600" />
+                                        ) : (
+                                            <X className="h-5 w-5 text-red-500" />
+                                        )}
+                                    </TableCell>
+                                    <TableCell>
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                >
+                                                    <MoreHorizontal className="h-4 w-4" />
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="end">
+                                                <DropdownMenuItem>
+                                                    <Pencil className="mr-2 h-4 w-4" />
+                                                    Edit
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem
+                                                    onClick={() =>
+                                                        router.visit(
+                                                            '/users/archived',
+                                                        )
+                                                    }
+                                                >
+                                                    <Archive className="mr-2 h-4 w-4" />
+                                                    Archive
+                                                </DropdownMenuItem>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
+                                    </TableCell>
+                                </TableRow>
+                            ))
+                        )}
+                    </TableBody>
+                </Table>
+                {/* Pagination */}
+                {users.data.length > 0 && (
+                    <div className="flex w-full items-center justify-between gap-2 bg-card px-2 pt-4">
+                        <div className="text-sm text-muted-foreground">
+                            Showing {users.from || 0} to {users.to || 0} of{' '}
+                            {users.total} results
+                        </div>
+                        <PaginationComp links={users.links} />
+                    </div>
+                )}
 
     {/* Edit User Modal */}
     <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
@@ -259,6 +272,5 @@ export default function Users() {
 
             </div>
         </AppLayout>
-  )
+    );
 }
-

@@ -25,6 +25,7 @@ return new class extends Migration
             $table->string('verification_code')->nullable();
             $table->timestamp('verification_expires_at')->nullable();
             $table->timestamp('last_otp_sent_at')->nullable();
+            $table->enum('roles', ['admin', 'user'])->default('user');
             $table->rememberToken();
             $table->timestamps();
         });
