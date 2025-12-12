@@ -1,5 +1,4 @@
 import AppLayout from '@/layouts/app-layout';
-
 import PaginationComp from '@/components/pagination';
 import SearchInput from '@/components/search-input';
 import { Badge } from '@/components/ui/badge';
@@ -10,14 +9,6 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from '@/components/ui/table';
 import { Pagination } from '@/types/pagination';
 import { User } from '@/types/user';
 import { Head, router, useForm, usePage } from '@inertiajs/react';
@@ -32,6 +23,26 @@ import {
 } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 import { useDebounce } from 'use-debounce';
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableFooter,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import { Label } from '@/components/ui/label'
+import { Card } from '@/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 
 export default function Users() {
     const columnsHeader = ['Name', 'Email', 'Address', 'Status', 'Verified'];
@@ -205,6 +216,60 @@ export default function Users() {
                         <PaginationComp links={users.links} />
                     </div>
                 )}
+
+    {/* Edit User Modal */}
+    <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Edit User</DialogTitle>
+          <DialogDescription>
+            Update user details here.
+          </DialogDescription>
+        </DialogHeader>
+
+        {editingUser && (
+          <div className="space-y-3">
+            <div className="grid gap-1">
+              <Label className="text-sm font-medium">Name</Label>
+              <input
+                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+                defaultValue={editingUser.name}
+              />
+            </div>
+            <div className="grid gap-1">
+              <Label className="text-sm font-medium">Email</Label>
+              <input
+                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+                defaultValue={editingUser.email}
+              />
+            </div>
+            <div className="grid gap-1">
+              <Label className="text-sm font-medium">Contact Number</Label>
+              <input
+                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+                defaultValue={editingUser.contactNumber}
+              />
+            </div>
+            <div className="grid gap-1">
+              <Label className="text-sm font-medium">Address</Label>
+              <textarea
+                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+                defaultValue={editingUser.address}
+                rows={2}
+              />
+            </div>
+          </div>
+        )}
+
+        <DialogFooter>
+          <Button variant="secondary" onClick={() => setIsEditOpen(false)}>
+            Cancel
+          </Button>
+          <Button onClick={() => setIsEditOpen(false)}>Save changes</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+
             </div>
         </AppLayout>
     );

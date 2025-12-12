@@ -18,7 +18,11 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table'
-import { ArrowUpDown, MoreHorizontal, Pencil, Archive } from 'lucide-react'
+import { ArrowUpDown, MoreHorizontal, Pencil, Archive, Airplay } from 'lucide-react'
+import { Label } from '@/components/ui/label'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Card } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
 
 // Mock devices data
 const devices = [
@@ -75,6 +79,7 @@ const devices = [
 export default function Devices() {
   const [selectedDevices, setSelectedDevices] = React.useState<string[]>([])
 
+
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
       setSelectedDevices(devices.map((device) => device.deviceId))
@@ -102,7 +107,47 @@ export default function Devices() {
           </p>
         </div>
 
-        <SearchInput placeholder="Search devices by serial number, name, or user..." />
+          {/* Total Users Card */}
+                <Card className="bg-orange-100/60  rounded-lg p-4 w-3xs mb-4 border-none">
+                    <div className="flex items-center gap-10">
+                        <div className="flex items-center gap-2">
+                            <span className="text-3xl font-bold ">5</span>
+                            <Badge className=" text-xs px-2 py-0.5">
+                                Total
+                            </Badge>
+                        </div>
+
+                    </div>
+                    <p className="text-sm text-gray-600 mt-2">Registered users</p>
+                </Card>
+
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <SearchInput placeholder="Search by date or status..." />
+          <Select >
+          <SelectTrigger
+            className="hidden h-8 w-[150px] border-2 rounded-lg text-xs sm:ml-auto sm:flex"
+            aria-label="Select a value"
+          >
+            <SelectValue placeholder="Select Here" />
+          </SelectTrigger>
+          <SelectContent className="rounded-xl">
+            <SelectItem value="90d" className="rounded-lg text-xs">
+              Oldest to Newest
+            </SelectItem>
+            <SelectItem value="15d" className="rounded-lg text-xs">
+              Newest to Oldest
+            </SelectItem>
+
+
+            <SelectItem value="7d" className="rounded-lg text-xs">
+              Connected
+            </SelectItem>
+             <SelectItem value="7d" className="rounded-lg text-xs">
+              Not Connected
+            </SelectItem>
+          </SelectContent>
+        </Select>
+        </div>
 
         <Table className="border">
           <TableHeader>
@@ -110,61 +155,51 @@ export default function Devices() {
               <TableHead className="w-12">
                 <Checkbox
                   className="border-gray-300"
-                  checked={selectedDevices.length === devices.length}
+                  checked={selectedDevices.length === devices.length && devices.length > 0}
                   onCheckedChange={handleSelectAll}
                   aria-label="Select all"
                 />
               </TableHead>
               <TableHead className=''>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="flex items-center gap-1"
-                >
-                  Device ID
-                  <ArrowUpDown className="h-4 w-4" />
-                </Button>
+                <div className="flex items-center gap-1">
+                  <Label className="text-sm font-medium">Device ID</Label>
+                  <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Sort Device ID">
+                    <ArrowUpDown className="h-4 w-4" />
+                  </Button>
+                </div>
               </TableHead>
               <TableHead className="text-center">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="flex items-center gap-1 mx-auto"
-                >
-                  Connected Users
-                  <ArrowUpDown className="h-4 w-4" />
-                </Button>
+                <div className="flex items-center justify-center gap-1">
+                  <Label className="text-sm font-medium">Connected Users</Label>
+                  <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Sort Connected Users">
+                    <ArrowUpDown className="h-4 w-4" />
+                  </Button>
+                </div>
               </TableHead>
 
               <TableHead>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="flex items-center gap-1"
-                >
-                  Serial Number
-                  <ArrowUpDown className="h-4 w-4" />
-                </Button>
+                <div className="flex items-center gap-1">
+                  <Label className="text-sm font-medium">Serial Number</Label>
+                  <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Sort Serial Number">
+                    <ArrowUpDown className="h-4 w-4" />
+                  </Button>
+                </div>
               </TableHead>
               <TableHead>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="flex items-center gap-1"
-                >
-                  Status
-                  <ArrowUpDown className="h-4 w-4" />
-                </Button>
+                <div className="flex items-center gap-1">
+                  <Label className="text-sm font-medium">Status</Label>
+                  <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Sort Status">
+                    <ArrowUpDown className="h-4 w-4" />
+                  </Button>
+                </div>
               </TableHead>
               <TableHead>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="flex items-center gap-1"
-                >
-                  Date Registered
-                  <ArrowUpDown className="h-4 w-4" />
-                </Button>
+                <div className="flex items-center gap-1">
+                  <Label className="text-sm font-medium">Date Registered</Label>
+                  <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Sort Date Registered">
+                    <ArrowUpDown className="h-4 w-4" />
+                  </Button>
+                </div>
               </TableHead>
               <TableHead></TableHead>
             </TableRow>
@@ -242,6 +277,7 @@ export default function Devices() {
             ))}
           </TableBody>
         </Table>
+
       </div>
     </AppLayout>
   )

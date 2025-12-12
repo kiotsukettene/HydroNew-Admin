@@ -41,6 +41,13 @@ export default function Dashboard() {
           </Button>
 
         </div>
+
+        {/* Illustration */}
+        <img
+          src="/assets/welcome-card.svg"
+          alt="Welcome Illustration"
+          className="absolute opacity-25 -bottom-3 right-0 w-xl max-w-[35%] object-contain pointer-events-none select-none"
+        />
       </Card>
 
 
@@ -92,48 +99,48 @@ export default function Dashboard() {
 
       {/* Overlay Content */}
       <div className='absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-[#2C5F5D] via-[#2C5F5D]/95 to-transparent'>
-        <CardTitle className='text-xl text-white font-semibold mb-1'>Harvest schedule</CardTitle>
+        <CardTitle className='text-xl text-white font-semibold mb-1'>Harvest Status</CardTitle>
         <CardDescription className='text-white/70 text-xs mb-4'>
-          Ask a question of the support question, Manage request, report an issue.
+         Monitor progress and estimated timeline for a successful harvest.
         </CardDescription>
 
         {/* Harvest Items */}
         <div className='flex flex-col gap-3'>
           {/* Water Tank Level */}
           <div className='flex items-center gap-3 bg-white/10 backdrop-blur-sm rounded-lg p-3 hover:bg-white/15 transition-colors'>
-            <div className='w-12 h-12 rounded-lg bg-blue-500/20 flex items-center justify-center flex-shrink-0'>
+            <div className='w-12 h-12 rounded-lg bg-green-400/20 flex items-center justify-center flex-shrink-0'>
               <Droplet className='text-white' size={24} fill="currentColor" />
             </div>
             <div className='flex-1'>
               <div className='text-white font-medium text-sm'>Water Tank Level</div>
               <div className='text-white/70 text-xs mt-1'>
-                Shows current water level at 85%
+                Water level at 85%
               </div>
             </div>
           </div>
 
           {/* Current Growth Stage */}
           <div className='flex items-center gap-3 bg-white/10 backdrop-blur-sm rounded-lg p-3 hover:bg-white/15 transition-colors'>
-            <div className='w-12 h-12 rounded-lg bg-orange-500/20 flex items-center justify-center flex-shrink-0'>
+            <div className='w-12 h-12 rounded-lg bg-green-400/20 flex items-center justify-center flex-shrink-0'>
               <Sprout className='text-white' size={24} />
             </div>
             <div className='flex-1'>
               <div className='text-white font-medium text-sm'>Current Growth Stage</div>
               <div className='text-white/70 text-xs mt-1'>
-                Displays "Vegetative" stage
+                Vegetative stage
               </div>
             </div>
           </div>
 
           {/* Estimated Harvest Date */}
           <div className='flex items-center gap-3 bg-white/10 backdrop-blur-sm rounded-lg p-3 hover:bg-white/15 transition-colors'>
-            <div className='w-12 h-12 rounded-lg bg-green-500/20 flex items-center justify-center flex-shrink-0'>
+            <div className='w-12 h-12 rounded-lg bg-green-400/20 flex items-center justify-center flex-shrink-0'>
               <Calendar className='text-white' size={24} />
             </div>
             <div className='flex-1'>
               <div className='text-white font-medium text-sm'>Estimated Harvest Date</div>
               <div className='text-white/70 text-xs mt-1'>
-                Next harvest: Feb 12, 2025 • 14 days remaining
+                Feb 12, 2025 • 14 days remaining
               </div>
             </div>
           </div>
