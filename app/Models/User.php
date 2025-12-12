@@ -7,6 +7,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\{Collection, Model};
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Carbon\Carbon;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 
@@ -38,6 +39,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
  */
 class User extends Authenticatable
 {
+	use HasFactory;
 	protected $table = 'users';
 
 	protected $casts = [
@@ -45,7 +47,8 @@ class User extends Authenticatable
 		'first_time_login' => 'bool',
 		'last_login_at' => 'datetime',
 		'verification_expires_at' => 'datetime',
-		'last_otp_sent_at' => 'datetime'
+		'last_otp_sent_at' => 'datetime',
+		'is_archived' => 'bool'
 	];
 
 	protected $hidden = [
@@ -66,7 +69,8 @@ class User extends Authenticatable
 		'verification_code',
 		'verification_expires_at',
 		'last_otp_sent_at',
-		'remember_token'
+		'remember_token',
+		'is_archived'
 	];
 
 	protected $appends = [

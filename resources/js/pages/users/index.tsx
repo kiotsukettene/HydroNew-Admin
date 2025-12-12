@@ -21,7 +21,7 @@ import {
     Users as UsersIcon,
     X,
 } from 'lucide-react';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useDebounce } from 'use-debounce';
 import {
   Table,
@@ -58,6 +58,42 @@ export default function Users() {
     });
     const [debounceSearch] = useDebounce(data.search, 500);
     const hasMounted = useRef(false);
+
+    // Edit modal state
+    const [isEditOpen, setIsEditOpen] = useState(false);
+    const [editingUser, setEditingUser] = useState<User | null>(null);
+
+    // Edit form
+    const { data: editData, setData: setEditData, put, processing, reset } = useForm({
+        first_name: '',
+        last_name: '',
+        email: '',
+        address: '',
+    });
+
+    const handleEditClick = (user: User) => {
+        setEditingUser(user);
+        setEditData({
+            first_name: user.first_name,
+            last_name: user.last_name,
+            email: user.email,
+            address: user.address || '',
+        });
+        setIsEditOpen(true);
+    };
+
+    const handleSaveEdit = () => {
+        if (editingUser) {
+            put(`/users/${editingUser.id}`, {
+                preserveScroll: true,
+                onSuccess: () => {
+                    setIsEditOpen(false);
+                    reset();
+                    setEditingUser(null);
+                },
+            });
+        }
+    };
 
     useEffect(() => {
         if (!hasMounted.current) {
@@ -108,11 +144,20 @@ export default function Users() {
                     </p>
                 </div>
 
-                <SearchInput
-                    value={data.search}
-                    onChange={(value) => setData('search', value)}
-                    placeholder="Search users..."
-                />
+                <div className="flex gap-3 items-center">
+                    <SearchInput
+                        value={data.search}
+                        onChange={(value) => setData('search', value)}
+                        placeholder="Search users..."
+                    />
+                    <Button 
+                        variant="secondary"
+                        onClick={() => router.visit('/users/archived')}
+                    >
+                        <Archive className="mr-2 h-4 w-4" />
+                        View Archived
+                    </Button>
+                </div>
                 <Table className="border">
                     <TableHeader>
                         <TableRow>
@@ -184,16 +229,16 @@ export default function Users() {
                                                 </Button>
                                             </DropdownMenuTrigger>
                                             <DropdownMenuContent align="end">
-                                                <DropdownMenuItem>
+                                                <DropdownMenuItem
+                                                    onClick={() => handleEditClick(user)}
+                                                >
                                                     <Pencil className="mr-2 h-4 w-4" />
                                                     Edit
                                                 </DropdownMenuItem>
                                                 <DropdownMenuItem
-                                                    onClick={() =>
-                                                        router.visit(
-                                                            '/users/archived',
-                                                        )
-                                                    }
+                                                    onClick={() => router.patch(`/users/${user.id}/archive`, {}, {
+                                                        preserveScroll: true,
+                                                    })}
                                                 >
                                                     <Archive className="mr-2 h-4 w-4" />
                                                     Archive
@@ -230,31 +275,36 @@ export default function Users() {
         {editingUser && (
           <div className="space-y-3">
             <div className="grid gap-1">
-              <Label className="text-sm font-medium">Name</Label>
+              <Label className="text-sm font-medium">First Name</Label>
               <input
                 className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-                defaultValue={editingUser.name}
+                value={editData.first_name}
+                onChange={(e) => setEditData('first_name', e.target.value)}
+              />
+            </div>
+            <div className="grid gap-1">
+              <Label className="text-sm font-medium">Last Name</Label>
+              <input
+                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+                value={editData.last_name}
+                onChange={(e) => setEditData('last_name', e.target.value)}
               />
             </div>
             <div className="grid gap-1">
               <Label className="text-sm font-medium">Email</Label>
               <input
+                type="email"
                 className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-                defaultValue={editingUser.email}
-              />
-            </div>
-            <div className="grid gap-1">
-              <Label className="text-sm font-medium">Contact Number</Label>
-              <input
-                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-                defaultValue={editingUser.contactNumber}
+                value={editData.email}
+                onChange={(e) => setEditData('email', e.target.value)}
               />
             </div>
             <div className="grid gap-1">
               <Label className="text-sm font-medium">Address</Label>
               <textarea
                 className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-                defaultValue={editingUser.address}
+                value={editData.address}
+                onChange={(e) => setEditData('address', e.target.value)}
                 rows={2}
               />
             </div>
@@ -262,14 +312,26 @@ export default function Users() {
         )}
 
         <DialogFooter>
-          <Button variant="secondary" onClick={() => setIsEditOpen(false)}>
+          <Button 
+            variant="secondary" 
+            onClick={() => {
+              setIsEditOpen(false);
+              reset();
+              setEditingUser(null);
+            }}
+            disabled={processing}
+          >
             Cancel
           </Button>
-          <Button onClick={() => setIsEditOpen(false)}>Save changes</Button>
+          <Button 
+            onClick={handleSaveEdit}
+            disabled={processing}
+          >
+            {processing ? 'Saving...' : 'Save changes'}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
-
             </div>
         </AppLayout>
     );

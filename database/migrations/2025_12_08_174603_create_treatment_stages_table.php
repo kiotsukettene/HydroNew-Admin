@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('treatment_stages', function (Blueprint $table) {
             $table->bigInteger('id', true);
-            $table->bigInteger('treatment_id')->index('treatment_id');
+            $table->bigInteger('treatment_id');
             $table->enum('stage_name', ['MFC', 'Natural Filter', 'UV Filter', 'Clean Water Tank'])->default('MFC');
             $table->integer('stage_order');
             $table->enum('status', ['pending', 'processing', 'passed', 'failed'])->nullable()->default('pending');

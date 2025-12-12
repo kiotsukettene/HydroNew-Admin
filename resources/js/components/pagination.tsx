@@ -62,6 +62,8 @@ export default function PaginationComp({
           <Link
             key={index}
             href={link.url ?? "#"}
+            preserveState={true}
+            preserveScroll={true}
             className={`px-3 py-2 text-sm font-medium rounded-md border transition-colors
               ${link.active
                 ? "bg-primary text-primary-foreground border-primary shadow-sm"

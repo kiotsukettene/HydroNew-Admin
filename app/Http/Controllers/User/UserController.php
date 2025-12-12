@@ -17,9 +17,10 @@ class UserController extends Controller
         $filters = $request->only(['search']);
 
         $users = User::where('roles', '=', 'user')
+                    ->where('is_archived', false)
                     ->filter($filters)
                     ->paginate(10);
-        $userCount = User::where('roles', '=', 'user')->count();
+        $userCount = User::where('roles', '=', 'user')->where('is_archived', false)->count();
         return Inertia::render('users/index',[
             'users' => $users,
             'userCount' => $userCount,
@@ -30,9 +31,50 @@ class UserController extends Controller
     /**
      * Display archived (Users)
      */
-    public function archived()
+    public function archived(Request $request)
     {
-        return Inertia::render('users/archive-user');
+        $filters = $request->only(['search']);
+
+        $users = User::where('roles', '=', 'user')
+                    ->where('is_archived', true)
+                    ->when($filters['search'] ?? null, function ($query, $search) {
+                        $query->where(function ($q) use ($search) {
+                            $q->where('first_name', 'like', '%' . $search . '%')
+                              ->orWhere('last_name', 'like', '%' . $search . '%')
+                              ->orWhere('email', 'like', '%' . $search . '%');
+                        });
+                    })
+                    ->paginate(10);
+
+        $archivedCount = User::where('roles', '=', 'user')->where('is_archived', true)->count();
+
+        return Inertia::render('users/archive-user', [
+            'users' => $users,
+            'archivedCount' => $archivedCount,
+            'filters' => $filters,
+        ]);
+    }
+
+    /**
+     * Archive a user
+     */
+    public function archive(string $id)
+    {
+        $user = User::findOrFail($id);
+        $user->update(['is_archived' => true]);
+
+        return redirect()->back()->with('success', 'User archived successfully.');
+    }
+
+    /**
+     * Unarchive a user
+     */
+    public function unarchive(string $id)
+    {
+        $user = User::findOrFail($id);
+        $user->update(['is_archived' => false]);
+
+        return redirect()->back()->with('success', 'User unarchived successfully.');
     }
 
     /**
@@ -72,7 +114,17 @@ class UserController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        //
+        $validated = $request->validate([
+            'first_name' => 'required|string|max:255',
+            'last_name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email,' . $id,
+            'address' => 'nullable|string|max:500',
+        ]);
+
+        $user = User::findOrFail($id);
+        $user->update($validated);
+
+        return redirect()->back()->with('success', 'User updated successfully.');
     }
 
     /**

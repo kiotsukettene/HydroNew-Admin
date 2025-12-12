@@ -12,6 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('notifications', function (Blueprint $table) {
+            $table->index('user_id');
+            $table->index('device_id');
             $table->foreign(['user_id'], 'notifications_ibfk_1')->references(['id'])->on('users')->onUpdate('restrict')->onDelete('cascade');
             $table->foreign(['device_id'], 'notifications_ibfk_2')->references(['id'])->on('devices')->onUpdate('restrict')->onDelete('cascade');
         });

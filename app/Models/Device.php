@@ -9,6 +9,7 @@ namespace App\Models;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 /**
  * Class Device
@@ -30,17 +31,20 @@ use Illuminate\Database\Eloquent\Model;
  */
 class Device extends Model
 {
+	use HasFactory;
 	protected $table = 'devices';
 
 	protected $casts = [
-		'user_id' => 'int'
+		'user_id' => 'int',
+		'is_archived' => 'bool'
 	];
 
 	protected $fillable = [
 		'user_id',
 		'name',
 		'serial_number',
-		'status'
+		'status',
+		'is_archived'
 	];
 
 	public function user()
