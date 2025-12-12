@@ -18,7 +18,7 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table'
-import { ArrowUpDown, MoreHorizontal, Pencil, Archive, Airplay } from 'lucide-react'
+import { ArrowUpDown, ArrowUp, ArrowDown, MoreHorizontal, Pencil, Archive, Airplay, Filter, Loader2 } from 'lucide-react'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Card } from '@/components/ui/card'
@@ -36,20 +36,26 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 
+type SortField = 'name' | 'serial_number' | 'status' | 'created_at';
+type SortDirection = 'asc' | 'desc';
+
 export default function Devices() {
   const { devices, filters, deviceCount } = usePage<{
     devices: Pagination<Device>;
-    filters: { search: string; status?: string };
+    filters: { search: string; status?: string; sort?: string; direction?: string };
     deviceCount: number;
   }>().props;
 
   const [selectedDevices, setSelectedDevices] = useState<number[]>([])
   const [isEditOpen, setIsEditOpen] = useState(false)
   const [editingDevice, setEditingDevice] = useState<Device | null>(null)
+  const [isSearching, setIsSearching] = useState(false)
 
   const { data, setData } = useForm({
     search: filters.search || '',
     status: filters.status || 'all',
+    sort: (filters.sort as SortField) || 'created_at',
+    direction: (filters.direction as SortDirection) || 'desc',
   })
 
   const [debounceSearch] = useDebounce(data.search, 500)
@@ -85,6 +91,35 @@ export default function Devices() {
     }
   }
 
+  const handleSort = (field: SortField) => {
+    const newDirection = data.sort === field && data.direction === 'asc' ? 'desc' : 'asc';
+    
+    router.get(
+      '/devices',
+      { 
+        search: data.search, 
+        status: data.status,
+        sort: field, 
+        direction: newDirection
+      },
+      {
+        preserveState: true,
+        preserveScroll: true,
+        replace: true,
+        onSuccess: () => {
+          setData({ ...data, sort: field, direction: newDirection });
+        }
+      }
+    );
+  };
+
+  const getSortIcon = (field: string) => {
+    if (data.sort !== field) return <ArrowUpDown className="h-4 w-4" />;
+    return data.direction === 'asc' 
+      ? <ArrowUp className="h-4 w-4" /> 
+      : <ArrowDown className="h-4 w-4" />;
+  };
+
   useEffect(() => {
     if (!hasMounted.current) {
       hasMounted.current = true
@@ -92,27 +127,41 @@ export default function Devices() {
     }
 
     if (debounceSearch !== undefined) {
+      setIsSearching(true)
       router.get(
         '/devices',
-        { search: debounceSearch, status: data.status },
+        { 
+          search: debounceSearch, 
+          status: data.status,
+          sort: data.sort,
+          direction: data.direction
+        },
         {
           preserveState: true,
           preserveScroll: true,
           replace: true,
+          onFinish: () => setIsSearching(false),
         }
       )
     }
   }, [debounceSearch])
 
   const handleStatusChange = (status: string) => {
-    setData('status', status)
     router.get(
       '/devices',
-      { search: data.search, status: status },
+      { 
+        search: data.search, 
+        status: status,
+        sort: data.sort,
+        direction: data.direction
+      },
       {
         preserveState: true,
         preserveScroll: true,
         replace: true,
+        onSuccess: () => {
+          setData('status', status);
+        }
       }
     )
   }
@@ -172,6 +221,7 @@ export default function Devices() {
               className="hidden h-8 w-[150px] border-2 rounded-lg text-xs sm:ml-auto sm:flex"
               aria-label="Filter by status"
             >
+              <Filter className="mr-2 h-4 w-4" />
               <SelectValue placeholder="Filter Status" />
             </SelectTrigger>
             <SelectContent className="rounded-xl">
@@ -210,41 +260,62 @@ export default function Devices() {
               <TableHead className=''>
                 <div className="flex items-center gap-1">
                   <Label className="text-sm font-medium">Device Name</Label>
-                  <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Sort Device Name">
-                    <ArrowUpDown className="h-4 w-4" />
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-8 w-8" 
+                    aria-label="Sort Device Name"
+                    onClick={() => handleSort('name')}
+                  >
+                    {getSortIcon('name')}
                   </Button>
                 </div>
               </TableHead>
               <TableHead>
                 <div className="flex items-center gap-1">
                   <Label className="text-sm font-medium">Owner</Label>
-                  <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Sort Owner">
-                    <ArrowUpDown className="h-4 w-4" />
-                  </Button>
                 </div>
               </TableHead>
 
               <TableHead>
                 <div className="flex items-center gap-1">
                   <Label className="text-sm font-medium">Serial Number</Label>
-                  <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Sort Serial Number">
-                    <ArrowUpDown className="h-4 w-4" />
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-8 w-8" 
+                    aria-label="Sort Serial Number"
+                    onClick={() => handleSort('serial_number')}
+                  >
+                    {getSortIcon('serial_number')}
                   </Button>
                 </div>
               </TableHead>
               <TableHead>
                 <div className="flex items-center gap-1">
                   <Label className="text-sm font-medium">Status</Label>
-                  <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Sort Status">
-                    <ArrowUpDown className="h-4 w-4" />
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-8 w-8" 
+                    aria-label="Sort Status"
+                    onClick={() => handleSort('status')}
+                  >
+                    {getSortIcon('status')}
                   </Button>
                 </div>
               </TableHead>
               <TableHead>
                 <div className="flex items-center gap-1">
                   <Label className="text-sm font-medium">Date Registered</Label>
-                  <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Sort Date Registered">
-                    <ArrowUpDown className="h-4 w-4" />
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-8 w-8" 
+                    aria-label="Sort Date Registered"
+                    onClick={() => handleSort('created_at')}
+                  >
+                    {getSortIcon('created_at')}
                   </Button>
                 </div>
               </TableHead>
@@ -253,7 +324,19 @@ export default function Devices() {
           </TableHeader>
 
           <TableBody>
-            {devices.data.length === 0 ? (
+            {isSearching ? (
+              <TableRow>
+                <TableCell
+                  colSpan={7}
+                  className="h-24 text-center"
+                >
+                  <div className="flex items-center justify-center gap-2 text-gray-500">
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                    <span>Loading devices...</span>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ) : devices.data.length === 0 ? (
               <TableRow>
                 <TableCell
                   colSpan={7}

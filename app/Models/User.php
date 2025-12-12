@@ -27,6 +27,9 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
  * @property string|null $verification_code
  * @property Carbon|null $verification_expires_at
  * @property Carbon|null $last_otp_sent_at
+ * @property string $roles
+ * @property string $status
+ * @property bool $is_archived
  * @property string|null $remember_token
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at

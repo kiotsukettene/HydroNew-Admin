@@ -14,28 +14,36 @@ class DeviceController extends Controller
      */
     public function index(Request $request)
     {
-        $filters = $request->only(['search', 'status']);
+        $filters = $request->only(['search', 'status', 'sort', 'direction']);
 
-        $devices = Device::with('user')
-            ->where('is_archived', false)
-            ->when($filters['search'] ?? null, function ($query, $search) {
-                $query->where(function ($q) use ($search) {
-                    $q->where('name', 'like', '%' . $search . '%')
-                      ->orWhere('serial_number', 'like', '%' . $search . '%')
-                      ->orWhereHas('user', function ($userQuery) use ($search) {
-                          $userQuery->where('first_name', 'like', '%' . $search . '%')
-                                    ->orWhere('last_name', 'like', '%' . $search . '%')
-                                    ->orWhere('email', 'like', '%' . $search . '%');
-                      });
-                });
-            })
-            ->when($filters['status'] ?? null, function ($query, $status) {
-                if ($status !== 'all') {
-                    $query->where('status', $status);
-                }
-            })
-            ->orderBy('created_at', 'desc')
-            ->paginate(10);
+        $query = Device::with('user')
+            ->where('is_archived', false);
+
+        // Apply search filter
+        if (!empty($filters['search'])) {
+            $query->where(function ($q) use ($filters) {
+                $q->where('name', 'like', '%' . $filters['search'] . '%')
+                  ->orWhere('serial_number', 'like', '%' . $filters['search'] . '%')
+                  ->orWhereHas('user', function ($userQuery) use ($filters) {
+                      $userQuery->where('first_name', 'like', '%' . $filters['search'] . '%')
+                                ->orWhere('last_name', 'like', '%' . $filters['search'] . '%')
+                                ->orWhere('email', 'like', '%' . $filters['search'] . '%');
+                  });
+            });
+        }
+
+        // Apply status filter
+        if (!empty($filters['status']) && $filters['status'] !== 'all') {
+            $query->where('status', $filters['status']);
+        }
+
+        // Apply sorting
+        $sortField = $filters['sort'] ?? 'created_at';
+        $sortDirection = $filters['direction'] ?? 'desc';
+        
+        $query->orderBy($sortField, $sortDirection);
+
+        $devices = $query->paginate(10);
 
         $deviceCount = Device::where('is_archived', false)->count();
 
