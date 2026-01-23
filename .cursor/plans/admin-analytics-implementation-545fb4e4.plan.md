@@ -46,9 +46,12 @@ Update [`resources/js/pages/analytics/index.tsx`](resources/js/pages/analytics/i
 
 | Growth stage distribution | `hydroponic_setup.growth_stage` |
 
-| Crop Type Distribution | 
+| Crop Type Distribution |
+
 | Most Grown Crop Type |
+
 |Total Harvest This Month|
+
 | Total Harvest This Year|
 
 | Health status distribution | `hydroponic_setup.health_status` |
