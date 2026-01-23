@@ -16,15 +16,15 @@ class DeviceController extends Controller
     {
         $filters = $request->only(['search', 'status', 'sort', 'direction']);
 
-        $query = Device::with('user')
+        $query = Device::with('users')
             ->where('is_archived', false);
 
         // Apply search filter
         if (!empty($filters['search'])) {
             $query->where(function ($q) use ($filters) {
-                $q->where('name', 'like', '%' . $filters['search'] . '%')
+                $q->where('device_name', 'like', '%' . $filters['search'] . '%')
                   ->orWhere('serial_number', 'like', '%' . $filters['search'] . '%')
-                  ->orWhereHas('user', function ($userQuery) use ($filters) {
+                  ->orWhereHas('users', function ($userQuery) use ($filters) {
                       $userQuery->where('first_name', 'like', '%' . $filters['search'] . '%')
                                 ->orWhere('last_name', 'like', '%' . $filters['search'] . '%')
                                 ->orWhere('email', 'like', '%' . $filters['search'] . '%');
@@ -58,13 +58,13 @@ class DeviceController extends Controller
     {
         $filters = $request->only(['search', 'status']);
 
-        $devices = Device::with('user')
+        $devices = Device::with('users')
             ->where('is_archived', true)
             ->when($filters['search'] ?? null, function ($query, $search) {
                 $query->where(function ($q) use ($search) {
-                    $q->where('name', 'like', '%' . $search . '%')
+                    $q->where('device_name', 'like', '%' . $search . '%')
                       ->orWhere('serial_number', 'like', '%' . $search . '%')
-                      ->orWhereHas('user', function ($userQuery) use ($search) {
+                      ->orWhereHas('users', function ($userQuery) use ($search) {
                           $userQuery->where('first_name', 'like', '%' . $search . '%')
                                     ->orWhere('last_name', 'like', '%' . $search . '%')
                                     ->orWhere('email', 'like', '%' . $search . '%');
@@ -149,8 +149,8 @@ class DeviceController extends Controller
     public function update(Request $request, string $id)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'status' => 'nullable|string|in:connected,not connected',
+            'device_name' => 'required|string|max:255',
+            'status' => 'nullable|string|in:online,offline',
         ]);
 
         $device = Device::findOrFail($id);

@@ -11,8 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('devices', function (Blueprint $table) {
-            $table->foreign(['user_id'], 'devices_ibfk_1')->references(['id'])->on('users')->onUpdate('restrict')->onDelete('cascade');
+        Schema::table('users', function (Blueprint $table) {
+            $table->enum('status', ['active', 'inactive'])->default('active');
         });
     }
 
@@ -21,8 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('devices', function (Blueprint $table) {
-            $table->dropForeign('devices_ibfk_1');
+        Schema::table('users', function (Blueprint $table) {
+            //
         });
     }
 };

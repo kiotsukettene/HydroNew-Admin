@@ -11,8 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('users', function (Blueprint $table) {
-            $table->boolean('is_archived')->default(false)->after('roles');
+        Schema::table('sensors', function (Blueprint $table) {
+            $table->foreign(['device_id'], 'sensors_ibfk_1')->references(['id'])->on('devices')->onUpdate('restrict')->onDelete('cascade');
         });
     }
 
@@ -21,8 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('users', function (Blueprint $table) {
-            $table->dropColumn('is_archived');
+        Schema::table('sensors', function (Blueprint $table) {
+            $table->dropForeign('sensors_ibfk_1');
         });
     }
 };

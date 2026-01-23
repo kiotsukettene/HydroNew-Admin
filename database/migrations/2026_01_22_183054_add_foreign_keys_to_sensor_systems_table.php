@@ -11,11 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('sensor_readings', function (Blueprint $table) {
-            $table->bigInteger('id', true);
-            $table->bigInteger('sensor_id');
-            $table->decimal('reading_value', 10);
-            $table->dateTime('reading_time')->nullable()->useCurrent();
+        Schema::table('sensor_systems', function (Blueprint $table) {
+            $table->foreign(['device_id'], 'sensor_systems_ibfk_1')->references(['id'])->on('devices')->onUpdate('restrict')->onDelete('cascade');
         });
     }
 
@@ -24,6 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('sensor_readings');
+        Schema::table('sensor_systems', function (Blueprint $table) {
+            $table->dropForeign('sensor_systems_ibfk_1');
+        });
     }
 };

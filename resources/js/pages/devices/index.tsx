@@ -63,7 +63,7 @@ export default function Devices() {
 
   // Edit form
   const { data: editData, setData: setEditData, put, processing, reset } = useForm({
-    name: '',
+    device_name: '',
     serial_number: '',
     status: '',
   })
@@ -71,7 +71,7 @@ export default function Devices() {
   const handleEditClick = (device: Device) => {
     setEditingDevice(device)
     setEditData({
-      name: device.name,
+      device_name: device.device_name,
       serial_number: device.serial_number,
       status: device.status || '',
     })
@@ -228,11 +228,11 @@ export default function Devices() {
               <SelectItem value="all" className="rounded-lg text-xs">
                 All Devices
               </SelectItem>
-              <SelectItem value="connected" className="rounded-lg text-xs">
-              Connected
+              <SelectItem value="online" className="rounded-lg text-xs">
+              Online
             </SelectItem>
-            <SelectItem value="not connected" className="rounded-lg text-xs">
-              Not Connected
+            <SelectItem value="offline" className="rounded-lg text-xs">
+              Offline
             </SelectItem>
           </SelectContent>
         </Select>
@@ -355,21 +355,26 @@ export default function Devices() {
                       onCheckedChange={(checked) =>
                         handleSelectDevice(device.id, checked as boolean)
                       }
-                      aria-label={`Select ${device.name}`}
+                      aria-label={`Select ${device.device_name}`}
                     />
                   </TableCell>
                   <TableCell className="font-medium ">
-                    {device.name}
+                    {device.device_name}
                   </TableCell>
                   <TableCell>
-                    {device.user ? (
+                    {device.users && device.users.length > 0 ? (
                       <div className="flex flex-col">
                         <span className="font-medium text-sm">
-                          {device.user.first_name} {device.user.last_name}
+                          {device.users[0].first_name} {device.users[0].last_name}
                         </span>
                         <span className="text-xs text-muted-foreground">
-                          {device.user.email}
+                          {device.users[0].email}
                         </span>
+                        {device.users.length > 1 && (
+                          <span className="text-xs text-muted-foreground">
+                            +{device.users.length - 1} more
+                          </span>
+                        )}
                       </div>
                     ) : (
                       <span className="text-muted-foreground text-sm">No owner</span>
@@ -382,7 +387,7 @@ export default function Devices() {
                     <div className="flex items-center gap-2">
                       <span
                         className={`h-2 w-2 rounded-full ${
-                          device.status === 'connected'
+                          device.status === 'online'
                             ? 'bg-green-500'
                             : 'bg-gray-400'
                         }`}
@@ -455,8 +460,8 @@ export default function Devices() {
                   <Label className="text-sm font-medium">Device Name</Label>
                   <input
                     className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-                    value={editData.name}
-                    onChange={(e) => setEditData('name', e.target.value)}
+                    value={editData.device_name}
+                    onChange={(e) => setEditData('device_name', e.target.value)}
                   />
                 </div>
                 <div className="grid gap-1">
@@ -472,7 +477,7 @@ export default function Devices() {
                 <div className="grid gap-1">
                   <Label className="text-sm font-medium">Status</Label>
                   <div className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm text-muted-foreground">
-                    {editData.status === 'connected' ? 'Connected' : 'Not Connected'}
+                    {editData.status === 'online' ? 'Online' : 'Offline'}
                   </div>
                   <p className="text-xs text-muted-foreground">Status is managed by the device automatically</p>
                 </div>
@@ -505,3 +510,4 @@ export default function Devices() {
     </AppLayout>
   )
 }
+

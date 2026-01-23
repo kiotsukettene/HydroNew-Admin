@@ -11,8 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('devices', function (Blueprint $table) {
-            $table->boolean('is_archived')->default(false)->after('status');
+        Schema::table('users', function (Blueprint $table) {
+            $table->boolean('is_archived')->default(false);
         });
     }
 
@@ -21,8 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('devices', function (Blueprint $table) {
-            $table->dropColumn('is_archived');
+        Schema::table('users', function (Blueprint $table) {
+            //
         });
     }
 };

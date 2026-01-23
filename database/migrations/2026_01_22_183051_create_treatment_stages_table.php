@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('treatment_stages', function (Blueprint $table) {
             $table->bigInteger('id', true);
-            $table->bigInteger('treatment_id');
+            $table->bigInteger('treatment_id')->index('treatment_id');
             $table->enum('stage_name', ['MFC', 'Natural Filter', 'UV Filter', 'Clean Water Tank'])->default('MFC');
             $table->integer('stage_order');
             $table->enum('status', ['pending', 'processing', 'passed', 'failed'])->nullable()->default('pending');
@@ -21,6 +21,8 @@ return new class extends Migration
             $table->decimal('turbidity', 10)->nullable();
             $table->decimal('TDS', 10)->nullable();
             $table->text('notes')->nullable();
+
+            $table->index(['treatment_id', 'stage_order'], 'idx_treatment_stages_treatment_order');
         });
     }
 

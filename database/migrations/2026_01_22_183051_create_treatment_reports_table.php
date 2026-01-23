@@ -18,6 +18,9 @@ return new class extends Migration
             $table->dateTime('end_time')->nullable();
             $table->enum('final_status', ['pending', 'success', 'failed'])->nullable()->default('pending');
             $table->integer('total_cycles')->nullable()->default(0);
+
+            $table->index(['device_id', 'start_time'], 'idx_treatment_reports_device_time');
+            $table->index(['final_status', 'start_time'], 'idx_treatment_reports_status_time');
         });
     }
 

@@ -117,23 +117,25 @@ export default function ArchiveDevices() {
               devices.data.map((device) => (
                 <TableRow key={device.id}>
                   <TableCell className="font-medium">
-                    {device.name}
+                    {device.device_name}
                   </TableCell>
                   <TableCell className="font-mono text-sm">
                     {device.serial_number}
                   </TableCell>
                   <TableCell>
-                    {device.user ? `${device.user.first_name} ${device.user.last_name}` : 'N/A'}
+                    {device.users && device.users.length > 0 
+                      ? `${device.users[0].first_name} ${device.users[0].last_name}${device.users.length > 1 ? ` +${device.users.length - 1}` : ''}`
+                      : 'N/A'}
                   </TableCell>
                   <TableCell>
                     <Badge
                       className={
-                        device.status === 'connected'
+                        device.status === 'online'
                           ? 'bg-green-100 border-green-300 text-green-700'
                           : 'bg-red-100 border-red-300 text-red-700'
                       }
                     >
-                      {device.status === 'connected' ? 'Connected' : 'Not Connected'}
+                      {device.status === 'online' ? 'Online' : 'Offline'}
                     </Badge>
                   </TableCell>
                   <TableCell>

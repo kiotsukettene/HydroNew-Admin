@@ -15,6 +15,7 @@ return new class extends Migration
             $table->bigInteger('id', true);
             $table->string('first_name', 100);
             $table->string('last_name', 100);
+            $table->enum('role', ['admin', 'user'])->default('user');
             $table->string('email', 150)->unique('email');
             $table->dateTime('email_verified_at')->nullable();
             $table->string('password')->nullable();
@@ -25,7 +26,6 @@ return new class extends Migration
             $table->string('verification_code')->nullable();
             $table->timestamp('verification_expires_at')->nullable();
             $table->timestamp('last_otp_sent_at')->nullable();
-            $table->enum('roles', ['admin', 'user'])->default('user');
             $table->rememberToken();
             $table->timestamps();
         });

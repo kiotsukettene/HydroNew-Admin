@@ -16,7 +16,7 @@ class UserController extends Controller
     {
         $filters = $request->only(['search', 'sort', 'direction', 'status', 'verified']);
 
-        $query = User::where('roles', '=', 'user')
+        $query = User::where('role', '=', 'user')
                     ->where('is_archived', false);
 
         // Apply search filter
@@ -45,7 +45,7 @@ class UserController extends Controller
         // Apply sorting
         $sortField = $filters['sort'] ?? 'created_at';
         $sortDirection = $filters['direction'] ?? 'desc';
-        
+
         // Handle name sorting (concat first_name and last_name)
         if ($sortField === 'name') {
             $query->orderByRaw("CONCAT(first_name, ' ', last_name) {$sortDirection}");
@@ -54,9 +54,9 @@ class UserController extends Controller
         }
 
         $users = $query->paginate(10);
-        
-        $userCount = User::where('roles', '=', 'user')->where('is_archived', false)->count();
-        
+
+        $userCount = User::where('role', '=', 'user')->where('is_archived', false)->count();
+
         return Inertia::render('users/index',[
             'users' => $users,
             'userCount' => $userCount,
@@ -71,7 +71,7 @@ class UserController extends Controller
     {
         $filters = $request->only(['search']);
 
-        $users = User::where('roles', '=', 'user')
+        $users = User::where('role', '=', 'user')
                     ->where('is_archived', true)
                     ->when($filters['search'] ?? null, function ($query, $search) {
                         $query->where(function ($q) use ($search) {
@@ -82,7 +82,7 @@ class UserController extends Controller
                     })
                     ->paginate(10);
 
-        $archivedCount = User::where('roles', '=', 'user')->where('is_archived', true)->count();
+        $archivedCount = User::where('role', '=', 'user')->where('is_archived', true)->count();
 
         return Inertia::render('users/archive-user', [
             'users' => $users,

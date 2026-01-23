@@ -19,7 +19,7 @@ class DashboardController extends Controller
     public function index()
     {
         // Get total counts
-        $totalUsers = User::where('roles', 'user')->count();
+        $totalUsers = User::where('role', 'user')->count();
         $totalDevices = Device::where('is_archived', false)->count();
         $totalHarvestedCrops = HydroponicYield::count();
 

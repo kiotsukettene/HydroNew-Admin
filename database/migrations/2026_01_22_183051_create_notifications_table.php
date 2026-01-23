@@ -13,8 +13,8 @@ return new class extends Migration
     {
         Schema::create('notifications', function (Blueprint $table) {
             $table->bigInteger('id', true);
-            $table->bigInteger('user_id');
-            $table->bigInteger('device_id');
+            $table->bigInteger('user_id')->index('notifications_ibfk_1');
+            $table->bigInteger('device_id')->index('notifications_ibfk_2');
             $table->string('title');
             $table->text('message');
             $table->string('type');
