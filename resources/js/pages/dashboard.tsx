@@ -10,10 +10,17 @@ import { DashboardStats, HarvestStatus } from '@/types/dashboard';
 
 
 
+interface Device {
+    id: number;
+    device_name: string;
+    status: string;
+}
+
 export default function Dashboard() {
-    const { stats, harvestStatus } = usePage<{
+    const { stats, harvestStatus, devices } = usePage<{
         stats: DashboardStats;
         harvestStatus: HarvestStatus;
+        devices: Device[];
     }>().props;
 
     return (
@@ -85,7 +92,7 @@ export default function Dashboard() {
       </div>
     </div>
 
-        <PhTdsChart className="flex-1"/>
+        <PhTdsChart className="flex-1" devices={devices}/>
 
 
 
