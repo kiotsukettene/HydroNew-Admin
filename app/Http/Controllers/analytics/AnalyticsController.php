@@ -3,66 +3,88 @@
 namespace App\Http\Controllers\Analytics;
 
 use App\Http\Controllers\Controller;
+use App\Services\AdminAnalyticsService;
 use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
 use Inertia\Inertia;
 
 class AnalyticsController extends Controller
 {
+    protected AdminAnalyticsService $analyticsService;
+
+    public function __construct(AdminAnalyticsService $analyticsService)
+    {
+        $this->analyticsService = $analyticsService;
+    }
+
     /**
-     * Display a listing of the resource.
+     * Display the analytics page
      */
     public function index()
     {
-        return Inertia::render('analytics/index');
-    }
+        // Get all analytics data
+        $usersDevicesData = $this->analyticsService->getUsersDevicesAnalytics();
+        $cropsHarvestData = $this->analyticsService->getCropsHarvestAnalytics();
+        $yieldData = $this->analyticsService->getYieldAnalytics();
+        $waterTreatmentData = $this->analyticsService->getWaterTreatmentAnalytics();
 
-
-
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        //
+        return Inertia::render('analytics/index', [
+            'usersDevices' => $usersDevicesData,
+            'cropsHarvest' => $cropsHarvestData,
+            'yields' => $yieldData,
+            'waterTreatment' => $waterTreatmentData,
+        ]);
     }
 
     /**
-     * Display the specified resource.
+     * Get users and devices analytics data (API endpoint)
      */
-    public function show(string $id)
+    public function getUsersDevices(): JsonResponse
     {
-        //
+        $data = $this->analyticsService->getUsersDevicesAnalytics();
+        
+        return response()->json([
+            'status' => 'success',
+            'data' => $data,
+        ]);
     }
 
     /**
-     * Show the form for editing the specified resource.
+     * Get crops and harvest analytics data (API endpoint)
      */
-    public function edit(string $id)
+    public function getCropsHarvest(): JsonResponse
     {
-        //
+        $data = $this->analyticsService->getCropsHarvestAnalytics();
+        
+        return response()->json([
+            'status' => 'success',
+            'data' => $data,
+        ]);
     }
 
     /**
-     * Update the specified resource in storage.
+     * Get yield analytics data (API endpoint)
      */
-    public function update(Request $request, string $id)
+    public function getYields(): JsonResponse
     {
-        //
+        $data = $this->analyticsService->getYieldAnalytics();
+        
+        return response()->json([
+            'status' => 'success',
+            'data' => $data,
+        ]);
     }
 
     /**
-     * Remove the specified resource from storage.
+     * Get water treatment analytics data (API endpoint)
      */
-    public function destroy(string $id)
+    public function getWaterTreatment(): JsonResponse
     {
-        //
+        $data = $this->analyticsService->getWaterTreatmentAnalytics();
+        
+        return response()->json([
+            'status' => 'success',
+            'data' => $data,
+        ]);
     }
 }
