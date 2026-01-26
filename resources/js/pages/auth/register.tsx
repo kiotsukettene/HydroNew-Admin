@@ -120,7 +120,7 @@ export default function Register() {
 
                         <div className="text-center text-sm text-muted-foreground">
                             Already have an account?{' '}
-                            <TextLink href={login()} tabIndex={7}>
+                            <TextLink href={login().url} tabIndex={7}>
                                 Log in
                             </TextLink>
                         </div>

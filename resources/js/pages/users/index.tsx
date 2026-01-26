@@ -1,6 +1,7 @@
 import AppLayout from '@/layouts/app-layout';
 import PaginationComp from '@/components/pagination';
 import SearchInput from '@/components/search-input';
+import { cleanFilters } from '@/lib/filter-helpers';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -130,13 +131,13 @@ export default function Users() {
         
         router.get(
             '/users',
-            { 
+            cleanFilters({ 
                 search: data.search, 
                 sort: field, 
                 direction: newDirection,
                 status: data.status,
                 verified: data.verified
-            },
+            }, { sort: 'created_at', direction: 'desc', status: 'all', verified: 'all' }),
             {
                 preserveState: true,
                 preserveScroll: true,
@@ -151,13 +152,13 @@ export default function Users() {
     const handleFilterChange = (filterType: 'status' | 'verified', value: string) => {
         router.get(
             '/users',
-            {
+            cleanFilters({
                 search: data.search,
                 sort: data.sort,
                 direction: data.direction,
                 status: filterType === 'status' ? value : data.status,
                 verified: filterType === 'verified' ? value : data.verified,
-            },
+            }, { sort: 'created_at', direction: 'desc', status: 'all', verified: 'all' }),
             {
                 preserveState: true,
                 preserveScroll: true,
@@ -179,13 +180,13 @@ export default function Users() {
             setIsSearching(true);
             router.get(
                 '/users',
-                { 
+                cleanFilters({ 
                     search: debounceSearch, 
                     sort: data.sort, 
                     direction: data.direction,
                     status: data.status,
                     verified: data.verified
-                },
+                }, { sort: 'created_at', direction: 'desc', status: 'all', verified: 'all' }),
                 {
                     preserveState: true,
                     preserveScroll: true,
@@ -300,13 +301,13 @@ export default function Users() {
                                             onClick={() => {
                                                 router.get(
                                                     '/users',
-                                                    {
+                                                    cleanFilters({
                                                         search: data.search,
                                                         sort: data.sort,
                                                         direction: data.direction,
                                                         status: 'all',
                                                         verified: 'all',
-                                                    },
+                                                    }, { sort: 'created_at', direction: 'desc', status: 'all', verified: 'all' }),
                                                     {
                                                         preserveState: true,
                                                         preserveScroll: true,
@@ -328,7 +329,7 @@ export default function Users() {
 
                     <Button 
                         variant="secondary"
-                        onClick={() => router.visit('/users/archived')}
+                        onClick={() => router.visit('/users/archived', { preserveState: false })}
                     >
                         <Archive className="mr-2 h-4 w-4" />
                         View Archived

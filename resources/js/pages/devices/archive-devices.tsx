@@ -1,6 +1,7 @@
 import AppLayout from '@/layouts/app-layout'
 import { Head, router, useForm, usePage } from '@inertiajs/react'
 import React, { useEffect } from 'react'
+import { cleanFilters } from '@/lib/filter-helpers'
 import {
   Table,
   TableBody,
@@ -28,20 +29,19 @@ export default function ArchiveDevices() {
     devices: Pagination<Device>
     filters: { search?: string }
   }>().props
-  const { data, setData, get } = useForm({
-    search: filters.search || "",
-  })
+  const [search, setSearch] = React.useState(filters.search || "")
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      get("/devices/archived", {
+      router.get("/devices/archived", cleanFilters({ search }), {
         preserveState: true,
         preserveScroll: true,
+        replace: true,
       })
     }, 500)
 
     return () => clearTimeout(timer)
-  }, [data.search])
+  }, [search])
 
   const handleUnarchive = (deviceId: number) => {
     if (confirm("Are you sure you want to restore this device?")) {
@@ -72,7 +72,7 @@ export default function ArchiveDevices() {
           </div>
           <Button
             variant="secondary"
-            onClick={() => router.visit("/devices")}
+            onClick={() => router.visit("/devices", { preserveState: false })}
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Devices
@@ -82,8 +82,8 @@ export default function ArchiveDevices() {
         <input
           type="text"
           placeholder="Search archived devices..."
-          value={data.search}
-          onChange={(e) => setData("search", e.target.value)}
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
           className="w-full md:w-96 px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
         />
 
