@@ -12,22 +12,23 @@ use Illuminate\Database\Eloquent\Model;
 
 /**
  * Class Device
- *
+ * 
  * @property int $id
  * @property string $device_name
  * @property string $serial_number
  * @property string|null $model
  * @property string|null $firmware_version
  * @property string|null $status
- * @property bool $is_archived
  * @property Carbon $created_at
  * @property Carbon $updated_at
- *
+ * @property bool $is_archived
+ * 
+ * @property Collection|Feedback[] $feedback
+ * @property Collection|HydroponicSetup[] $hydroponic_setups
  * @property Collection|Notification[] $notifications
  * @property Collection|SensorSystem[] $sensor_systems
  * @property Collection|Sensor[] $sensors
  * @property Collection|TreatmentReport[] $treatment_reports
- * @property Collection|User[] $users
  *
  * @package App\Models
  */
@@ -48,10 +49,15 @@ class Device extends Model
 		'is_archived'
 	];
 
-    public function users()
-    {
-        return $this->belongsToMany(User::class, 'device_users', 'device_id', 'user_id');
-    }
+	public function feedback()
+	{
+		return $this->hasMany(Feedback::class);
+	}
+
+	public function hydroponic_setups()
+	{
+		return $this->hasMany(HydroponicSetup::class);
+	}
 
 	public function notifications()
 	{
@@ -71,5 +77,10 @@ class Device extends Model
 	public function treatment_reports()
 	{
 		return $this->hasMany(TreatmentReport::class);
+	}
+
+	public function users()
+	{
+		return $this->belongsToMany(User::class, 'device_users', 'device_id', 'user_id');
 	}
 }

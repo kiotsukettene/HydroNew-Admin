@@ -5,7 +5,18 @@ namespace Database\Seeders;
 use App\Models\User;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
-use Database\Seeders\AdminSeeder;
+use Database\Seeders\DevicesSeeder;
+use Database\Seeders\SensorsSeeder;
+use Database\Seeders\NotificationSeeder;
+use Database\Seeders\SensorReadingsSeeder;
+use Database\Seeders\HydroponicSetupSeeder;
+use Database\Seeders\HydroponicYieldSeeder;
+use Database\Seeders\HydroponicYieldGradeSeeder;
+use Database\Seeders\TipsSuggestionsSeeder;
+use Database\Seeders\TreatmentStagesSeeder;
+use Database\Seeders\TreatmentReportsSeeder;
+use Database\Seeders\DeviceUserSeeder;
+use Database\Seeders\PairingTokenSeeder;
 
 class DatabaseSeeder extends Seeder
 {
@@ -14,10 +25,24 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        // User::factory(10)->create();
+
         $this->call([
             AdminSeeder::class,
-            UserSeeder::class,
-            DeviceSeeder::class,
+            UsersSeeder::class,
+            DevicesSeeder::class,
+            SensorSystemSeeder::class,
+            SensorReadingsSeeder::class,
+            TreatmentReportsSeeder::class,
+            TreatmentStagesSeeder::class,
+            HydroponicSetupSeeder::class,
+            HydroponicYieldSeeder::class,
+            HydroponicYieldGradeSeeder::class,
+            TipsSuggestionsSeeder::class,
+            NotificationSeeder::class,
+            HelpCenterSeeder::class,
+            DeviceUserSeeder::class,
+            PairingTokenSeeder::class,
         ]);
     }
 }

@@ -21,6 +21,8 @@ return new class extends Migration
             $table->string('password')->nullable();
             $table->string('profile_picture')->nullable();
             $table->text('address')->nullable();
+            $table->enum('status', ['active', 'inactive'])->default('active');
+            $table->boolean('is_archived')->default(false);
             $table->boolean('first_time_login')->nullable()->default(true);
             $table->dateTime('last_login_at')->nullable();
             $table->string('verification_code')->nullable();

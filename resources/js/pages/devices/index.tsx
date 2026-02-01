@@ -18,7 +18,7 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table'
-import { ArrowUpDown, ArrowUp, ArrowDown, MoreHorizontal, Pencil, Archive, Airplay, Filter, Loader2 } from 'lucide-react'
+import { ArrowUpDown, ArrowUp, ArrowDown, MoreHorizontal, Pencil, Archive, Airplay, Filter, Loader2, Plus, AlertTriangle } from 'lucide-react'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Card } from '@/components/ui/card'
@@ -35,6 +35,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+import { toast } from 'sonner';
 
 type SortField = 'name' | 'serial_number' | 'status' | 'created_at';
 type SortDirection = 'asc' | 'desc';
@@ -49,7 +50,10 @@ export default function Devices() {
   const [selectedDevices, setSelectedDevices] = useState<number[]>([])
   const [isEditOpen, setIsEditOpen] = useState(false)
   const [editingDevice, setEditingDevice] = useState<Device | null>(null)
+  const [isAddOpen, setIsAddOpen] = useState(false)
   const [isSearching, setIsSearching] = useState(false)
+  const [isArchiveConfirmOpen, setIsArchiveConfirmOpen] = useState(false)
+  const [deviceToArchive, setDeviceToArchive] = useState<Device | null>(null)
 
   const { data, setData } = useForm({
     search: filters.search || '',
@@ -66,6 +70,15 @@ export default function Devices() {
     device_name: '',
     serial_number: '',
     status: '',
+  })
+
+  // Add form
+  const { data: addData, setData: setAddData, post, processing: addProcessing, reset: addReset, errors: addErrors } = useForm({
+    device_name: '',
+    serial_number: '',
+    model: '',
+    firmware_version: '',
+    status: 'offline',
   })
 
   const handleEditClick = (device: Device) => {
@@ -86,6 +99,57 @@ export default function Devices() {
           setIsEditOpen(false)
           reset()
           setEditingDevice(null)
+          toast.success('Device updated successfully', {
+            description: `${editData.device_name} has been updated.`,
+          })
+        },
+        onError: () => {
+          toast.error('Failed to update device', {
+            description: 'Please check the form and try again.',
+          })
+        },
+      })
+    }
+  }
+
+  const handleAddDevice = () => {
+    post('/devices', {
+      preserveScroll: true,
+      onSuccess: () => {
+        setIsAddOpen(false)
+        addReset()
+        toast.success('Device added successfully', {
+          description: `${addData.device_name} has been registered.`,
+        })
+      },
+      onError: () => {
+        toast.error('Failed to add device', {
+          description: 'Please check the form and try again.',
+        })
+      },
+    })
+  }
+
+  const handleArchiveClick = (device: Device) => {
+    setDeviceToArchive(device)
+    setIsArchiveConfirmOpen(true)
+  }
+
+  const handleArchiveConfirm = () => {
+    if (deviceToArchive) {
+      router.patch(`/devices/${deviceToArchive.id}/archive`, {}, {
+        preserveScroll: true,
+        onSuccess: () => {
+          setIsArchiveConfirmOpen(false)
+          setDeviceToArchive(null)
+          toast.success('Device archived successfully', {
+            description: `${deviceToArchive.device_name} has been moved to archives.`,
+          })
+        },
+        onError: () => {
+          toast.error('Failed to archive device', {
+            description: 'Please try again later.',
+          })
         },
       })
     }
@@ -236,6 +300,13 @@ export default function Devices() {
             </SelectItem>
           </SelectContent>
         </Select>
+        <Button
+          variant="primary"
+          onClick={() => setIsAddOpen(true)}
+        >
+          <Plus className="mr-2 h-4 w-4" />
+          Add Device
+        </Button>
         <Button
           variant="secondary"
           onClick={() => router.visit("/devices/archived")}
@@ -416,11 +487,7 @@ export default function Devices() {
                           <Pencil className="mr-2 h-4 w-4" />
                           Edit
                         </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => router.patch(`/devices/${device.id}/archive`, {}, {
-                            preserveScroll: true,
-                          })}
-                        >
+                        <DropdownMenuItem onClick={() => handleArchiveClick(device)}>
                           <Archive className="mr-2 h-4 w-4" />
                           Archive
                         </DropdownMenuItem>
@@ -501,6 +568,145 @@ export default function Devices() {
                 disabled={processing}
               >
                 {processing ? 'Saving...' : 'Save changes'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Add Device Modal */}
+        <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Add New Device</DialogTitle>
+              <DialogDescription>
+                Register a new device to the system.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-3">
+              <div className="grid gap-1">
+                <Label className="text-sm font-medium">Device Name <span className="text-red-500">*</span></Label>
+                <input
+                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+                  placeholder="e.g., HydroStation Alpha"
+                  value={addData.device_name}
+                  onChange={(e) => setAddData('device_name', e.target.value)}
+                />
+                {addErrors.device_name && (
+                  <p className="text-xs text-red-500">{addErrors.device_name}</p>
+                )}
+              </div>
+
+              <div className="grid gap-1">
+                <Label className="text-sm font-medium">Serial Number <span className="text-red-500">*</span></Label>
+                <input
+                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm font-mono"
+                  placeholder="e.g., HS-2024-0001"
+                  value={addData.serial_number}
+                  onChange={(e) => setAddData('serial_number', e.target.value)}
+                />
+                {addErrors.serial_number && (
+                  <p className="text-xs text-red-500">{addErrors.serial_number}</p>
+                )}
+              </div>
+
+              <div className="grid gap-1">
+                <Label className="text-sm font-medium">Model</Label>
+                <input
+                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+                  placeholder="e.g., HydroStation Pro v2"
+                  value={addData.model}
+                  onChange={(e) => setAddData('model', e.target.value)}
+                />
+              </div>
+
+              <div className="grid gap-1">
+                <Label className="text-sm font-medium">Firmware Version</Label>
+                <input
+                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+                  placeholder="e.g., 2.1.0"
+                  value={addData.firmware_version}
+                  onChange={(e) => setAddData('firmware_version', e.target.value)}
+                />
+              </div>
+
+              <div className="grid gap-1">
+                <Label className="text-sm font-medium">Initial Status</Label>
+                <Select 
+                  value={addData.status} 
+                  onValueChange={(value) => setAddData('status', value)}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="offline">Offline</SelectItem>
+                    <SelectItem value="online">Online</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <DialogFooter>
+              <Button 
+                variant="secondary" 
+                onClick={() => {
+                  setIsAddOpen(false)
+                  addReset()
+                }}
+                disabled={addProcessing}
+              >
+                Cancel
+              </Button>
+              <Button 
+                onClick={handleAddDevice}
+                disabled={addProcessing}
+              >
+                {addProcessing ? 'Adding...' : 'Add Device'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Archive Confirmation Modal */}
+        <Dialog open={isArchiveConfirmOpen} onOpenChange={setIsArchiveConfirmOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <AlertTriangle className="h-5 w-5 text-orange-500" />
+                Archive Device
+              </DialogTitle>
+              <DialogDescription>
+                Are you sure you want to archive this device? It will be moved to the archived devices list.
+              </DialogDescription>
+            </DialogHeader>
+
+            {deviceToArchive && (
+              <div className="rounded-lg border border-border bg-muted p-4">
+                <p className="text-sm font-medium text-foreground font-mono">
+                  {deviceToArchive.device_name}
+                </p>
+                <p className="text-xs text-muted-foreground font-mono mt-1">
+                  {deviceToArchive.serial_number}
+                </p>
+              </div>
+            )}
+
+            <DialogFooter>
+              <Button 
+                variant="secondary" 
+                onClick={() => {
+                  setIsArchiveConfirmOpen(false)
+                  setDeviceToArchive(null)
+                }}
+              >
+                Cancel
+              </Button>
+              <Button 
+                variant="destructive"
+                onClick={handleArchiveConfirm}
+              >
+                Archive Device
               </Button>
             </DialogFooter>
           </DialogContent>

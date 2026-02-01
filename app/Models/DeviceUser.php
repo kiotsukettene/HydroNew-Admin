@@ -17,9 +17,6 @@ use Illuminate\Database\Eloquent\Model;
  * @property int|null $device_id
  * @property Carbon $created_at
  * @property Carbon $updated_at
- * 
- * @property User $user
- * @property Device $device
  *
  * @package App\Models
  */
@@ -36,14 +33,4 @@ class DeviceUser extends Model
 		'user_id',
 		'device_id'
 	];
-
-	public function user()
-	{
-		return $this->belongsTo(User::class);
-	}
-
-	public function device()
-	{
-		return $this->belongsTo(Device::class);
-	}
 }

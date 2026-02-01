@@ -1,6 +1,6 @@
 import AppLayout from '@/layouts/app-layout'
 import { Head, router, useForm, usePage } from '@inertiajs/react'
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import {
   Table,
   TableBody,
@@ -22,6 +22,15 @@ import { Device } from '@/types/device'
 import { Pagination } from '@/types/pagination'
 import PaginationComp from '@/components/pagination'
 import { Badge } from '@/components/ui/badge'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { toast } from 'sonner';
 
 export default function ArchiveDevices() {
   const { devices, filters } = usePage<{
@@ -31,6 +40,9 @@ export default function ArchiveDevices() {
   const { data, setData, get } = useForm({
     search: filters.search || "",
   })
+
+  const [isUnarchiveConfirmOpen, setIsUnarchiveConfirmOpen] = useState(false)
+  const [deviceToUnarchive, setDeviceToUnarchive] = useState<Device | null>(null)
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -43,11 +55,27 @@ export default function ArchiveDevices() {
     return () => clearTimeout(timer)
   }, [data.search])
 
-  const handleUnarchive = (deviceId: number) => {
-    if (confirm("Are you sure you want to restore this device?")) {
-      router.patch(`/devices/${deviceId}/unarchive`, {}, {
-        preserveState: true,
+  const handleUnarchiveClick = (device: Device) => {
+    setDeviceToUnarchive(device)
+    setIsUnarchiveConfirmOpen(true)
+  }
+
+  const handleUnarchiveConfirm = () => {
+    if (deviceToUnarchive) {
+      router.patch(`/devices/${deviceToUnarchive.id}/unarchive`, {}, {
         preserveScroll: true,
+        onSuccess: () => {
+          setIsUnarchiveConfirmOpen(false)
+          setDeviceToUnarchive(null)
+          toast.success('Device restored successfully', {
+            description: `${deviceToUnarchive.device_name} has been restored from archives.`,
+          })
+        },
+        onError: () => {
+          toast.error('Failed to restore device', {
+            description: 'Please try again later.',
+          })
+        },
       })
     }
   }
@@ -146,7 +174,7 @@ export default function ArchiveDevices() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => handleUnarchive(device.id)}>
+                        <DropdownMenuItem onClick={() => handleUnarchiveClick(device)}>
                           <RotateCcw className="mr-2 h-4 w-4" />
                           Restore
                         </DropdownMenuItem>
@@ -164,6 +192,50 @@ export default function ArchiveDevices() {
             <PaginationComp links={devices.links} />
           </div>
         )}
+
+        {/* Unarchive Confirmation Modal */}
+        <Dialog open={isUnarchiveConfirmOpen} onOpenChange={setIsUnarchiveConfirmOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <RotateCcw className="h-5 w-5 text-green-500" />
+                Restore Device
+              </DialogTitle>
+              <DialogDescription>
+                Are you sure you want to restore this device? It will be moved back to the active devices list.
+              </DialogDescription>
+            </DialogHeader>
+
+            {deviceToUnarchive && (
+              <div className="rounded-lg border border-border bg-muted p-4">
+                <p className="text-sm font-medium text-foreground font-mono">
+                  {deviceToUnarchive.device_name}
+                </p>
+                <p className="text-xs text-muted-foreground font-mono mt-1">
+                  {deviceToUnarchive.serial_number}
+                </p>
+              </div>
+            )}
+
+            <DialogFooter>
+              <Button 
+                variant="secondary" 
+                onClick={() => {
+                  setIsUnarchiveConfirmOpen(false)
+                  setDeviceToUnarchive(null)
+                }}
+              >
+                Cancel
+              </Button>
+              <Button 
+                variant="primary"
+                onClick={handleUnarchiveConfirm}
+              >
+                Restore Device
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </AppLayout>
   )

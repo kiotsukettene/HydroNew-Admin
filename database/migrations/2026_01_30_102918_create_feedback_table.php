@@ -11,13 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('devices', function (Blueprint $table) {
+        Schema::create('feedback', function (Blueprint $table) {
             $table->bigInteger('id', true);
-            $table->string('device_name', 150);
-            $table->string('serial_number', 150)->unique('serial_number');
-            $table->string('model', 100)->nullable();
-            $table->string('firmware_version', 50)->nullable();
-            $table->enum('status', ['online', 'offline'])->nullable()->default('offline');
+            $table->bigInteger('user_id')->index();
+            $table->bigInteger('device_id')->index();
+            $table->enum('category', ['bug_report', 'feature_request', 'general_feedback', 'device_issue', 'other'])->default('general_feedback');
+            $table->string('subject')->nullable();
+            $table->text('message');
             $table->timestamp('created_at')->useCurrent();
             $table->timestamp('updated_at')->useCurrentOnUpdate()->useCurrent();
         });
@@ -28,6 +28,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('devices');
+        Schema::dropIfExists('feedback');
     }
 };

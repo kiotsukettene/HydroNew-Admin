@@ -20,19 +20,33 @@ class AnalyticsController extends Controller
     /**
      * Display the analytics page
      */
-    public function index()
+    public function index(Request $request)
     {
+        // Get filter parameters
+        $filters = [
+            'date_from' => $request->input('date_from'),
+            'date_to' => $request->input('date_to'),
+            'frequency' => $request->input('frequency', 'monthly'), // weekly, monthly
+            'device_id' => $request->input('device_id'), // for crops and water treatment filtering
+        ];
+
+        // Get all devices for the filter dropdown
+        $devices = \App\Models\Device::where('is_archived', false)
+            ->select('id', 'device_name', 'serial_number')
+            ->orderBy('device_name')
+            ->get();
+
         // Get all analytics data
-        $usersDevicesData = $this->analyticsService->getUsersDevicesAnalytics();
-        $cropsHarvestData = $this->analyticsService->getCropsHarvestAnalytics();
-        $yieldData = $this->analyticsService->getYieldAnalytics();
-        $waterTreatmentData = $this->analyticsService->getWaterTreatmentAnalytics();
+        $usersDevicesData = $this->analyticsService->getUsersDevicesAnalytics($filters);
+        $cropsHarvestYieldData = $this->analyticsService->getCropsHarvestYieldAnalytics($filters);
+        $waterTreatmentData = $this->analyticsService->getWaterTreatmentAnalytics($filters);
 
         return Inertia::render('analytics/index', [
             'usersDevices' => $usersDevicesData,
-            'cropsHarvest' => $cropsHarvestData,
-            'yields' => $yieldData,
+            'cropsHarvestYield' => $cropsHarvestYieldData,
             'waterTreatment' => $waterTreatmentData,
+            'devices' => $devices,
+            'filters' => $filters,
         ]);
     }
 
@@ -50,24 +64,11 @@ class AnalyticsController extends Controller
     }
 
     /**
-     * Get crops and harvest analytics data (API endpoint)
+     * Get crops, harvest, and yield analytics data (API endpoint)
      */
-    public function getCropsHarvest(): JsonResponse
+    public function getCropsHarvestYield(): JsonResponse
     {
-        $data = $this->analyticsService->getCropsHarvestAnalytics();
-        
-        return response()->json([
-            'status' => 'success',
-            'data' => $data,
-        ]);
-    }
-
-    /**
-     * Get yield analytics data (API endpoint)
-     */
-    public function getYields(): JsonResponse
-    {
-        $data = $this->analyticsService->getYieldAnalytics();
+        $data = $this->analyticsService->getCropsHarvestYieldAnalytics();
         
         return response()->json([
             'status' => 'success',

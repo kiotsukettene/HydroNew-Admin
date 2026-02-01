@@ -22,10 +22,21 @@ export interface UsersDevicesAnalytics {
     }>;
 }
 
-export interface CropsHarvestAnalytics {
+export interface CropsHarvestYieldAnalytics {
+    // Harvest metrics
     setups_by_status: Record<string, number>;
     growth_stage_distribution: Record<string, number>;
     health_status_distribution: Record<string, number>;
+    harvest_rate: number;
+    harvest_this_month: number;
+    harvest_this_year: number;
+    
+    // Yield metrics
+    total_yield_weight: number;
+    total_yield_count: number;
+    average_yield_per_setup: number;
+    
+    // Combined crop insights
     popular_crops: Array<{
         crop_name: string;
         count: number;
@@ -35,31 +46,23 @@ export interface CropsHarvestAnalytics {
         crop: string;
         harvested: number;
     }>;
-    harvest_rate: number;
-    monthly_harvest_trend: Array<{
-        month: string;
-        harvested: number;
-    }>;
-    harvest_this_month: number;
-    harvest_this_year: number;
-}
-
-export interface YieldAnalytics {
-    total_yield_weight: number;
-    total_yield_count: number;
-    grade_distribution: Record<string, {
-        weight: number;
-        count: number;
-        percentage: number;
-    }>;
-    average_yield_per_setup: number;
     top_yielding_crops: Array<{
         crop_name: string;
         total_weight: number;
         setup_count: number;
     }>;
-    yield_trends: Array<{
+    
+    // Grade distribution
+    grade_distribution: Record<string, {
+        weight: number;
+        count: number;
+        percentage: number;
+    }>;
+    
+    // Combined trends
+    monthly_harvest_trend: Array<{
         month: string;
+        harvested: number;
         total_weight: number;
     }>;
 }

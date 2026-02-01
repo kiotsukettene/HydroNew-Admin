@@ -1,8 +1,8 @@
 import AppLayout from '@/layouts/app-layout'
-import { Head, usePage } from '@inertiajs/react'
+import { Head, usePage, router } from '@inertiajs/react'
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, RadarChart, PolarAngleAxis, PolarGrid, Radar, LineChart, Line, Legend } from 'recharts'
-import { Users, Cast, Leaf, Waves, TrendingUp, TrendingDown, Activity } from 'lucide-react'
+import { Users, Cast, Leaf, Waves, TrendingUp, TrendingDown, Activity, Calendar, Filter, FileDown, Image } from 'lucide-react'
 import {
   TextureCardContent,
   TextureCardStyled
@@ -11,15 +11,78 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { FiltrationCyclesCard } from '@/components/filtration-cycles-card'
-import { UsersDevicesAnalytics, CropsHarvestAnalytics, YieldAnalytics, WaterTreatmentAnalytics } from '@/types/analytics'
+import { UsersDevicesAnalytics, CropsHarvestYieldAnalytics, WaterTreatmentAnalytics } from '@/types/analytics'
+import { Device } from '@/types/device'
+import { Button } from '@/components/ui/button'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { Label } from '@/components/ui/label'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { useState } from 'react'
 
 export default function Analytics() {
-  const { usersDevices, cropsHarvest, yields, waterTreatment } = usePage<{
+  const { usersDevices, cropsHarvestYield, waterTreatment, devices = [], filters = { frequency: 'monthly' } } = usePage<{
     usersDevices: UsersDevicesAnalytics;
-    cropsHarvest: CropsHarvestAnalytics;
-    yields: YieldAnalytics;
+    cropsHarvestYield: CropsHarvestYieldAnalytics;
     waterTreatment: WaterTreatmentAnalytics;
+    devices?: Device[];
+    filters?: { date_from?: string; date_to?: string; frequency: string; device_id?: number };
   }>().props;
+
+  const [activeTab, setActiveTab] = useState('users-devices');
+  const [dateFrom, setDateFrom] = useState(filters?.date_from || '');
+  const [dateTo, setDateTo] = useState(filters?.date_to || '');
+  const [frequency, setFrequency] = useState(filters?.frequency || 'monthly');
+  const [deviceId, setDeviceId] = useState<string>(filters?.device_id?.toString() || 'all');
+
+  // Safety check for devices
+  const devicesList = devices;
+
+  const handleApplyFilters = () => {
+    router.get('/analytics', {
+      date_from: dateFrom,
+      date_to: dateTo,
+      frequency: frequency,
+      device_id: deviceId !== 'all' ? deviceId : undefined,
+    }, {
+      preserveState: true,
+      preserveScroll: true,
+    });
+  };
+
+  const handleResetFilters = () => {
+    setDateFrom('');
+    setDateTo('');
+    setFrequency('monthly');
+    setDeviceId('all');
+    router.get('/analytics', {}, {
+      preserveState: true,
+      preserveScroll: true,
+    });
+  };
+
+  const handleExportPdf = () => {
+    const params = new URLSearchParams({
+      tab: activeTab,
+      ...(dateFrom && { date_from: dateFrom }),
+      ...(dateTo && { date_to: dateTo }),
+      frequency: frequency,
+      ...(deviceId !== 'all' && { device_id: deviceId }),
+    });
+
+    window.open(`/analytics/export/pdf?${params.toString()}`, '_blank');
+  };
+
+  const handleExportImage = () => {
+    const params = new URLSearchParams({
+      tab: activeTab,
+      ...(dateFrom && { date_from: dateFrom }),
+      ...(dateTo && { date_to: dateTo }),
+      frequency: frequency,
+      ...(deviceId !== 'all' && { device_id: deviceId }),
+    });
+
+    window.open(`/analytics/export/image?${params.toString()}`, '_blank');
+  };
 
   return (
     <AppLayout title="">
@@ -27,13 +90,157 @@ export default function Analytics() {
       <div className="flex h-full flex-1 flex-col gap-6 rounded-xl p-4 md:p-6">
 
         {/* Header */}
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Analytics Overview</h1>
-          <p className="text-sm text-muted-foreground mt-1">Track your system performance and insights</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">Analytics Overview</h1>
+            <p className="text-sm text-muted-foreground mt-1">Track your system performance and insights</p>
+          </div>
+
+          {/* Compact Filter Controls - Inspired by Devices Page */}
+          <div className="flex gap-2">
+            {/* Export Buttons */}
+            <Button 
+              variant="secondary" 
+              size="sm" 
+              className="h-8 gap-1.5 border-2"
+              onClick={handleExportPdf}
+            >
+              <FileDown className="h-3.5 w-3.5" />
+              <span className="text-xs">Export PDF</span>
+            </Button>
+            <Button 
+              variant="secondary" 
+              size="sm" 
+              className="h-8 gap-1.5 border-2"
+              onClick={handleExportImage}
+            >
+              <Image className="h-3.5 w-3.5" />
+              <span className="text-xs">Export Image</span>
+            </Button>
+            
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="secondary" size="sm" className="h-8 gap-1.5 border-2">
+                  <Filter className="h-3.5 w-3.5" />
+                  <span className="text-xs">
+                    {frequency === 'weekly' ? 'Weekly' : 'Monthly'}
+                  </span>
+                  {(dateFrom || dateTo || (deviceId && deviceId !== 'all')) && (
+                    <span className="ml-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-medium text-primary-foreground">
+                      •
+                    </span>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-80" align="end">
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <h4 className="font-medium leading-none">
+                      {activeTab === 'users-devices' && 'User & Device Filters'}
+                      {activeTab === 'crops-harvest-yield' && 'Crop & Harvest Filters'}
+                      {activeTab === 'water-treatment' && 'Water Treatment Filters'}
+                    </h4>
+                    <p className="text-sm text-muted-foreground">
+                      {activeTab === 'users-devices' && 'Filter user registration and login activity'}
+                      {activeTab === 'crops-harvest-yield' && 'Filter harvest trends and yield data by device'}
+                      {activeTab === 'water-treatment' && 'Filter treatment cycles and performance by device'}
+                    </p>
+                  </div>
+
+                  <div className="space-y-3">
+                    {/* Device Filter - Only for Crops & Harvest and Water Treatment */}
+                    {(activeTab === 'crops-harvest-yield' || activeTab === 'water-treatment') && (
+                      <div className="space-y-2">
+                        <Label htmlFor="device">Device</Label>
+                        <Select value={deviceId || 'all'} onValueChange={setDeviceId}>
+                          <SelectTrigger id="device">
+                            <SelectValue placeholder="All Devices" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">All Devices</SelectItem>
+                            {devicesList.map((device) => (
+                              <SelectItem key={device.id} value={device.id.toString()}>
+                                {device.device_name} ({device.serial_number})
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
+
+                    <div className="space-y-2">
+                      <Label htmlFor="date-from">From Date</Label>
+                      <input
+                        id="date-from"
+                        type="date"
+                        value={dateFrom}
+                        onChange={(e) => setDateFrom(e.target.value)}
+                        className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="date-to">To Date</Label>
+                      <input
+                        id="date-to"
+                        type="date"
+                        value={dateTo}
+                        onChange={(e) => setDateTo(e.target.value)}
+                        className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      />
+                    </div>
+
+                    {/* Frequency - Only show for Users & Devices and Water Treatment */}
+                    {(activeTab === 'users-devices' || activeTab === 'water-treatment') && (
+                      <div className="space-y-2">
+                        <Label htmlFor="frequency">
+                          {activeTab === 'users-devices' ? 'Registration Frequency' : 'Treatment Frequency'}
+                        </Label>
+                        <Select value={frequency} onValueChange={setFrequency}>
+                          <SelectTrigger id="frequency">
+                            <SelectValue placeholder="Select frequency" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="weekly">Weekly</SelectItem>
+                            <SelectItem value="monthly">Monthly</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
+
+                    {/* Crops & Harvest specific: Harvest Frequency */}
+                    {activeTab === 'crops-harvest-yield' && (
+                      <div className="space-y-2">
+                        <Label htmlFor="frequency">Harvest Period</Label>
+                        <Select value={frequency} onValueChange={setFrequency}>
+                          <SelectTrigger id="frequency">
+                            <SelectValue placeholder="Select period" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="weekly">Weekly Harvest</SelectItem>
+                            <SelectItem value="monthly">Monthly Harvest</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
+
+                    <div className="flex gap-2 pt-2">
+                      <Button onClick={handleApplyFilters} className="flex-1">
+                        Apply Filters
+                      </Button>
+                      <Button onClick={handleResetFilters} variant="secondary" className="flex-1">
+                        Reset
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </PopoverContent>
+            </Popover>
+          </div>
         </div>
 
         {/* Tabs */}
-        <Tabs defaultValue="users-devices" className="w-full">
+        <Tabs defaultValue="users-devices" className="w-full" onValueChange={setActiveTab}>
           <TabsList className="h-12 p-1 bg-muted/60 rounded-xl">
             <TabsTrigger
               value="users-devices"
@@ -43,18 +250,11 @@ export default function Analytics() {
               Users & Devices
             </TabsTrigger>
             <TabsTrigger
-              value="crops-harvest"
+              value="crops-harvest-yield"
               className="h-10 px-4 text-sm font-medium rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md"
             >
               <Leaf className="w-4 h-4 mr-2" />
-              Crops & Harvest
-            </TabsTrigger>
-            <TabsTrigger
-              value="yields"
-              className="h-10 px-4 text-sm font-medium rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md"
-            >
-              <TrendingUp className="w-4 h-4 mr-2" />
-              Yields
+              Crops and Harvest
             </TabsTrigger>
             <TabsTrigger
               value="water-treatment"
@@ -137,7 +337,12 @@ export default function Analytics() {
                 <Card className="rounded-2xl">
                   <CardHeader>
                     <CardTitle>User Registration Trend</CardTitle>
-                    <CardDescription>New user registrations over the last 12 months</CardDescription>
+                    <CardDescription>
+                      {frequency === 'weekly' 
+                        ? 'New user registrations per week'
+                        : 'New user registrations per month'}
+                      {dateFrom && dateTo && ` (${dateFrom} to ${dateTo})`}
+                    </CardDescription>
                   </CardHeader>
                   <CardContent>
                     <ChartContainer
@@ -171,7 +376,10 @@ export default function Analytics() {
                 <Card className="rounded-2xl">
                   <CardHeader>
                     <CardTitle>Login Activity</CardTitle>
-                    <CardDescription>Daily login activity for the last 30 days</CardDescription>
+                    <CardDescription>
+                      User login activity trends
+                      {dateFrom && dateTo && ` from ${dateFrom} to ${dateTo}`}
+                    </CardDescription>
                   </CardHeader>
                   <CardContent>
                     <ChartContainer
@@ -198,7 +406,13 @@ export default function Analytics() {
                         <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
                         <Line type="monotone" dataKey="unique_users" stroke="hsl(var(--primary))" strokeWidth={2} />
                         <Line type="monotone" dataKey="total_logins" stroke="hsl(var(--chart-2))" strokeWidth={2} />
-                        <Legend />
+                        <Legend 
+                          formatter={(value) => {
+                            if (value === 'unique_users') return 'Unique Users';
+                            if (value === 'total_logins') return 'Total Logins';
+                            return value;
+                          }}
+                        />
                       </LineChart>
                     </ChartContainer>
                   </CardContent>
@@ -244,16 +458,16 @@ export default function Analytics() {
             </div>
           </TabsContent>
 
-          {/* Crops & Harvest Tab Content */}
-          <TabsContent value="crops-harvest" className="mt-6">
+          {/* Crops, Harvest & Yields Tab Content */}
+          <TabsContent value="crops-harvest-yield" className="mt-6">
             <div className="flex flex-col gap-6">
               {/* Summary Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
                 <TextureCardStyled className="rounded-2xl">
                   <TextureCardContent className="flex items-center gap-4">
                     <div>
-                      <p className="text-sm text-muted-foreground">Total Harvest This Month</p>
-                      <p className="text-2xl font-bold text-foreground">{cropsHarvest.harvest_this_month} <span className="text-sm font-normal text-muted-foreground">crops</span></p>
+                      <p className="text-sm text-muted-foreground">Harvest This Month</p>
+                      <p className="text-2xl font-bold text-foreground">{cropsHarvestYield.harvest_this_month} <span className="text-sm font-normal text-muted-foreground">crops</span></p>
                     </div>
                   </TextureCardContent>
                 </TextureCardStyled>
@@ -261,8 +475,8 @@ export default function Analytics() {
                 <TextureCardStyled className="rounded-2xl">
                   <TextureCardContent className="flex items-center gap-4">
                     <div>
-                      <p className="text-sm text-muted-foreground">Total Harvest This Year</p>
-                      <p className="text-2xl font-bold text-foreground">{cropsHarvest.harvest_this_year} <span className="text-sm font-normal text-muted-foreground">total</span></p>
+                      <p className="text-sm text-muted-foreground">Harvest This Year</p>
+                      <p className="text-2xl font-bold text-foreground">{cropsHarvestYield.harvest_this_year} <span className="text-sm font-normal text-muted-foreground">total</span></p>
                     </div>
                   </TextureCardContent>
                 </TextureCardStyled>
@@ -270,29 +484,53 @@ export default function Analytics() {
                 <TextureCardStyled className="rounded-2xl">
                   <TextureCardContent className="flex items-center gap-4">
                     <div>
-                      <p className="text-sm text-muted-foreground">Most Grown Crop Type</p>
-                      <p className="text-2xl font-bold text-foreground">{cropsHarvest.most_grown_crop || 'N/A'}</p>
+                      <p className="text-sm text-muted-foreground">Total Yield Weight</p>
+                      <p className="text-2xl font-bold text-foreground">{cropsHarvestYield.total_yield_weight} <span className="text-sm font-normal text-muted-foreground">kg</span></p>
+                    </div>
+                  </TextureCardContent>
+                </TextureCardStyled>
+
+                <TextureCardStyled className="rounded-2xl">
+                  <TextureCardContent className="flex items-center gap-4">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Avg Yield/Setup</p>
+                      <p className="text-2xl font-bold text-foreground">{cropsHarvestYield.average_yield_per_setup} <span className="text-sm font-normal text-muted-foreground">kg</span></p>
+                    </div>
+                  </TextureCardContent>
+                </TextureCardStyled>
+
+                <TextureCardStyled className="rounded-2xl">
+                  <TextureCardContent className="flex items-center gap-4">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Most Grown Crop</p>
+                      <p className="text-2xl font-bold text-foreground">{cropsHarvestYield.most_grown_crop || 'N/A'}</p>
                     </div>
                   </TextureCardContent>
                 </TextureCardStyled>
               </div>
 
-              {/* Row 1: Harvest Bar Chart + Crop Type Distribution Radar */}
+              {/* Row 1: Combined Harvest & Yield Trends + Crop Type Distribution */}
               <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-                {/* Harvest Bar Chart */}
+                {/* Combined Harvest & Yield Trends */}
                 <Card className="lg:col-span-3 rounded-2xl">
                   <CardHeader>
-                    <CardTitle>Monthly Harvest Insights</CardTitle>
-                    <CardDescription>Harvest trends over the last 12 months</CardDescription>
+                    <CardTitle>Harvest & Yield Performance</CardTitle>
+                    <CardDescription>
+                      {frequency === 'weekly'
+                        ? 'Weekly harvest count and yield weight'
+                        : 'Monthly harvest count and yield weight'}
+                      {dateFrom && dateTo && ` (${dateFrom} to ${dateTo})`}
+                    </CardDescription>
                   </CardHeader>
                   <CardContent>
                     <ChartContainer
                       config={{
-                        harvested: { label: 'Harvested', color: '#cadbb7' }
+                        harvested: { label: 'Crops Harvested', color: '#cadbb7' },
+                        total_weight: { label: 'Yield Weight (kg)', color: 'hsl(var(--primary))' }
                       }}
                       className="h-[300px] w-full"
                     >
-                      <BarChart data={cropsHarvest.monthly_harvest_trend} barCategoryGap="8%">
+                      <BarChart data={cropsHarvestYield.monthly_harvest_trend} barCategoryGap="8%">
                         <CartesianGrid vertical={false} />
                         <XAxis
                           dataKey="month"
@@ -300,16 +538,34 @@ export default function Analytics() {
                           tickMargin={10}
                           axisLine={false}
                         />
+                        <YAxis yAxisId="left" tickLine={false} axisLine={false} />
+                        <YAxis yAxisId="right" orientation="right" tickLine={false} axisLine={false} />
                         <ChartTooltip
                           cursor={false}
-                          content={<ChartTooltipContent hideLabel />}
+                          content={<ChartTooltipContent />}
+                        />
+                        <Legend 
+                          formatter={(value) => {
+                            if (value === 'harvested') return 'Crops Harvested';
+                            if (value === 'total_weight') return 'Yield Weight (kg)';
+                            return value;
+                          }}
                         />
                         <Bar
+                          yAxisId="left"
                           dataKey="harvested"
                           fill="#cadbb7"
                           strokeWidth={2}
                           radius={20}
-                          maxBarSize={80}
+                          maxBarSize={60}
+                        />
+                        <Bar
+                          yAxisId="right"
+                          dataKey="total_weight"
+                          fill="hsl(var(--primary))"
+                          strokeWidth={2}
+                          radius={20}
+                          maxBarSize={60}
                         />
                       </BarChart>
                     </ChartContainer>
@@ -321,7 +577,8 @@ export default function Analytics() {
                   <CardHeader className="items-center pb-4">
                     <CardTitle>Crop Type Distribution</CardTitle>
                     <CardDescription>
-                      Top crops by setup count
+                      Popular crops by harvest count
+                      {dateFrom && dateTo && ` (filtered)`}
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="pb-0">
@@ -331,7 +588,7 @@ export default function Analytics() {
                       }}
                       className="mx-auto aspect-square max-h-[300px]"
                     >
-                      <RadarChart data={cropsHarvest.crop_type_distribution}>
+                      <RadarChart data={cropsHarvestYield.crop_type_distribution}>
                         <ChartTooltip
                           cursor={false}
                           content={<ChartTooltipContent hideLabel />}
@@ -349,6 +606,74 @@ export default function Analytics() {
                 </Card>
               </div>
 
+              {/* Top Yielding Crops */}
+              <Card className="rounded-2xl">
+                <CardHeader>
+                  <CardTitle>Top Yielding Crops</CardTitle>
+                  <CardDescription>
+                    Crops ranked by total yield weight
+                    {dateFrom && dateTo && ` within selected period`}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Crop Name</TableHead>
+                        <TableHead>Total Weight (kg)</TableHead>
+                        <TableHead>Setup Count</TableHead>
+                        <TableHead>Avg per Setup</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {cropsHarvestYield.top_yielding_crops && cropsHarvestYield.top_yielding_crops.length > 0 ? (
+                        cropsHarvestYield.top_yielding_crops.map((crop, index) => (
+                          <TableRow key={index}>
+                            <TableCell className="font-medium">{crop.crop_name}</TableCell>
+                            <TableCell>{crop.total_weight} kg</TableCell>
+                            <TableCell>{crop.setup_count}</TableCell>
+                            <TableCell>{(crop.total_weight / crop.setup_count).toFixed(2)} kg</TableCell>
+                          </TableRow>
+                        ))
+                      ) : (
+                        <TableRow>
+                          <TableCell colSpan={4} className="text-center text-muted-foreground">
+                            No yield data available
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+
+              {/* Grade Distribution */}
+              <Card className="rounded-2xl">
+                <CardHeader>
+                  <CardTitle>Yield Quality Distribution</CardTitle>
+                  <CardDescription>Breakdown of harvested yield by grade quality</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {cropsHarvestYield.grade_distribution && Object.keys(cropsHarvestYield.grade_distribution).length > 0 ? (
+                      Object.entries(cropsHarvestYield.grade_distribution).map(([grade, data]) => (
+                        <div key={grade} className="p-4 border rounded-lg">
+                          <p className="text-sm text-muted-foreground capitalize">{grade}</p>
+                          <p className="text-2xl font-bold text-foreground">{data.weight} kg</p>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {data.count} units • {data.percentage}% of total
+                          </p>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="col-span-3 text-center text-muted-foreground p-4">
+                        No grade distribution data available
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+
               {/* Status Distributions */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {/* Growth Stage Distribution */}
@@ -359,12 +684,16 @@ export default function Analytics() {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-2">
-                      {Object.entries(cropsHarvest.growth_stage_distribution).map(([stage, count]) => (
-                        <div key={stage} className="flex items-center justify-between p-2 border rounded">
-                          <span className="text-sm capitalize">{stage}</span>
-                          <span className="font-semibold">{count}</span>
-                        </div>
-                      ))}
+                      {cropsHarvestYield.growth_stage_distribution && Object.keys(cropsHarvestYield.growth_stage_distribution).length > 0 ? (
+                        Object.entries(cropsHarvestYield.growth_stage_distribution).map(([stage, count]) => (
+                          <div key={stage} className="flex items-center justify-between p-2 border rounded">
+                            <span className="text-sm capitalize">{stage}</span>
+                            <span className="font-semibold">{count}</span>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="text-center text-muted-foreground p-4">No data</div>
+                      )}
                     </div>
                   </CardContent>
                 </Card>
@@ -377,12 +706,16 @@ export default function Analytics() {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-2">
-                      {Object.entries(cropsHarvest.health_status_distribution).map(([status, count]) => (
-                        <div key={status} className="flex items-center justify-between p-2 border rounded">
-                          <span className="text-sm capitalize">{status}</span>
-                          <span className="font-semibold">{count}</span>
-                        </div>
-                      ))}
+                      {cropsHarvestYield.health_status_distribution && Object.keys(cropsHarvestYield.health_status_distribution).length > 0 ? (
+                        Object.entries(cropsHarvestYield.health_status_distribution).map(([status, count]) => (
+                          <div key={status} className="flex items-center justify-between p-2 border rounded">
+                            <span className="text-sm capitalize">{status}</span>
+                            <span className="font-semibold">{count}</span>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="text-center text-muted-foreground p-4">No data</div>
+                      )}
                     </div>
                   </CardContent>
                 </Card>
@@ -395,141 +728,24 @@ export default function Analytics() {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-2">
-                      {Object.entries(cropsHarvest.setups_by_status).map(([status, count]) => (
-                        <div key={status} className="flex items-center justify-between p-2 border rounded">
-                          <span className="text-sm capitalize">{status}</span>
-                          <span className="font-semibold">{count}</span>
-                        </div>
-                      ))}
+                      {cropsHarvestYield.setups_by_status && Object.keys(cropsHarvestYield.setups_by_status).length > 0 ? (
+                        Object.entries(cropsHarvestYield.setups_by_status).map(([status, count]) => (
+                          <div key={status} className="flex items-center justify-between p-2 border rounded">
+                            <span className="text-sm capitalize">{status}</span>
+                            <span className="font-semibold">{count}</span>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="text-center text-muted-foreground p-4">No data</div>
+                      )}
                       <div className="mt-4 p-3 bg-primary/10 rounded-lg">
                         <p className="text-xs text-muted-foreground">Harvest Rate</p>
-                        <p className="text-2xl font-bold text-primary">{cropsHarvest.harvest_rate}%</p>
+                        <p className="text-2xl font-bold text-primary">{cropsHarvestYield.harvest_rate}%</p>
                       </div>
                     </div>
                   </CardContent>
                 </Card>
               </div>
-            </div>
-          </TabsContent>
-
-          {/* Yields Tab Content */}
-          <TabsContent value="yields" className="mt-6">
-            <div className="flex flex-col gap-6">
-              {/* Summary Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Card className="rounded-2xl">
-                  <CardContent className="pt-6">
-                    <div>
-                      <p className="text-sm text-muted-foreground">Total Yield Weight</p>
-                      <p className="text-3xl font-bold text-foreground">{yields.total_yield_weight} <span className="text-lg font-normal text-muted-foreground">kg</span></p>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card className="rounded-2xl">
-                  <CardContent className="pt-6">
-                    <div>
-                      <p className="text-sm text-muted-foreground">Total Yield Count</p>
-                      <p className="text-3xl font-bold text-foreground">{yields.total_yield_count} <span className="text-lg font-normal text-muted-foreground">units</span></p>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card className="rounded-2xl">
-                  <CardContent className="pt-6">
-                    <div>
-                      <p className="text-sm text-muted-foreground">Avg Yield Per Setup</p>
-                      <p className="text-3xl font-bold text-foreground">{yields.average_yield_per_setup} <span className="text-lg font-normal text-muted-foreground">kg</span></p>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* Charts Row */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Yield Trends */}
-                <Card className="rounded-2xl">
-                  <CardHeader>
-                    <CardTitle>Yield Trends</CardTitle>
-                    <CardDescription>Total yield weight over the last 12 months</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <ChartContainer
-                      config={{
-                        total_weight: { label: 'Weight (kg)', color: 'hsl(var(--primary))' }
-                      }}
-                      className="h-[300px] w-full"
-                    >
-                      <LineChart data={yields.yield_trends}>
-                        <CartesianGrid vertical={false} strokeDasharray="3 3" />
-                        <XAxis
-                          dataKey="month"
-                          tickLine={false}
-                          tickMargin={10}
-                          axisLine={false}
-                          tick={{ fontSize: 12 }}
-                        />
-                        <YAxis
-                          tickLine={false}
-                          axisLine={false}
-                          tick={{ fontSize: 12 }}
-                        />
-                        <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
-                        <Line type="monotone" dataKey="total_weight" stroke="hsl(var(--primary))" strokeWidth={2} />
-                      </LineChart>
-                    </ChartContainer>
-                  </CardContent>
-                </Card>
-
-                {/* Top Yielding Crops */}
-                <Card className="rounded-2xl">
-                  <CardHeader>
-                    <CardTitle>Top Yielding Crops</CardTitle>
-                    <CardDescription>Crops with highest total yield</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Crop Name</TableHead>
-                          <TableHead>Weight (kg)</TableHead>
-                          <TableHead>Setups</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {yields.top_yielding_crops.map((crop, index) => (
-                          <TableRow key={index}>
-                            <TableCell className="font-medium">{crop.crop_name}</TableCell>
-                            <TableCell>{crop.total_weight}</TableCell>
-                            <TableCell>{crop.setup_count}</TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* Grade Distribution */}
-              <Card className="rounded-2xl">
-                <CardHeader>
-                  <CardTitle>Grade Distribution</CardTitle>
-                  <CardDescription>Breakdown of yield by grade quality</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {Object.entries(yields.grade_distribution).map(([grade, data]) => (
-                      <div key={grade} className="p-4 border rounded-lg">
-                        <p className="text-sm text-muted-foreground capitalize">{grade}</p>
-                        <p className="text-2xl font-bold text-foreground">{data.weight} kg</p>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          {data.count} units • {data.percentage}%
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
             </div>
           </TabsContent>
 
@@ -586,7 +802,12 @@ export default function Analytics() {
                     <div className="flex items-center justify-between">
                       <div>
                         <CardTitle>Water Filtered</CardTitle>
-                        <CardDescription>Total liters filtered per week</CardDescription>
+                        <CardDescription>
+                          {frequency === 'weekly'
+                            ? 'Total liters filtered per week'
+                            : 'Total liters filtered per month'}
+                          {dateFrom && dateTo && ` (${dateFrom} to ${dateTo})`}
+                        </CardDescription>
                       </div>
                     </div>
                   </CardHeader>
@@ -632,7 +853,10 @@ export default function Analytics() {
               <Card className="rounded-2xl">
                 <CardHeader>
                   <CardTitle>Treatment Trends</CardTitle>
-                  <CardDescription>Daily treatment cycles and success rate (last 30 days)</CardDescription>
+                  <CardDescription>
+                    Treatment cycles and success rate
+                    {dateFrom && dateTo && ` from ${dateFrom} to ${dateTo}`}
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <ChartContainer
@@ -659,7 +883,13 @@ export default function Analytics() {
                       <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
                       <Line type="monotone" dataKey="cycle_count" stroke="hsl(var(--primary))" strokeWidth={2} />
                       <Line type="monotone" dataKey="success_count" stroke="hsl(var(--chart-2))" strokeWidth={2} />
-                      <Legend />
+                      <Legend 
+                        formatter={(value) => {
+                          if (value === 'cycle_count') return 'Total Cycles';
+                          if (value === 'success_count') return 'Successful';
+                          return value;
+                        }}
+                      />
                     </LineChart>
                   </ChartContainer>
                 </CardContent>
@@ -684,26 +914,34 @@ export default function Analytics() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {waterTreatment.stage_performance.map((stage, index) => (
-                        <TableRow key={index}>
-                          <TableCell className="font-medium">{stage.stage_name}</TableCell>
-                          <TableCell>{stage.total_count}</TableCell>
-                          <TableCell>
-                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                              stage.pass_rate >= 80
-                                ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
-                                : stage.pass_rate >= 60
-                                ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
-                                : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-                            }`}>
-                              {stage.pass_rate}%
-                            </span>
+                      {waterTreatment.stage_performance && waterTreatment.stage_performance.length > 0 ? (
+                        waterTreatment.stage_performance.map((stage, index) => (
+                          <TableRow key={index}>
+                            <TableCell className="font-medium">{stage.stage_name}</TableCell>
+                            <TableCell>{stage.total_count}</TableCell>
+                            <TableCell>
+                              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                stage.pass_rate >= 80
+                                  ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+                                  : stage.pass_rate >= 60
+                                  ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+                                  : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                              }`}>
+                                {stage.pass_rate}%
+                              </span>
+                            </TableCell>
+                            <TableCell>{stage.avg_ph ?? 'N/A'}</TableCell>
+                            <TableCell>{stage.avg_turbidity ?? 'N/A'}</TableCell>
+                            <TableCell>{stage.avg_tds ?? 'N/A'}</TableCell>
+                          </TableRow>
+                        ))
+                      ) : (
+                        <TableRow>
+                          <TableCell colSpan={6} className="text-center text-muted-foreground">
+                            No stage performance data available
                           </TableCell>
-                          <TableCell>{stage.avg_ph ?? 'N/A'}</TableCell>
-                          <TableCell>{stage.avg_turbidity ?? 'N/A'}</TableCell>
-                          <TableCell>{stage.avg_tds ?? 'N/A'}</TableCell>
                         </TableRow>
-                      ))}
+                      )}
                     </TableBody>
                   </Table>
                 </CardContent>

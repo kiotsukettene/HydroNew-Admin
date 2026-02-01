@@ -16,11 +16,6 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import {
-    Popover,
-    PopoverContent,
-    PopoverTrigger,
-} from '@/components/ui/popover';
 import { Pagination } from '@/types/pagination';
 import { User } from '@/types/user';
 import { Head, router, useForm, usePage } from '@inertiajs/react';
@@ -29,13 +24,12 @@ import {
     ArrowUpDown,
     ArrowUp,
     ArrowDown,
-    Check,
     Filter,
     Loader2,
     MoreHorizontal,
     Pencil,
     Users as UsersIcon,
-    X,
+    AlertTriangle,
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useDebounce } from 'use-debounce';
@@ -59,6 +53,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+import { toast } from 'sonner';
 
 type SortField = 'name' | 'email' | 'created_at';
 type SortDirection = 'asc' | 'desc';
@@ -69,12 +64,11 @@ export default function Users() {
         { key: 'email', label: 'Email', sortable: true },
         { key: 'address', label: 'Address', sortable: false },
         { key: 'status', label: 'Status', sortable: false },
-        { key: 'verified', label: 'Verified', sortable: false },
     ];
 
     const { users, filters, userCount } = usePage<{
         users: Pagination<User>;
-        filters: { search: string; sort?: string; direction?: string; status?: string; verified?: string };
+        filters: { search: string; sort?: string; direction?: string; status?: string };
         userCount: number;
     }>().props;
 
@@ -83,7 +77,6 @@ export default function Users() {
         sort: (filters.sort as SortField) || 'created_at',
         direction: (filters.direction as SortDirection) || 'desc',
         status: filters.status || 'all',
-        verified: filters.verified || 'all',
     });
     const [debounceSearch] = useDebounce(data.search, 500);
     const [isSearching, setIsSearching] = useState(false);
@@ -92,6 +85,10 @@ export default function Users() {
     // Edit modal state
     const [isEditOpen, setIsEditOpen] = useState(false);
     const [editingUser, setEditingUser] = useState<User | null>(null);
+
+    // Archive confirmation modal state
+    const [isArchiveConfirmOpen, setIsArchiveConfirmOpen] = useState(false);
+    const [userToArchive, setUserToArchive] = useState<User | null>(null);
 
     // Edit form
     const { data: editData, setData: setEditData, put, processing, reset } = useForm({
@@ -120,6 +117,39 @@ export default function Users() {
                     setIsEditOpen(false);
                     reset();
                     setEditingUser(null);
+                    toast.success('User updated successfully', {
+                        description: `${editData.first_name} ${editData.last_name}'s information has been updated.`,
+                    });
+                },
+                onError: () => {
+                    toast.error('Failed to update user', {
+                        description: 'Please check the form and try again.',
+                    });
+                },
+            });
+        }
+    };
+
+    const handleArchiveClick = (user: User) => {
+        setUserToArchive(user);
+        setIsArchiveConfirmOpen(true);
+    };
+
+    const handleArchiveConfirm = () => {
+        if (userToArchive) {
+            router.patch(`/users/${userToArchive.id}/archive`, {}, {
+                preserveScroll: true,
+                onSuccess: () => {
+                    setIsArchiveConfirmOpen(false);
+                    setUserToArchive(null);
+                    toast.success('User archived successfully', {
+                        description: `${userToArchive.first_name} ${userToArchive.last_name} has been moved to archives.`,
+                    });
+                },
+                onError: () => {
+                    toast.error('Failed to archive user', {
+                        description: 'Please try again later.',
+                    });
                 },
             });
         }
@@ -135,7 +165,6 @@ export default function Users() {
                 sort: field, 
                 direction: newDirection,
                 status: data.status,
-                verified: data.verified
             },
             {
                 preserveState: true,
@@ -148,7 +177,7 @@ export default function Users() {
         );
     };
 
-    const handleFilterChange = (filterType: 'status' | 'verified', value: string) => {
+    const handleFilterChange = (filterType: 'status', value: string) => {
         router.get(
             '/users',
             {
@@ -156,7 +185,6 @@ export default function Users() {
                 sort: data.sort,
                 direction: data.direction,
                 status: filterType === 'status' ? value : data.status,
-                verified: filterType === 'verified' ? value : data.verified,
             },
             {
                 preserveState: true,
@@ -184,7 +212,6 @@ export default function Users() {
                     sort: data.sort, 
                     direction: data.direction,
                     status: data.status,
-                    verified: data.verified
                 },
                 {
                     preserveState: true,
@@ -241,98 +268,36 @@ export default function Users() {
                         placeholder="Search users..."
                     />
 
-                    <Popover>
-                        <PopoverTrigger asChild>
-                            <Button variant="secondary">
+                    <div className="flex gap-3">
+                        <Select value={data.status} onValueChange={(value) => handleFilterChange('status', value)}>
+                            <SelectTrigger
+                                className="h-8 w-[150px] border-2 rounded-lg text-xs"
+                                aria-label="Filter by status"
+                            >
                                 <Filter className="mr-2 h-4 w-4" />
-                                Filters
-                                {(data.status !== 'all' || data.verified !== 'all') && (
-                                    <Badge className="ml-2 bg-orange-500 text-white px-1.5 py-0 text-xs">
-                                        {[data.status !== 'all' ? 1 : 0, data.verified !== 'all' ? 1 : 0].reduce((a, b) => a + b, 0)}
-                                    </Badge>
-                                )}
-                            </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-80">
-                            <div className="space-y-4">
-                                <div className="space-y-2">
-                                    <h4 className="font-medium leading-none">Filters</h4>
-                                    <p className="text-sm text-muted-foreground">
-                                        Filter users by status and verification
-                                    </p>
-                                </div>
-                                <div className="space-y-4">
-                                    <div className="space-y-2">
-                                        <Label htmlFor="status-filter" className="text-sm font-medium">
-                                            Status
-                                        </Label>
-                                        <Select value={data.status} onValueChange={(value) => handleFilterChange('status', value)}>
-                                            <SelectTrigger id="status-filter">
-                                                <SelectValue placeholder="Filter by status" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="all">All Status</SelectItem>
-                                                <SelectItem value="active">Active</SelectItem>
-                                                <SelectItem value="inactive">Inactive</SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label htmlFor="verified-filter" className="text-sm font-medium">
-                                            Verification
-                                        </Label>
-                                        <Select value={data.verified} onValueChange={(value) => handleFilterChange('verified', value)}>
-                                            <SelectTrigger id="verified-filter">
-                                                <SelectValue placeholder="Filter by verified" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="all">All Users</SelectItem>
-                                                <SelectItem value="verified">Verified</SelectItem>
-                                                <SelectItem value="unverified">Unverified</SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-                                    {(data.status !== 'all' || data.verified !== 'all') && (
-                                        <Button 
-                                            variant="ghost" 
-                                            size="sm" 
-                                            className="w-full"
-                                            onClick={() => {
-                                                router.get(
-                                                    '/users',
-                                                    {
-                                                        search: data.search,
-                                                        sort: data.sort,
-                                                        direction: data.direction,
-                                                        status: 'all',
-                                                        verified: 'all',
-                                                    },
-                                                    {
-                                                        preserveState: true,
-                                                        preserveScroll: true,
-                                                        replace: true,
-                                                        onSuccess: () => {
-                                                            setData({ ...data, status: 'all', verified: 'all' });
-                                                        }
-                                                    }
-                                                );
-                                            }}
-                                        >
-                                            Clear Filters
-                                        </Button>
-                                    )}
-                                </div>
-                            </div>
-                        </PopoverContent>
-                    </Popover>
+                                <SelectValue placeholder="Filter Status" />
+                            </SelectTrigger>
+                            <SelectContent className="rounded-xl">
+                                <SelectItem value="all" className="rounded-lg text-xs">
+                                    All Status
+                                </SelectItem>
+                                <SelectItem value="active" className="rounded-lg text-xs">
+                                    Active
+                                </SelectItem>
+                                <SelectItem value="inactive" className="rounded-lg text-xs">
+                                    Inactive
+                                </SelectItem>
+                            </SelectContent>
+                        </Select>
 
-                    <Button 
-                        variant="secondary"
-                        onClick={() => router.visit('/users/archived')}
-                    >
-                        <Archive className="mr-2 h-4 w-4" />
-                        View Archived
-                    </Button>
+                        <Button
+                            variant="secondary"
+                            onClick={() => router.visit('/users/archived')}
+                        >
+                            <Archive className="mr-2 h-4 w-4" />
+                            View Archived
+                        </Button>
+                    </div>
                 </div>
                 <Table className="border">
                     <TableHeader>
@@ -391,25 +356,11 @@ export default function Users() {
                                         {user.address}
                                     </TableCell>
                                     <TableCell>
-                                        <Badge
-                                            className={
-                                                user.status === 'active'
-                                                    ? 'border-amber-300 bg-amber-100 text-amber-500'
-                                                    : 'border-gray-300 bg-gray-100 text-gray-500'
-                                            }
-                                        >
-                                            {user.status
-                                                .charAt(0)
-                                                .toUpperCase() +
-                                                user.status.slice(1)}
+                                        <Badge className={user.status === 'active' 
+                                            ? "border-green-300 bg-green-100 text-green-600" 
+                                            : "border-gray-300 bg-gray-100 text-gray-600"}>
+                                            {user.status === 'active' ? 'Active' : 'Inactive'}
                                         </Badge>
-                                    </TableCell>
-                                    <TableCell>
-                                        {user.email_verified_at ? (
-                                            <Check className="h-5 w-5 text-green-600" />
-                                        ) : (
-                                            <X className="h-5 w-5 text-red-500" />
-                                        )}
                                     </TableCell>
                                     <TableCell>
                                         <DropdownMenu>
@@ -429,9 +380,7 @@ export default function Users() {
                                                     Edit
                                                 </DropdownMenuItem>
                                                 <DropdownMenuItem
-                                                    onClick={() => router.patch(`/users/${user.id}/archive`, {}, {
-                                                        preserveScroll: true,
-                                                    })}
+                                                    onClick={() => handleArchiveClick(user)}
                                                 >
                                                     <Archive className="mr-2 h-4 w-4" />
                                                     Archive
@@ -525,6 +474,49 @@ export default function Users() {
         </DialogFooter>
       </DialogContent>
     </Dialog>
+
+    {/* Archive Confirmation Modal */}
+    <Dialog open={isArchiveConfirmOpen} onOpenChange={setIsArchiveConfirmOpen}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <AlertTriangle className="h-5 w-5 text-orange-500" />
+            Archive User
+          </DialogTitle>
+          <DialogDescription>
+            Are you sure you want to archive this user? They will be moved to the archived users list.
+          </DialogDescription>
+        </DialogHeader>
+
+        {userToArchive && (
+          <div className="rounded-lg border border-border bg-muted p-4">
+            <p className="text-sm font-medium text-foreground">
+              {userToArchive.first_name} {userToArchive.last_name}
+            </p>
+            <p className="text-sm text-muted-foreground">{userToArchive.email}</p>
+          </div>
+        )}
+
+        <DialogFooter>
+          <Button 
+            variant="secondary" 
+            onClick={() => {
+              setIsArchiveConfirmOpen(false);
+              setUserToArchive(null);
+            }}
+          >
+            Cancel
+          </Button>
+          <Button 
+            variant="destructive"
+            onClick={handleArchiveConfirm}
+          >
+            Archive User
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+
             </div>
         </AppLayout>
     );

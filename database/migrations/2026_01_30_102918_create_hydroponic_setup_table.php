@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('hydroponic_setup', function (Blueprint $table) {
             $table->bigInteger('id', true);
             $table->bigInteger('user_id');
+            $table->bigInteger('device_id')->nullable()->index('hydroponic_setup_device_id_foreign');
             $table->string('crop_name', 100);
             $table->integer('number_of_crops')->default(0);
             $table->enum('bed_size', ['small', 'medium', 'large', 'custom']);
