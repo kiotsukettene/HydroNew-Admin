@@ -2,14 +2,20 @@ import { PhTdsChart } from '@/components/ph-tds-chart';
 import { Card, CardDescription, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import AppLayout from '@/layouts/app-layout';
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 import { Cast, Leaf, User, Droplet, Calendar, Sprout } from 'lucide-react';
 import TextureCard from '@/components/ui/texture-card';
 import { index as devicesIndex } from '@/routes/devices';
+import { DashboardStats, HarvestStatus } from '@/types/dashboard';
 
 
 
 export default function Dashboard() {
+    const { stats, harvestStatus } = usePage<{
+        stats: DashboardStats;
+        harvestStatus: HarvestStatus;
+    }>().props;
+
     return (
         <AppLayout title="Dashboard">
 
@@ -58,21 +64,21 @@ export default function Dashboard() {
         <Card className='p-4 w-full flex-1'>
           <CardTitle className='text-xs font-semibold text-muted-foreground'>Total Users</CardTitle>
           <div className="flex flex-row items-center justify-between mt-2">
-            <div className='text-3xl font-medium'>14</div>
+            <div className='text-3xl font-medium'>{stats.totalUsers}</div>
             <User className='text-primary/70' size={32} strokeWidth={1}/>
           </div>
         </Card>
         <Card className='p-4 w-full flex-1'>
           <CardTitle className='text-xs font-semibold text-muted-foreground'>Total Harvested Crops</CardTitle>
           <div className="flex flex-row items-center justify-between mt-2">
-            <div className='text-3xl font-medium'>23</div>
+            <div className='text-3xl font-medium'>{stats.totalHarvestedCrops}</div>
             <Leaf className='text-primary/70' size={32} strokeWidth={1}/>
           </div>
         </Card>
         <Card className='p-4 w-full flex-1'>
           <CardTitle className='text-xs font-semibold text-muted-foreground'>Total Devices</CardTitle>
           <div className="flex flex-row items-center justify-between mt-2">
-            <div className='text-3xl font-medium'>13</div>
+            <div className='text-3xl font-medium'>{stats.totalDevices}</div>
             <Cast className='text-primary/70' size={32} strokeWidth={1}/>
           </div>
         </Card>
@@ -114,7 +120,7 @@ export default function Dashboard() {
             <div className='flex-1'>
               <div className='text-white font-medium text-sm'>Water Tank Level</div>
               <div className='text-white/70 text-xs mt-1'>
-                Water level at 85%
+                Water level at {harvestStatus.waterTankLevel}%
               </div>
             </div>
           </div>
@@ -127,7 +133,7 @@ export default function Dashboard() {
             <div className='flex-1'>
               <div className='text-white font-medium text-sm'>Current Growth Stage</div>
               <div className='text-white/70 text-xs mt-1'>
-                Vegetative stage
+                {harvestStatus.currentGrowthStage}
               </div>
             </div>
           </div>
@@ -140,7 +146,9 @@ export default function Dashboard() {
             <div className='flex-1'>
               <div className='text-white font-medium text-sm'>Estimated Harvest Date</div>
               <div className='text-white/70 text-xs mt-1'>
-                Feb 12, 2025 • 14 days remaining
+                {harvestStatus.estimatedHarvestDate 
+                  ? `${harvestStatus.estimatedHarvestDate} • ${harvestStatus.daysRemaining} days remaining`
+                  : 'No active harvest scheduled'}
               </div>
             </div>
           </div>

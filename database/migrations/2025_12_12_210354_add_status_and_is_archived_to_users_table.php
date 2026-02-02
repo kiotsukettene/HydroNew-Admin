@@ -11,9 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('sensors', function (Blueprint $table) {
-            $table->index('device_id');
-            $table->foreign(['device_id'], 'sensors_ibfk_1')->references(['id'])->on('devices')->onUpdate('restrict')->onDelete('cascade');
+        Schema::table('users', function (Blueprint $table) {
+            $table->enum('status', ['active', 'inactive'])->default('active')->after('roles');
         });
     }
 
@@ -22,8 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('sensors', function (Blueprint $table) {
-            $table->dropForeign('sensors_ibfk_1');
+        Schema::table('users', function (Blueprint $table) {
+            $table->dropColumn('status');
         });
     }
 };

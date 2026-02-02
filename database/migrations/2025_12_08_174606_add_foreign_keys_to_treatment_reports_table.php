@@ -12,6 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('treatment_reports', function (Blueprint $table) {
+            $table->index('device_id');
             $table->foreign(['device_id'], 'treatment_reports_ibfk_1')->references(['id'])->on('devices')->onUpdate('restrict')->onDelete('cascade');
         });
     }
