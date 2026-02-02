@@ -1,19 +1,16 @@
 import AppLayout from '@/layouts/app-layout'
-import { BreadcrumbItem } from '@/types';
 import { Head, usePage, router } from '@inertiajs/react'
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import { cleanFilters } from '@/lib/filter-helpers'
 import {
   Table,
   TableBody,
-  TableCaption,
   TableCell,
-  TableFooter,
   TableHead,
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { ArrowUpDown, MoreHorizontal, RotateCcw, Trash2, Check, X, ArrowLeft, AlertTriangle } from 'lucide-react'
+import { ArrowUpDown, MoreHorizontal, RotateCcw, Check, X, ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -22,7 +19,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Badge } from '@/components/ui/badge'
-import SearchInput from '@/components/search-input'
 import { User } from "@/types/user"
 import { Pagination } from "@/types/pagination"
 import PaginationComp from "@/components/pagination"

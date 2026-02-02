@@ -2,7 +2,7 @@ import AppLayout from '@/layouts/app-layout'
 import { Head, usePage, router } from '@inertiajs/react'
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, RadarChart, PolarAngleAxis, PolarGrid, Radar, LineChart, Line, Legend } from 'recharts'
-import { Users, Cast, Leaf, Waves, TrendingUp, TrendingDown, Activity, Calendar, Filter, FileDown } from 'lucide-react'
+import { Users, Cast, Leaf, Waves, TrendingDown, Activity, Filter, FileDown } from 'lucide-react'
 import {
   TextureCardContent,
   TextureCardStyled
@@ -87,16 +87,16 @@ export default function Analytics() {
           {/* Compact Filter Controls - Inspired by Devices Page */}
           <div className="flex gap-2">
             {/* Export Buttons */}
-            <Button 
-              variant="secondary" 
-              size="sm" 
+            <Button
+              variant="secondary"
+              size="sm"
               className="h-8 gap-1.5 border-2"
               onClick={handleExportPdf}
             >
               <FileDown className="h-3.5 w-3.5" />
               <span className="text-xs">Export PDF</span>
             </Button>
-            
+
             <Popover>
               <PopoverTrigger asChild>
                 <Button variant="secondary" size="sm" className="h-8 gap-1.5 border-2">
@@ -317,7 +317,7 @@ export default function Analytics() {
                   <CardHeader>
                     <CardTitle>User Registration Trend</CardTitle>
                     <CardDescription>
-                      {frequency === 'weekly' 
+                      {frequency === 'weekly'
                         ? 'New user registrations per week'
                         : 'New user registrations per month'}
                       {dateFrom && dateTo && ` (${dateFrom} to ${dateTo})`}
@@ -385,7 +385,7 @@ export default function Analytics() {
                         <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
                         <Line type="monotone" dataKey="unique_users" stroke="hsl(var(--primary))" strokeWidth={2} />
                         <Line type="monotone" dataKey="total_logins" stroke="hsl(var(--chart-2))" strokeWidth={2} />
-                        <Legend 
+                        <Legend
                           formatter={(value) => {
                             if (value === 'unique_users') return 'Unique Users';
                             if (value === 'total_logins') return 'Total Logins';
@@ -523,7 +523,7 @@ export default function Analytics() {
                           cursor={false}
                           content={<ChartTooltipContent />}
                         />
-                        <Legend 
+                        <Legend
                           formatter={(value) => {
                             if (value === 'harvested') return 'Crops Harvested';
                             if (value === 'total_weight') return 'Yield Weight (kg)';
@@ -862,7 +862,7 @@ export default function Analytics() {
                       <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
                       <Line type="monotone" dataKey="cycle_count" stroke="hsl(var(--primary))" strokeWidth={2} />
                       <Line type="monotone" dataKey="success_count" stroke="hsl(var(--chart-2))" strokeWidth={2} />
-                      <Legend 
+                      <Legend
                         formatter={(value) => {
                           if (value === 'cycle_count') return 'Total Cycles';
                           if (value === 'success_count') return 'Successful';

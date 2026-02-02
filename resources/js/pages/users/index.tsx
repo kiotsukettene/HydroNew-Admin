@@ -17,6 +17,11 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from '@/components/ui/popover';
 import { Pagination } from '@/types/pagination';
 import { User } from '@/types/user';
 import { Head, router, useForm, usePage } from '@inertiajs/react';
@@ -37,15 +42,12 @@ import { useDebounce } from 'use-debounce';
 import {
   Table,
   TableBody,
-  TableCaption,
   TableCell,
-  TableFooter,
   TableHead,
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { Label } from '@/components/ui/label'
-import { Card } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
 import {
   Dialog,
   DialogContent,
@@ -73,11 +75,12 @@ export default function Users() {
         userCount: number;
     }>().props;
 
-    const { data, setData, get } = useForm({
+    const { data, setData } = useForm({
         search: filters.search || '',
         sort: (filters.sort as SortField) || 'created_at',
         direction: (filters.direction as SortDirection) || 'desc',
         status: filters.status || 'all',
+        verified: 'all',
     });
     const [debounceSearch] = useDebounce(data.search, 500);
     const [isSearching, setIsSearching] = useState(false);
@@ -179,7 +182,7 @@ export default function Users() {
         );
     };
 
-    const handleFilterChange = (filterType: 'status', value: string) => {
+    const handleFilterChange = (filterType: 'status' | 'verified', value: string) => {
         router.get(
             '/users',
             cleanFilters({
@@ -207,7 +210,6 @@ export default function Users() {
         }
 
         if (debounceSearch !== undefined) {
-            setIsSearching(true);
             router.get(
                 '/users',
                 cleanFilters({ 
@@ -221,11 +223,12 @@ export default function Users() {
                     preserveState: true,
                     preserveScroll: true,
                     replace: true,
+                    onStart: () => setIsSearching(true),
                     onFinish: () => setIsSearching(false),
                 },
             );
         }
-    }, [debounceSearch]);
+    }, [debounceSearch, data.sort, data.direction, data.status, data.verified]);
 
     const getSortIcon = (field: string) => {
         if (data.sort !== field) return <ArrowUpDown className="h-4 w-4" />;
@@ -273,21 +276,23 @@ export default function Users() {
                     />
 
                     <div className="flex gap-3">
-                        <Select value={data.status} onValueChange={(value) => handleFilterChange('status', value)}>
-                            <SelectTrigger
-                                className="h-8 w-[150px] border-2 rounded-lg text-xs"
-                                aria-label="Filter by status"
-                            >
-                                <Filter className="mr-2 h-4 w-4" />
-                                Filters
-                                {(data.status !== 'all' || data.verified !== 'all') && (
-                                    <Badge className="ml-2 bg-orange-500 text-white px-1.5 py-0 text-xs">
-                                        {[data.status !== 'all' ? 1 : 0, data.verified !== 'all' ? 1 : 0].reduce((a, b) => a + b, 0)}
-                                    </Badge>
-                                )}
-                            </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-80">
+                        <Popover>
+                            <PopoverTrigger asChild>
+                                <Button
+                                    variant="secondary"
+                                    className="h-8 w-[150px] border-2 rounded-lg text-xs"
+                                    aria-label="Filter by status"
+                                >
+                                    <Filter className="mr-2 h-4 w-4" />
+                                    Filters
+                                    {(data.status !== 'all' || data.verified !== 'all') && (
+                                        <Badge className="ml-2 bg-orange-500 text-white px-1.5 py-0 text-xs">
+                                            {[data.status !== 'all' ? 1 : 0, data.verified !== 'all' ? 1 : 0].reduce((a, b) => a + b, 0)}
+                                        </Badge>
+                                    )}
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-80">
                             <div className="space-y-4">
                                 <div className="space-y-2">
                                     <h4 className="font-medium leading-none">Filters</h4>
@@ -367,6 +372,7 @@ export default function Users() {
                         <Archive className="mr-2 h-4 w-4" />
                         View Archived
                     </Button>
+                    </div>
                 </div>
                 <Table className="border">
                     <TableHeader>
