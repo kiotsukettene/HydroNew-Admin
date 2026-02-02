@@ -1,6 +1,7 @@
 import AppLayout from '@/layouts/app-layout';
 import PaginationComp from '@/components/pagination';
 import SearchInput from '@/components/search-input';
+import { cleanFilters } from '@/lib/filter-helpers';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -160,12 +161,13 @@ export default function Users() {
         
         router.get(
             '/users',
-            { 
+            cleanFilters({ 
                 search: data.search, 
                 sort: field, 
                 direction: newDirection,
                 status: data.status,
-            },
+                verified: data.verified
+            }, { sort: 'created_at', direction: 'desc', status: 'all', verified: 'all' }),
             {
                 preserveState: true,
                 preserveScroll: true,
@@ -180,12 +182,13 @@ export default function Users() {
     const handleFilterChange = (filterType: 'status', value: string) => {
         router.get(
             '/users',
-            {
+            cleanFilters({
                 search: data.search,
                 sort: data.sort,
                 direction: data.direction,
                 status: filterType === 'status' ? value : data.status,
-            },
+                verified: filterType === 'verified' ? value : data.verified,
+            }, { sort: 'created_at', direction: 'desc', status: 'all', verified: 'all' }),
             {
                 preserveState: true,
                 preserveScroll: true,
@@ -207,12 +210,13 @@ export default function Users() {
             setIsSearching(true);
             router.get(
                 '/users',
-                { 
+                cleanFilters({ 
                     search: debounceSearch, 
                     sort: data.sort, 
                     direction: data.direction,
                     status: data.status,
-                },
+                    verified: data.verified
+                }, { sort: 'created_at', direction: 'desc', status: 'all', verified: 'all' }),
                 {
                     preserveState: true,
                     preserveScroll: true,
@@ -275,29 +279,94 @@ export default function Users() {
                                 aria-label="Filter by status"
                             >
                                 <Filter className="mr-2 h-4 w-4" />
-                                <SelectValue placeholder="Filter Status" />
-                            </SelectTrigger>
-                            <SelectContent className="rounded-xl">
-                                <SelectItem value="all" className="rounded-lg text-xs">
-                                    All Status
-                                </SelectItem>
-                                <SelectItem value="active" className="rounded-lg text-xs">
-                                    Active
-                                </SelectItem>
-                                <SelectItem value="inactive" className="rounded-lg text-xs">
-                                    Inactive
-                                </SelectItem>
-                            </SelectContent>
-                        </Select>
+                                Filters
+                                {(data.status !== 'all' || data.verified !== 'all') && (
+                                    <Badge className="ml-2 bg-orange-500 text-white px-1.5 py-0 text-xs">
+                                        {[data.status !== 'all' ? 1 : 0, data.verified !== 'all' ? 1 : 0].reduce((a, b) => a + b, 0)}
+                                    </Badge>
+                                )}
+                            </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-80">
+                            <div className="space-y-4">
+                                <div className="space-y-2">
+                                    <h4 className="font-medium leading-none">Filters</h4>
+                                    <p className="text-sm text-muted-foreground">
+                                        Filter users by status and verification
+                                    </p>
+                                </div>
+                                <div className="space-y-4">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="status-filter" className="text-sm font-medium">
+                                            Status
+                                        </Label>
+                                        <Select value={data.status} onValueChange={(value) => handleFilterChange('status', value)}>
+                                            <SelectTrigger id="status-filter">
+                                                <SelectValue placeholder="Filter by status" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="all">All Status</SelectItem>
+                                                <SelectItem value="active">Active</SelectItem>
+                                                <SelectItem value="inactive">Inactive</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="verified-filter" className="text-sm font-medium">
+                                            Verification
+                                        </Label>
+                                        <Select value={data.verified} onValueChange={(value) => handleFilterChange('verified', value)}>
+                                            <SelectTrigger id="verified-filter">
+                                                <SelectValue placeholder="Filter by verified" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="all">All Users</SelectItem>
+                                                <SelectItem value="verified">Verified</SelectItem>
+                                                <SelectItem value="unverified">Unverified</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    {(data.status !== 'all' || data.verified !== 'all') && (
+                                        <Button 
+                                            variant="ghost" 
+                                            size="sm" 
+                                            className="w-full"
+                                            onClick={() => {
+                                                router.get(
+                                                    '/users',
+                                                    cleanFilters({
+                                                        search: data.search,
+                                                        sort: data.sort,
+                                                        direction: data.direction,
+                                                        status: 'all',
+                                                        verified: 'all',
+                                                    }, { sort: 'created_at', direction: 'desc', status: 'all', verified: 'all' }),
+                                                    {
+                                                        preserveState: true,
+                                                        preserveScroll: true,
+                                                        replace: true,
+                                                        onSuccess: () => {
+                                                            setData({ ...data, status: 'all', verified: 'all' });
+                                                        }
+                                                    }
+                                                );
+                                            }}
+                                        >
+                                            Clear Filters
+                                        </Button>
+                                    )}
+                                </div>
+                            </div>
+                        </PopoverContent>
+                    </Popover>
 
-                        <Button
-                            variant="secondary"
-                            onClick={() => router.visit('/users/archived')}
-                        >
-                            <Archive className="mr-2 h-4 w-4" />
-                            View Archived
-                        </Button>
-                    </div>
+                    <Button 
+                        variant="secondary"
+                        onClick={() => router.visit('/users/archived', { preserveState: false })}
+                    >
+                        <Archive className="mr-2 h-4 w-4" />
+                        View Archived
+                    </Button>
                 </div>
                 <Table className="border">
                     <TableHeader>

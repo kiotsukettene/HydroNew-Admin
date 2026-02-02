@@ -21,27 +21,27 @@ import feedback from '@/routes/feedback';
 const mainNavItems: NavItem[] = [
     {
         title: 'Dashboard',
-        href: dashboard(),
+        href: dashboard().url,
         icon: LayoutGrid,
     },
     {
         title: 'Users',
-        href: users.index(),
+        href: users.index().url,
         icon: Users,
     },
     {
         title: 'Devices',
-        href: devices.index(),
+        href: devices.index().url,
         icon: Airplay,
     },
       {
         title: 'Analytics',
-        href: analytics.index(),
+        href: analytics.index().url,
         icon: ChartBar,
     },
     {
         title: 'Feedback',
-        href: feedback.index(),
+        href: feedback.index().url,
         icon: MessageCircleMore,
     }
 
@@ -67,7 +67,7 @@ export function AppSidebar() {
                 <SidebarMenu>
                     <SidebarMenuItem>
                         <SidebarMenuButton size="lg" asChild>
-                            <Link href={dashboard()} prefetch>
+                            <Link href={dashboard().url} prefetch>
                                 <AppLogo />
                             </Link>
                         </SidebarMenuButton>

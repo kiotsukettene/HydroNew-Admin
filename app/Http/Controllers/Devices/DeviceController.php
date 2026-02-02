@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Devices;
 
 use App\Http\Controllers\Controller;
 use App\Models\Device;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -47,9 +48,15 @@ class DeviceController extends Controller
 
         $deviceCount = Device::where('is_archived', false)->count();
 
+        $users = User::where('role', 'user')
+            ->where('is_archived', false)
+            ->select('id', 'first_name', 'last_name', 'email')
+            ->get();
+
         return Inertia::render('devices/index', [
             'devices' => $devices,
             'deviceCount' => $deviceCount,
+            'users' => $users,
             'filters' => $filters,
         ]);
     }
@@ -142,23 +149,22 @@ class DeviceController extends Controller
      */
     public function store(Request $request)
     {
-        try {
-            $validated = $request->validate([
-                'device_name' => 'required|string|max:255',
-                'serial_number' => 'required|string|max:255|unique:devices,serial_number',
-                'model' => 'nullable|string|max:255',
-                'firmware_version' => 'nullable|string|max:255',
-                'status' => 'nullable|string|in:online,offline',
-            ]);
+        $validated = $request->validate([
+            'device_name' => 'required|string|max:150',
+            'serial_number' => 'required|string|max:150|unique:devices,serial_number',
+            'model' => 'nullable|string|max:100',
+            'firmware_version' => 'nullable|string|max:50',
+        ]);
 
-            Device::create($validated);
+        $device = Device::create([
+            'device_name' => $validated['device_name'],
+            'serial_number' => $validated['serial_number'],
+            'model' => $validated['model'] ?? null,
+            'firmware_version' => $validated['firmware_version'] ?? null,
+            'status' => 'offline',
+        ]);
 
-            return redirect()->back()->with('success', 'Device added successfully.');
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            throw $e;
-        } catch (\Exception $e) {
-            return redirect()->back()->withErrors(['error' => 'Failed to add device.']);
-        }
+        return redirect()->back()->with('success', 'Device created successfully.');
     }
 
     /**

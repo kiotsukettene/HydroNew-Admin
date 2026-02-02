@@ -1,7 +1,8 @@
 import AppLayout from '@/layouts/app-layout'
 import { BreadcrumbItem } from '@/types';
 import { Head, usePage, router } from '@inertiajs/react'
-import React, { useEffect, useState } from 'react'
+import React, { useEffect } from 'react'
+import { cleanFilters } from '@/lib/filter-helpers'
 import {
   Table,
   TableBody,
@@ -23,7 +24,6 @@ import {
 import { Badge } from '@/components/ui/badge'
 import SearchInput from '@/components/search-input'
 import { User } from "@/types/user"
-import { useForm } from "@inertiajs/react"
 import { Pagination } from "@/types/pagination"
 import PaginationComp from "@/components/pagination"
 import {
@@ -41,9 +41,7 @@ export default function ArchiveUser() {
     users: Pagination<User>
     filters: { search?: string }
   }>().props
-  const { data, setData, get } = useForm({
-    search: filters.search || "",
-  })
+  const [search, setSearch] = React.useState(filters.search || "")
 
   // Unarchive confirmation modal state
   const [isUnarchiveConfirmOpen, setIsUnarchiveConfirmOpen] = useState(false);
@@ -51,14 +49,15 @@ export default function ArchiveUser() {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      get("/users/archived", {
+      router.get("/users/archived", cleanFilters({ search }), {
         preserveState: true,
         preserveScroll: true,
+        replace: true,
       })
     }, 500)
 
     return () => clearTimeout(timer)
-  }, [data.search])
+  }, [search])
 
   const handleUnarchiveClick = (user: User) => {
     setUserToUnarchive(user);
@@ -100,7 +99,7 @@ export default function ArchiveUser() {
                   </div>
                   <Button
                     variant="secondary"
-                    onClick={() => router.visit("/users")}
+                    onClick={() => router.visit("/users", { preserveState: false })}
                   >
                     <ArrowLeft className="mr-2 h-4 w-4" />
                     Back to Users
@@ -109,8 +108,8 @@ export default function ArchiveUser() {
                  <input
                   type="text"
                   placeholder="Search archived users..."
-                  value={data.search}
-                  onChange={(e) => setData("search", e.target.value)}
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
                   className="w-full md:w-96 px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                 />
                  <Table className='border'>
