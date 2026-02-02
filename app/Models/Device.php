@@ -9,52 +9,58 @@ namespace App\Models;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 /**
  * Class Device
- * 
+ *
  * @property int $id
- * @property int $user_id
- * @property string $name
+ * @property string $device_name
  * @property string $serial_number
+ * @property string|null $model
+ * @property string|null $firmware_version
  * @property string|null $status
+ * @property bool $is_archived
  * @property Carbon $created_at
  * @property Carbon $updated_at
- * 
- * @property User $user
+ *
  * @property Collection|Notification[] $notifications
+ * @property Collection|SensorSystem[] $sensor_systems
  * @property Collection|Sensor[] $sensors
  * @property Collection|TreatmentReport[] $treatment_reports
+ * @property Collection|User[] $users
  *
  * @package App\Models
  */
 class Device extends Model
 {
-	use HasFactory;
 	protected $table = 'devices';
 
 	protected $casts = [
-		'user_id' => 'int',
 		'is_archived' => 'bool'
 	];
 
 	protected $fillable = [
-		'user_id',
-		'name',
+		'device_name',
 		'serial_number',
+		'model',
+		'firmware_version',
 		'status',
 		'is_archived'
 	];
 
-	public function user()
-	{
-		return $this->belongsTo(User::class);
-	}
+    public function users()
+    {
+        return $this->belongsToMany(User::class, 'device_users', 'device_id', 'user_id');
+    }
 
 	public function notifications()
 	{
 		return $this->hasMany(Notification::class);
+	}
+
+	public function sensor_systems()
+	{
+		return $this->hasMany(SensorSystem::class);
 	}
 
 	public function sensors()

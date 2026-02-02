@@ -34,10 +34,11 @@ class DeviceFactory extends Factory
         ];
 
         return [
-            'user_id' => User::factory(),
-            'name' => fake()->randomElement($deviceTypes) . ' ' . fake()->numberBetween(100, 999),
+            'device_name' => fake()->randomElement($deviceTypes) . ' ' . fake()->numberBetween(100, 999),
             'serial_number' => strtoupper(fake()->bothify('???-####-?????')),
-            'status' => fake()->randomElement(['connected', 'not connected']),
+            'model' => fake()->randomElement(['Model A', 'Model B', 'Model C', 'Model X']),
+            'firmware_version' => fake()->randomElement(['1.0.0', '1.1.0', '2.0.0', '2.1.5']),
+            'status' => fake()->randomElement(['online', 'offline']),
             'is_archived' => false,
         ];
     }
@@ -53,22 +54,22 @@ class DeviceFactory extends Factory
     }
 
     /**
-     * Indicate that the device is connected.
+     * Indicate that the device is online.
      */
-    public function connected(): static
+    public function online(): static
     {
         return $this->state(fn (array $attributes) => [
-            'status' => 'connected',
+            'status' => 'online',
         ]);
     }
 
     /**
-     * Indicate that the device is not connected.
+     * Indicate that the device is offline.
      */
-    public function disconnected(): static
+    public function offline(): static
     {
         return $this->state(fn (array $attributes) => [
-            'status' => 'not connected',
+            'status' => 'offline',
         ]);
     }
 }

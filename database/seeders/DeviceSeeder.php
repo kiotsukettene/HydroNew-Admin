@@ -15,7 +15,7 @@ class DeviceSeeder extends Seeder
     public function run(): void
     {
         // Get all users to assign devices to them
-        $users = User::where('roles', 'user')->get();
+        $users = User::where('role', 'user')->get();
         
         if ($users->isEmpty()) {
             $this->command->warn('No users found. Please run UserSeeder first.');
@@ -35,21 +35,28 @@ class DeviceSeeder extends Seeder
             'EC Meter',
         ];
 
-        $statuses = ['connected', 'not connected'];
+        $statuses = ['online', 'offline'];
+        $models = ['Model A', 'Model B', 'Model C', 'Model X'];
+        $firmwareVersions = ['1.0.0', '1.1.0', '2.0.0', '2.1.5'];
 
-        // Create 31 devices (one per user)
+        // Create devices and assign to users via pivot table
         foreach ($users as $index => $user) {
             $deviceType = $deviceTypes[$index % count($deviceTypes)];
             $serialPrefix = strtoupper(substr(str_replace(' ', '', $deviceType), 0, 4));
             
-            Device::create([
-                'user_id' => $user->id,
-                'name' => $deviceType . ' ' . ($index + 1),
+            $device = Device::create([
+                'device_name' => $deviceType . ' ' . ($index + 1),
                 'serial_number' => sprintf('%s-%s-%05d', $serialPrefix, date('Y'), $index + 1),
+                'model' => $models[array_rand($models)],
+                'firmware_version' => $firmwareVersions[array_rand($firmwareVersions)],
                 'status' => $statuses[array_rand($statuses)],
+                'is_archived' => false,
                 'created_at' => now()->subDays(rand(0, 90)),
                 'updated_at' => now()->subDays(rand(0, 30)),
             ]);
+
+            // Assign device to user using many-to-many relationship
+            $device->users()->attach($user->id);
         }
 
         $this->command->info('Created ' . $users->count() . ' devices successfully!');

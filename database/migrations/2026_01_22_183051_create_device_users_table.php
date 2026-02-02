@@ -11,11 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('sensors', function (Blueprint $table) {
-            $table->bigInteger('id', true);
-            $table->bigInteger('device_id');
-            $table->enum('type', ['ph', 'turbidity', 'tds', 'temperature', 'water_level', 'electric_current', 'ec', 'humidity']);
-            $table->string('unit', 50);
+        Schema::create('device_users', function (Blueprint $table) {
+            $table->bigIncrements('id');
+            $table->bigInteger('user_id');
+            $table->bigInteger('device_id')->nullable();
             $table->timestamp('created_at')->useCurrent();
             $table->timestamp('updated_at')->useCurrentOnUpdate()->useCurrent();
         });
@@ -26,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('sensors');
+        Schema::dropIfExists('device_users');
     }
 };

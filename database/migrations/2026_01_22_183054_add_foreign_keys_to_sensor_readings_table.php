@@ -11,9 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('sensors', function (Blueprint $table) {
-            $table->index('device_id');
-            $table->foreign(['device_id'], 'sensors_ibfk_1')->references(['id'])->on('devices')->onUpdate('restrict')->onDelete('cascade');
+        Schema::table('sensor_readings', function (Blueprint $table) {
+            $table->foreign(['sensor_system_id'], 'sensor_readings_ibfk_1')->references(['id'])->on('sensor_systems')->onUpdate('restrict')->onDelete('cascade');
         });
     }
 
@@ -22,8 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('sensors', function (Blueprint $table) {
-            $table->dropForeign('sensors_ibfk_1');
+        Schema::table('sensor_readings', function (Blueprint $table) {
+            $table->dropForeign('sensor_readings_ibfk_1');
         });
     }
 };

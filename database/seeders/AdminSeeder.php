@@ -28,7 +28,7 @@ class AdminSeeder extends Seeder
             'verification_code' => null,
             'verification_expires_at' => null,
             'last_otp_sent_at' => null,
-            'roles' => 'admin',
+            'role' => 'admin',
             'remember_token' => Str::random(10),
             'created_at' => now(),
             'updated_at' => now(),

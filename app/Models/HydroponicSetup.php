@@ -9,7 +9,6 @@ namespace App\Models;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 /**
  * Class HydroponicSetup
@@ -26,6 +25,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
  * @property float $target_tds_min
  * @property float $target_tds_max
  * @property string|null $harvest_status
+ * @property string|null $growth_stage
+ * @property string|null $health_status
  * @property Carbon|null $harvest_date
  * @property string|null $water_amount
  * @property Carbon|null $setup_date
@@ -34,14 +35,12 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * 
- * @property Collection|HydroponicSetupLog[] $hydroponic_setup_logs
  * @property Collection|HydroponicYield[] $hydroponic_yields
  *
  * @package App\Models
  */
 class HydroponicSetup extends Model
 {
-	use HasFactory;
 	protected $table = 'hydroponic_setup';
 
 	protected $casts = [
@@ -68,17 +67,14 @@ class HydroponicSetup extends Model
 		'target_tds_min',
 		'target_tds_max',
 		'harvest_status',
+		'growth_stage',
+		'health_status',
 		'harvest_date',
 		'water_amount',
 		'setup_date',
 		'status',
 		'is_archived'
 	];
-
-	public function hydroponic_setup_logs()
-	{
-		return $this->hasMany(HydroponicSetupLog::class);
-	}
 
 	public function hydroponic_yields()
 	{
