@@ -1,6 +1,6 @@
 import AppLayout from '@/layouts/app-layout'
 import { Head, router, useForm, usePage } from '@inertiajs/react'
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import { cleanFilters } from '@/lib/filter-helpers'
 import {
   Table,
@@ -10,7 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { ArrowUpDown, MoreHorizontal, RotateCcw, Trash2, ArrowLeft, Check, X } from 'lucide-react'
+import { ArrowUpDown, MoreHorizontal, RotateCcw, ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,

@@ -19,7 +19,7 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table'
-import { ArrowUpDown, ArrowUp, ArrowDown, MoreHorizontal, Pencil, Archive, Airplay, Filter, Loader2, Plus, AlertTriangle } from 'lucide-react'
+import { ArrowUpDown, ArrowUp, ArrowDown, MoreHorizontal, Pencil, Archive, Airplay, Filter, Loader2, AlertTriangle } from 'lucide-react'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Card } from '@/components/ui/card'
@@ -42,11 +42,10 @@ type SortField = 'name' | 'serial_number' | 'status' | 'created_at';
 type SortDirection = 'asc' | 'desc';
 
 export default function Devices() {
-  const { devices, filters, deviceCount, users } = usePage<{
+  const { devices, filters, deviceCount } = usePage<{
     devices: Pagination<Device>;
     filters: { search: string; status?: string; sort?: string; direction?: string };
     deviceCount: number;
-    users: Array<{ id: number; first_name: string; last_name: string; email: string }>;
   }>().props;
 
   const [selectedDevices, setSelectedDevices] = useState<number[]>([])
@@ -111,24 +110,6 @@ export default function Devices() {
         },
       })
     }
-  }
-
-  const handleAddDevice = () => {
-    post('/devices', {
-      preserveScroll: true,
-      onSuccess: () => {
-        setIsAddOpen(false)
-        addReset()
-        toast.success('Device added successfully', {
-          description: `${addData.device_name} has been registered.`,
-        })
-      },
-      onError: () => {
-        toast.error('Failed to add device', {
-          description: 'Please check the form and try again.',
-        })
-      },
-    })
   }
 
   const handleArchiveClick = (device: Device) => {
@@ -202,7 +183,6 @@ export default function Devices() {
     }
 
     if (debounceSearch !== undefined) {
-      setIsSearching(true)
       router.get(
         '/devices',
         cleanFilters({ 
@@ -215,11 +195,12 @@ export default function Devices() {
           preserveState: true,
           preserveScroll: true,
           replace: true,
+          onStart: () => setIsSearching(true),
           onFinish: () => setIsSearching(false),
         }
       )
     }
-  }, [debounceSearch])
+  }, [debounceSearch, data.status, data.sort, data.direction])
 
   const handleStatusChange = (status: string) => {
     router.get(
@@ -444,7 +425,7 @@ export default function Devices() {
                   <TableCell>
                     {device.users && device.users.length > 0 ? (
                       <div className="flex flex-col gap-1">
-                        {device.users.map((user, index) => (
+                        {device.users.map((user) => (
                           <div key={user.id} className="flex flex-col">
                             <span className="text-sm font-medium">
                               {user.first_name} {user.last_name}
@@ -655,6 +636,48 @@ export default function Devices() {
                 disabled={creating}
               >
                 {creating ? 'Creating...' : 'Create Device'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Archive Confirmation Modal */}
+        <Dialog open={isArchiveConfirmOpen} onOpenChange={setIsArchiveConfirmOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <AlertTriangle className="h-5 w-5 text-orange-500" />
+                Archive Device
+              </DialogTitle>
+              <DialogDescription>
+                Are you sure you want to archive this device? It will be moved to the archived devices list.
+              </DialogDescription>
+            </DialogHeader>
+
+            {deviceToArchive && (
+              <div className="rounded-lg border border-border bg-muted p-4">
+                <p className="text-sm font-medium text-foreground">
+                  {deviceToArchive.device_name}
+                </p>
+                <p className="text-sm text-muted-foreground font-mono">{deviceToArchive.serial_number}</p>
+              </div>
+            )}
+
+            <DialogFooter>
+              <Button 
+                variant="secondary" 
+                onClick={() => {
+                  setIsArchiveConfirmOpen(false)
+                  setDeviceToArchive(null)
+                }}
+              >
+                Cancel
+              </Button>
+              <Button 
+                variant="destructive"
+                onClick={handleArchiveConfirm}
+              >
+                Archive Device
               </Button>
             </DialogFooter>
           </DialogContent>
