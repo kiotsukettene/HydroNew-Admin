@@ -14,10 +14,10 @@ class UserController extends Controller
      */
     public function index(Request $request)
     {
-        $filters = $request->only(['search', 'sort', 'direction', 'status', 'verified']);
+        $filters = $request->only(['search', 'sort', 'direction', 'status']);
 
         $query = User::where('role', '=', 'user')
-                    ->where('is_archived', false);
+                     ->where('is_archived', false);
 
         // Apply search filter
         if (!empty($filters['search'])) {
@@ -33,15 +33,6 @@ class UserController extends Controller
             $query->where('status', $filters['status']);
         }
 
-        // Apply verified filter
-        if (!empty($filters['verified']) && $filters['verified'] !== 'all') {
-            if ($filters['verified'] === 'verified') {
-                $query->whereNotNull('email_verified_at');
-            } elseif ($filters['verified'] === 'unverified') {
-                $query->whereNull('email_verified_at');
-            }
-        }
-
         // Apply sorting
         $sortField = $filters['sort'] ?? 'created_at';
         $sortDirection = $filters['direction'] ?? 'desc';
@@ -55,7 +46,7 @@ class UserController extends Controller
 
         $users = $query->paginate(10);
 
-        $userCount = User::where('role', '=', 'user')->where('is_archived', false)->count();
+        $userCount = User::where('role', '=', 'user')->count();
 
         return Inertia::render('users/index',[
             'users' => $users,
@@ -71,18 +62,23 @@ class UserController extends Controller
     {
         $filters = $request->only(['search']);
 
-        $users = User::where('role', '=', 'user')
-                    ->where('is_archived', true)
-                    ->when($filters['search'] ?? null, function ($query, $search) {
-                        $query->where(function ($q) use ($search) {
-                            $q->where('first_name', 'like', '%' . $search . '%')
-                              ->orWhere('last_name', 'like', '%' . $search . '%')
-                              ->orWhere('email', 'like', '%' . $search . '%');
-                        });
-                    })
-                    ->paginate(10);
+        $query = User::where('role', '=', 'user')
+                    ->where('is_archived', true);
 
-        $archivedCount = User::where('role', '=', 'user')->where('is_archived', true)->count();
+        // Apply search filter
+        if (!empty($filters['search'])) {
+            $query->where(function ($q) use ($filters) {
+                $q->where('first_name', 'like', '%' . $filters['search'] . '%')
+                  ->orWhere('last_name', 'like', '%' . $filters['search'] . '%')
+                  ->orWhere('email', 'like', '%' . $filters['search'] . '%');
+            });
+        }
+
+        $users = $query->paginate(10);
+
+        $archivedCount = User::where('role', '=', 'user')
+                            ->where('is_archived', true)
+                            ->count();
 
         return Inertia::render('users/archive-user', [
             'users' => $users,
@@ -96,10 +92,20 @@ class UserController extends Controller
      */
     public function archive(string $id)
     {
-        $user = User::findOrFail($id);
-        $user->update(['is_archived' => true]);
+        try {
+            $user = User::findOrFail($id);
+            
+            if ($user->is_archived) {
+                return redirect()->back()->withErrors(['error' => 'User is already archived.']);
+            }
+            
+            $user->is_archived = true;
+            $user->save();
 
-        return redirect()->back()->with('success', 'User archived successfully.');
+            return redirect()->back()->with('success', 'User archived successfully.');
+        } catch (\Exception $e) {
+            return redirect()->back()->withErrors(['error' => 'Failed to archive user.']);
+        }
     }
 
     /**
@@ -107,10 +113,20 @@ class UserController extends Controller
      */
     public function unarchive(string $id)
     {
-        $user = User::findOrFail($id);
-        $user->update(['is_archived' => false]);
+        try {
+            $user = User::findOrFail($id);
+            
+            if (!$user->is_archived) {
+                return redirect()->back()->withErrors(['error' => 'User is not archived.']);
+            }
+            
+            $user->is_archived = false;
+            $user->save();
 
-        return redirect()->back()->with('success', 'User unarchived successfully.');
+            return redirect()->back()->with('success', 'User unarchived successfully.');
+        } catch (\Exception $e) {
+            return redirect()->back()->withErrors(['error' => 'Failed to restore user.']);
+        }
     }
 
     /**
@@ -150,17 +166,23 @@ class UserController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        $validated = $request->validate([
-            'first_name' => 'required|string|max:255',
-            'last_name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email,' . $id,
-            'address' => 'nullable|string|max:500',
-        ]);
+        try {
+            $validated = $request->validate([
+                'first_name' => 'required|string|max:255',
+                'last_name' => 'required|string|max:255',
+                'email' => 'required|email|unique:users,email,' . $id,
+                'address' => 'nullable|string|max:500',
+            ]);
 
-        $user = User::findOrFail($id);
-        $user->update($validated);
+            $user = User::findOrFail($id);
+            $user->update($validated);
 
-        return redirect()->back()->with('success', 'User updated successfully.');
+            return redirect()->back()->with('success', 'User updated successfully.');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            throw $e;
+        } catch (\Exception $e) {
+            return redirect()->back()->withErrors(['error' => 'Failed to update user.']);
+        }
     }
 
     /**

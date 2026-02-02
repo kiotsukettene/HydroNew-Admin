@@ -22,6 +22,8 @@ return new class extends Migration
             $table->decimal('temperature', 10)->nullable();
             $table->decimal('ec', 10)->nullable();
             $table->decimal('electric_current', 10)->nullable();
+            $table->enum('ai_classification', ['good', 'bad'])->nullable();
+            $table->decimal('confidence', 5)->nullable();
             $table->dateTime('reading_time')->nullable()->useCurrent();
 
             $table->index(['sensor_system_id', 'reading_time'], 'idx_sensor_readings_system_time');

@@ -30,28 +30,24 @@ import {
     ArrowUpDown,
     ArrowUp,
     ArrowDown,
-    Check,
     Filter,
     Loader2,
     MoreHorizontal,
     Pencil,
     Users as UsersIcon,
-    X,
+    AlertTriangle,
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useDebounce } from 'use-debounce';
 import {
   Table,
   TableBody,
-  TableCaption,
   TableCell,
-  TableFooter,
   TableHead,
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { Label } from '@/components/ui/label'
-import { Card } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
 import {
   Dialog,
   DialogContent,
@@ -60,6 +56,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+import { toast } from 'sonner';
 
 type SortField = 'name' | 'email' | 'created_at';
 type SortDirection = 'asc' | 'desc';
@@ -70,21 +67,20 @@ export default function Users() {
         { key: 'email', label: 'Email', sortable: true },
         { key: 'address', label: 'Address', sortable: false },
         { key: 'status', label: 'Status', sortable: false },
-        { key: 'verified', label: 'Verified', sortable: false },
     ];
 
     const { users, filters, userCount } = usePage<{
         users: Pagination<User>;
-        filters: { search: string; sort?: string; direction?: string; status?: string; verified?: string };
+        filters: { search: string; sort?: string; direction?: string; status?: string };
         userCount: number;
     }>().props;
 
-    const { data, setData, get } = useForm({
+    const { data, setData } = useForm({
         search: filters.search || '',
         sort: (filters.sort as SortField) || 'created_at',
         direction: (filters.direction as SortDirection) || 'desc',
         status: filters.status || 'all',
-        verified: filters.verified || 'all',
+        verified: 'all',
     });
     const [debounceSearch] = useDebounce(data.search, 500);
     const [isSearching, setIsSearching] = useState(false);
@@ -93,6 +89,10 @@ export default function Users() {
     // Edit modal state
     const [isEditOpen, setIsEditOpen] = useState(false);
     const [editingUser, setEditingUser] = useState<User | null>(null);
+
+    // Archive confirmation modal state
+    const [isArchiveConfirmOpen, setIsArchiveConfirmOpen] = useState(false);
+    const [userToArchive, setUserToArchive] = useState<User | null>(null);
 
     // Edit form
     const { data: editData, setData: setEditData, put, processing, reset } = useForm({
@@ -121,6 +121,39 @@ export default function Users() {
                     setIsEditOpen(false);
                     reset();
                     setEditingUser(null);
+                    toast.success('User updated successfully', {
+                        description: `${editData.first_name} ${editData.last_name}'s information has been updated.`,
+                    });
+                },
+                onError: () => {
+                    toast.error('Failed to update user', {
+                        description: 'Please check the form and try again.',
+                    });
+                },
+            });
+        }
+    };
+
+    const handleArchiveClick = (user: User) => {
+        setUserToArchive(user);
+        setIsArchiveConfirmOpen(true);
+    };
+
+    const handleArchiveConfirm = () => {
+        if (userToArchive) {
+            router.patch(`/users/${userToArchive.id}/archive`, {}, {
+                preserveScroll: true,
+                onSuccess: () => {
+                    setIsArchiveConfirmOpen(false);
+                    setUserToArchive(null);
+                    toast.success('User archived successfully', {
+                        description: `${userToArchive.first_name} ${userToArchive.last_name} has been moved to archives.`,
+                    });
+                },
+                onError: () => {
+                    toast.error('Failed to archive user', {
+                        description: 'Please try again later.',
+                    });
                 },
             });
         }
@@ -177,7 +210,6 @@ export default function Users() {
         }
 
         if (debounceSearch !== undefined) {
-            setIsSearching(true);
             router.get(
                 '/users',
                 cleanFilters({ 
@@ -191,11 +223,12 @@ export default function Users() {
                     preserveState: true,
                     preserveScroll: true,
                     replace: true,
+                    onStart: () => setIsSearching(true),
                     onFinish: () => setIsSearching(false),
                 },
             );
         }
-    }, [debounceSearch]);
+    }, [debounceSearch, data.sort, data.direction, data.status, data.verified]);
 
     const getSortIcon = (field: string) => {
         if (data.sort !== field) return <ArrowUpDown className="h-4 w-4" />;
@@ -242,19 +275,24 @@ export default function Users() {
                         placeholder="Search users..."
                     />
 
-                    <Popover>
-                        <PopoverTrigger asChild>
-                            <Button variant="secondary">
-                                <Filter className="mr-2 h-4 w-4" />
-                                Filters
-                                {(data.status !== 'all' || data.verified !== 'all') && (
-                                    <Badge className="ml-2 bg-orange-500 text-white px-1.5 py-0 text-xs">
-                                        {[data.status !== 'all' ? 1 : 0, data.verified !== 'all' ? 1 : 0].reduce((a, b) => a + b, 0)}
-                                    </Badge>
-                                )}
-                            </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-80">
+                    <div className="flex gap-3">
+                        <Popover>
+                            <PopoverTrigger asChild>
+                                <Button
+                                    variant="secondary"
+                                    className="h-8 w-[150px] border-2 rounded-lg text-xs"
+                                    aria-label="Filter by status"
+                                >
+                                    <Filter className="mr-2 h-4 w-4" />
+                                    Filters
+                                    {(data.status !== 'all' || data.verified !== 'all') && (
+                                        <Badge className="ml-2 bg-orange-500 text-white px-1.5 py-0 text-xs">
+                                            {[data.status !== 'all' ? 1 : 0, data.verified !== 'all' ? 1 : 0].reduce((a, b) => a + b, 0)}
+                                        </Badge>
+                                    )}
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-80">
                             <div className="space-y-4">
                                 <div className="space-y-2">
                                     <h4 className="font-medium leading-none">Filters</h4>
@@ -334,6 +372,7 @@ export default function Users() {
                         <Archive className="mr-2 h-4 w-4" />
                         View Archived
                     </Button>
+                    </div>
                 </div>
                 <Table className="border">
                     <TableHeader>
@@ -392,25 +431,11 @@ export default function Users() {
                                         {user.address}
                                     </TableCell>
                                     <TableCell>
-                                        <Badge
-                                            className={
-                                                user.status === 'active'
-                                                    ? 'border-amber-300 bg-amber-100 text-amber-500'
-                                                    : 'border-gray-300 bg-gray-100 text-gray-500'
-                                            }
-                                        >
-                                            {user.status
-                                                .charAt(0)
-                                                .toUpperCase() +
-                                                user.status.slice(1)}
+                                        <Badge className={user.status === 'active' 
+                                            ? "border-green-300 bg-green-100 text-green-600" 
+                                            : "border-gray-300 bg-gray-100 text-gray-600"}>
+                                            {user.status === 'active' ? 'Active' : 'Inactive'}
                                         </Badge>
-                                    </TableCell>
-                                    <TableCell>
-                                        {user.email_verified_at ? (
-                                            <Check className="h-5 w-5 text-green-600" />
-                                        ) : (
-                                            <X className="h-5 w-5 text-red-500" />
-                                        )}
                                     </TableCell>
                                     <TableCell>
                                         <DropdownMenu>
@@ -430,9 +455,7 @@ export default function Users() {
                                                     Edit
                                                 </DropdownMenuItem>
                                                 <DropdownMenuItem
-                                                    onClick={() => router.patch(`/users/${user.id}/archive`, {}, {
-                                                        preserveScroll: true,
-                                                    })}
+                                                    onClick={() => handleArchiveClick(user)}
                                                 >
                                                     <Archive className="mr-2 h-4 w-4" />
                                                     Archive
@@ -526,6 +549,49 @@ export default function Users() {
         </DialogFooter>
       </DialogContent>
     </Dialog>
+
+    {/* Archive Confirmation Modal */}
+    <Dialog open={isArchiveConfirmOpen} onOpenChange={setIsArchiveConfirmOpen}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <AlertTriangle className="h-5 w-5 text-orange-500" />
+            Archive User
+          </DialogTitle>
+          <DialogDescription>
+            Are you sure you want to archive this user? They will be moved to the archived users list.
+          </DialogDescription>
+        </DialogHeader>
+
+        {userToArchive && (
+          <div className="rounded-lg border border-border bg-muted p-4">
+            <p className="text-sm font-medium text-foreground">
+              {userToArchive.first_name} {userToArchive.last_name}
+            </p>
+            <p className="text-sm text-muted-foreground">{userToArchive.email}</p>
+          </div>
+        )}
+
+        <DialogFooter>
+          <Button 
+            variant="secondary" 
+            onClick={() => {
+              setIsArchiveConfirmOpen(false);
+              setUserToArchive(null);
+            }}
+          >
+            Cancel
+          </Button>
+          <Button 
+            variant="destructive"
+            onClick={handleArchiveConfirm}
+          >
+            Archive User
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+
             </div>
         </AppLayout>
     );

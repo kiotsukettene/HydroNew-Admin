@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\Model;
  * 
  * @property int $id
  * @property int $user_id
+ * @property int|null $device_id
  * @property string $crop_name
  * @property int $number_of_crops
  * @property string $bed_size
@@ -35,6 +36,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * 
+ * @property Device|null $device
  * @property Collection|HydroponicYield[] $hydroponic_yields
  *
  * @package App\Models
@@ -45,6 +47,7 @@ class HydroponicSetup extends Model
 
 	protected $casts = [
 		'user_id' => 'int',
+		'device_id' => 'int',
 		'number_of_crops' => 'int',
 		'target_ph_min' => 'float',
 		'target_ph_max' => 'float',
@@ -52,11 +55,13 @@ class HydroponicSetup extends Model
 		'target_tds_max' => 'float',
 		'harvest_date' => 'datetime',
 		'setup_date' => 'datetime',
-		'is_archived' => 'bool'
+		'is_archived' => 'bool',
+		'pump_config' => 'array'
 	];
 
 	protected $fillable = [
 		'user_id',
+		'device_id',
 		'crop_name',
 		'number_of_crops',
 		'bed_size',
@@ -75,6 +80,11 @@ class HydroponicSetup extends Model
 		'status',
 		'is_archived'
 	];
+
+	public function device()
+	{
+		return $this->belongsTo(Device::class);
+	}
 
 	public function hydroponic_yields()
 	{

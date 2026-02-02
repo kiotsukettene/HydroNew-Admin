@@ -1,259 +1,452 @@
 import AppLayout from '@/layouts/app-layout'
-import { Head } from '@inertiajs/react'
-import { useState } from 'react'
+import { Head, usePage, router } from '@inertiajs/react'
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart'
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, RadarChart, PolarAngleAxis, PolarGrid, Radar, Rectangle } from 'recharts'
-import { TrendingUp, Leaf, Waves, Sparkles } from 'lucide-react'
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, RadarChart, PolarAngleAxis, PolarGrid, Radar, LineChart, Line, Legend } from 'recharts'
+import { Users, Cast, Leaf, Waves, TrendingDown, Activity, Filter, FileDown } from 'lucide-react'
 import {
   TextureCardContent,
   TextureCardStyled
 } from '@/components/ui/texture-card'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { FiltrationCyclesCard } from '@/components/filtration-cycles-card'
-
-// Monthly harvest data with fill colors
-const harvestData = [
-  { month: 'Jan', harvested: 28, fill: 'var(--color-jan)' },
-  { month: 'Feb', harvested: 35, fill: 'var(--color-feb)' },
-  { month: 'Mar', harvested: 42, fill: 'var(--color-mar)' },
-  { month: 'Apr', harvested: 38, fill: 'var(--color-apr)' },
-  { month: 'May', harvested: 52, fill: 'var(--color-may)' },
-  { month: 'Jun', harvested: 48, fill: 'var(--color-jun)' },
-  { month: 'Jul', harvested: 55, fill: 'var(--color-jul)' },
-  { month: 'Aug', harvested: 45, fill: 'var(--color-aug)' },
-  { month: 'Sep', harvested: 40, fill: 'var(--color-sep)' },
-  { month: 'Oct', harvested: 35, fill: 'var(--color-oct)' },
-  { month: 'Nov', harvested: 30, fill: 'var(--color-nov)' },
-  { month: 'Dec', harvested: 25, fill: 'var(--color-dec)' }
-]
-
-// Chart config for harvest data
-const harvestChartConfig = {
-  harvested: { label: 'Harvested' },
-  jan: { label: 'Jan', color: '#cadbb7' },
-  feb: { label: 'Feb', color: '#cadbb7' },
-  mar: { label: 'Mar', color: '#cadbb7' },
-  apr: { label: 'Apr', color: '#cadbb7' },
-  may: { label: 'May', color: '#cadbb7' },
-  jun: { label: 'Jun', color: '#cadbb7' },
-  jul: { label: 'Jul', color: '#cadbb7' },
-  aug: { label: 'Aug', color: '#cadbb7' },
-  sep: { label: 'Sep', color: '#cadbb7' },
-  oct: { label: 'Oct', color: '#cadbb7' },
-  nov: { label: 'Nov', color: '#cadbb7' },
-  dec: { label: 'Dec', color: '#cadbb7' }
-}
-
-// Crop Type Radar Data
-const cropRadarData = [
-  { crop: 'Romaine', harvested: 112 },
-  { crop: 'Basil', harvested: 80 },
-  { crop: 'Iceberg', harvested: 64 },
-  { crop: 'Kale', harvested: 38 },
-  { crop: 'Spinach', harvested: 24 }
-]
-
-const cropRadarConfig = {
-  harvested: {
-    label: 'Harvested',
-    color: 'hsl(142, 76%, 36%)'
-  }
-}
-
-// Filtration History Data (weekly)
-const filtrationData = [
-  { week: 'Week 1', filtered: 120, cycles: 8 },
-  { week: 'Week 2', filtered: 145, cycles: 10 },
-  { week: 'Week 3', filtered: 98, cycles: 7 },
-  { week: 'Week 4', filtered: 167, cycles: 12 }
-]
-
-const filtrationChartConfig = {
-  filtered: { label: 'Water Filtered (L)', color: '#60A5FA' }
-}
-
-// Filtration Activity Log Data
-const filtrationLogs = [
-  { id: 1, date: 'Dec 05, 2025', liters: 48, status: 'Completed' },
-  { id: 2, date: 'Dec 04, 2025', liters: 35, status: 'Completed' },
-  { id: 3, date: 'Dec 03, 2025', liters: 42, status: 'Completed' },
-  { id: 4, date: 'Dec 02, 2025', liters: 55, status: 'Completed' },
-  { id: 5, date: 'Dec 01, 2025', liters: 38, status: 'Completed' },
-  { id: 6, date: 'Nov 30, 2025', liters: 45, status: 'Completed' },
-]
-
-const months = [
-  { value: 'january', label: 'January' },
-  { value: 'february', label: 'February' },
-  { value: 'march', label: 'March' },
-  { value: 'april', label: 'April' },
-  { value: 'may', label: 'May' },
-  { value: 'june', label: 'June' },
-  { value: 'july', label: 'July' },
-  { value: 'august', label: 'August' },
-  { value: 'september', label: 'September' },
-  { value: 'october', label: 'October' },
-  { value: 'november', label: 'November' },
-  { value: 'december', label: 'December' }
-]
-
-// Water Filtered Chart Component
-function WaterFilteredChart() {
-  const [selectedMonth, setSelectedMonth] = useState('december')
-
-  return (
-    <Card className="lg:col-span-2 rounded-2xl">
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle>Water Filtered</CardTitle>
-            <CardDescription>Total liters filtered per week</CardDescription>
-          </div>
-          <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-            <SelectTrigger className="w-[140px]">
-              <SelectValue placeholder="Select month" />
-            </SelectTrigger>
-            <SelectContent>
-              {months.map((month) => (
-                <SelectItem key={month.value} value={month.value}>
-                  {month.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </CardHeader>
-      <CardContent className="pt-0">
-        <ChartContainer config={filtrationChartConfig} className="h-[240px] w-full aspect-auto">
-          <BarChart data={filtrationData} barCategoryGap="10%">
-            <CartesianGrid vertical={false} strokeDasharray="3 3" />
-            <XAxis
-              dataKey="week"
-              tickLine={false}
-              tickMargin={10}
-              axisLine={false}
-              tick={{ fontSize: 12 }}
-            />
-            <YAxis
-              tickLine={false}
-              axisLine={false}
-              tick={{ fontSize: 12 }}
-              tickFormatter={(value) => `${value}L`}
-            />
-            <ChartTooltip
-              cursor={false}
-              content={<ChartTooltipContent />}
-            />
-            <Bar
-              dataKey="filtered"
-              fill="#60A5FA"
-              radius={12}
-              barSize={60}
-            />
-          </BarChart>
-        </ChartContainer>
-      </CardContent>
-    </Card>
-  )
-}
+import { UsersDevicesAnalytics, CropsHarvestYieldAnalytics, WaterTreatmentAnalytics } from '@/types/analytics'
+import { Device } from '@/types/device'
+import { Button } from '@/components/ui/button'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { Label } from '@/components/ui/label'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { useState } from 'react'
 
 export default function Analytics() {
+  const { usersDevices, cropsHarvestYield, waterTreatment, devices = [], filters = { frequency: 'monthly' } } = usePage<{
+    usersDevices: UsersDevicesAnalytics;
+    cropsHarvestYield: CropsHarvestYieldAnalytics;
+    waterTreatment: WaterTreatmentAnalytics;
+    devices?: Device[];
+    filters?: { date_from?: string; date_to?: string; frequency: string; device_id?: number };
+  }>().props;
+
+  const [activeTab, setActiveTab] = useState('users-devices');
+  const [dateFrom, setDateFrom] = useState(filters?.date_from || '');
+  const [dateTo, setDateTo] = useState(filters?.date_to || '');
+  const [frequency, setFrequency] = useState(filters?.frequency || 'monthly');
+  const [deviceId, setDeviceId] = useState<string>(filters?.device_id?.toString() || 'all');
+
+  // Safety check for devices
+  const devicesList = devices;
+
+  const handleApplyFilters = () => {
+    router.get('/analytics', {
+      date_from: dateFrom,
+      date_to: dateTo,
+      frequency: frequency,
+      device_id: deviceId !== 'all' ? deviceId : undefined,
+    }, {
+      preserveState: true,
+      preserveScroll: true,
+    });
+  };
+
+  const handleResetFilters = () => {
+    setDateFrom('');
+    setDateTo('');
+    setFrequency('monthly');
+    setDeviceId('all');
+    router.get('/analytics', {}, {
+      preserveState: true,
+      preserveScroll: true,
+    });
+  };
+
+  const handleExportPdf = () => {
+    const params = new URLSearchParams({
+      tab: activeTab,
+      ...(dateFrom && { date_from: dateFrom }),
+      ...(dateTo && { date_to: dateTo }),
+      frequency: frequency,
+      ...(deviceId !== 'all' && { device_id: deviceId }),
+    });
+
+    window.open(`/analytics/export/pdf?${params.toString()}`, '_blank');
+  };
+
   return (
     <AppLayout title="">
       <Head title="Analytics" />
       <div className="flex h-full flex-1 flex-col gap-6 rounded-xl p-4 md:p-6">
 
         {/* Header */}
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Analytics Overview</h1>
-          <p className="text-sm text-muted-foreground mt-1">Track your system performance and insights</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">Analytics Overview</h1>
+            <p className="text-sm text-muted-foreground mt-1">Track your system performance and insights</p>
+          </div>
+
+          {/* Compact Filter Controls - Inspired by Devices Page */}
+          <div className="flex gap-2">
+            {/* Export Buttons */}
+            <Button
+              variant="secondary"
+              size="sm"
+              className="h-8 gap-1.5 border-2"
+              onClick={handleExportPdf}
+            >
+              <FileDown className="h-3.5 w-3.5" />
+              <span className="text-xs">Export PDF</span>
+            </Button>
+
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="secondary" size="sm" className="h-8 gap-1.5 border-2">
+                  <Filter className="h-3.5 w-3.5" />
+                  <span className="text-xs">
+                    {frequency === 'weekly' ? 'Weekly' : 'Monthly'}
+                  </span>
+                  {(dateFrom || dateTo || (deviceId && deviceId !== 'all')) && (
+                    <span className="ml-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-medium text-primary-foreground">
+                      •
+                    </span>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-80" align="end">
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <h4 className="font-medium leading-none">
+                      {activeTab === 'users-devices' && 'User & Device Filters'}
+                      {activeTab === 'crops-harvest-yield' && 'Crop & Harvest Filters'}
+                      {activeTab === 'water-treatment' && 'Water Treatment Filters'}
+                    </h4>
+                    <p className="text-sm text-muted-foreground">
+                      {activeTab === 'users-devices' && 'Filter user registration and login activity'}
+                      {activeTab === 'crops-harvest-yield' && 'Filter harvest trends and yield data by device'}
+                      {activeTab === 'water-treatment' && 'Filter treatment cycles and performance by device'}
+                    </p>
+                  </div>
+
+                  <div className="space-y-3">
+                    {/* Device Filter - Only for Crops & Harvest and Water Treatment */}
+                    {(activeTab === 'crops-harvest-yield' || activeTab === 'water-treatment') && (
+                      <div className="space-y-2">
+                        <Label htmlFor="device">Device</Label>
+                        <Select value={deviceId || 'all'} onValueChange={setDeviceId}>
+                          <SelectTrigger id="device">
+                            <SelectValue placeholder="All Devices" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">All Devices</SelectItem>
+                            {devicesList.map((device) => (
+                              <SelectItem key={device.id} value={device.id.toString()}>
+                                {device.device_name} ({device.serial_number})
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
+
+                    <div className="space-y-2">
+                      <Label htmlFor="date-from">From Date</Label>
+                      <input
+                        id="date-from"
+                        type="date"
+                        value={dateFrom}
+                        onChange={(e) => setDateFrom(e.target.value)}
+                        className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="date-to">To Date</Label>
+                      <input
+                        id="date-to"
+                        type="date"
+                        value={dateTo}
+                        onChange={(e) => setDateTo(e.target.value)}
+                        className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      />
+                    </div>
+
+                    {/* Frequency - Only show for Users & Devices and Water Treatment */}
+                    {(activeTab === 'users-devices' || activeTab === 'water-treatment') && (
+                      <div className="space-y-2">
+                        <Label htmlFor="frequency">
+                          {activeTab === 'users-devices' ? 'Registration Frequency' : 'Treatment Frequency'}
+                        </Label>
+                        <Select value={frequency} onValueChange={setFrequency}>
+                          <SelectTrigger id="frequency">
+                            <SelectValue placeholder="Select frequency" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="weekly">Weekly</SelectItem>
+                            <SelectItem value="monthly">Monthly</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
+
+                    {/* Crops & Harvest specific: Harvest Frequency */}
+                    {activeTab === 'crops-harvest-yield' && (
+                      <div className="space-y-2">
+                        <Label htmlFor="frequency">Harvest Period</Label>
+                        <Select value={frequency} onValueChange={setFrequency}>
+                          <SelectTrigger id="frequency">
+                            <SelectValue placeholder="Select period" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="weekly">Weekly Harvest</SelectItem>
+                            <SelectItem value="monthly">Monthly Harvest</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
+
+                    <div className="flex gap-2 pt-2">
+                      <Button onClick={handleApplyFilters} className="flex-1">
+                        Apply Filters
+                      </Button>
+                      <Button onClick={handleResetFilters} variant="secondary" className="flex-1">
+                        Reset
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </PopoverContent>
+            </Popover>
+          </div>
         </div>
 
         {/* Tabs */}
-        <Tabs defaultValue="water-quality" className="w-full">
+        <Tabs defaultValue="users-devices" className="w-full" onValueChange={setActiveTab}>
           <TabsList className="h-12 p-1 bg-muted/60 rounded-xl">
             <TabsTrigger
-              value="water-quality"
-              className="h-10 px-6 text-sm font-medium rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md"
+              value="users-devices"
+              className="h-10 px-4 text-sm font-medium rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md"
             >
-              <Waves className="w-4 h-4 mr-2" />
-              Water Quality
+              <Users className="w-4 h-4 mr-2" />
+              Users & Devices
             </TabsTrigger>
             <TabsTrigger
-              value="crops-harvest"
-              className="h-10 px-6 text-sm font-medium rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md"
+              value="crops-harvest-yield"
+              className="h-10 px-4 text-sm font-medium rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md"
             >
               <Leaf className="w-4 h-4 mr-2" />
-              Crops & Harvest
+              Crops and Harvest
+            </TabsTrigger>
+            <TabsTrigger
+              value="water-treatment"
+              className="h-10 px-4 text-sm font-medium rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md"
+            >
+              <Waves className="w-4 h-4 mr-2" />
+              Water Treatment
             </TabsTrigger>
           </TabsList>
 
-          {/* Water Quality Tab Content */}
-          <TabsContent value="water-quality" className="mt-6">
+          {/* Users & Devices Tab Content */}
+          <TabsContent value="users-devices" className="mt-6">
             <div className="flex flex-col gap-6">
-              {/* Row 1: Filtration Cycle History */}
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Filtration Stats Cards */}
-                <FiltrationCyclesCard />
+              {/* Summary Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <Card className="rounded-2xl">
+                  <CardContent className="pt-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-muted-foreground">Total Users</p>
+                        <p className="text-3xl font-bold text-foreground">{usersDevices.users.total}</p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {usersDevices.users.active} active
+                        </p>
+                      </div>
+                      <Users className="w-10 h-10 text-primary/70" />
+                    </div>
+                  </CardContent>
+                </Card>
 
-                {/* Filtration Bar Chart */}
-                <WaterFilteredChart />
+                <Card className="rounded-2xl">
+                  <CardContent className="pt-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-muted-foreground">Total Devices</p>
+                        <p className="text-3xl font-bold text-foreground">{usersDevices.devices.total}</p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {usersDevices.devices.online} online
+                        </p>
+                      </div>
+                      <Cast className="w-10 h-10 text-primary/70" />
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="rounded-2xl">
+                  <CardContent className="pt-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-muted-foreground">Inactive Users</p>
+                        <p className="text-3xl font-bold text-foreground">{usersDevices.users.inactive}</p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Need attention
+                        </p>
+                      </div>
+                      <TrendingDown className="w-10 h-10 text-orange-500/70" />
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="rounded-2xl">
+                  <CardContent className="pt-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-muted-foreground">Without Devices</p>
+                        <p className="text-3xl font-bold text-foreground">{usersDevices.users.without_devices}</p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Users unassigned
+                        </p>
+                      </div>
+                      <Activity className="w-10 h-10 text-red-500/70" />
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
 
-              {/* Filtration Activity Log */}
+              {/* Charts Row */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* User Registration Trend */}
+                <Card className="rounded-2xl">
+                  <CardHeader>
+                    <CardTitle>User Registration Trend</CardTitle>
+                    <CardDescription>
+                      {frequency === 'weekly'
+                        ? 'New user registrations per week'
+                        : 'New user registrations per month'}
+                      {dateFrom && dateTo && ` (${dateFrom} to ${dateTo})`}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <ChartContainer
+                      config={{
+                        count: { label: 'Registrations', color: 'hsl(var(--primary))' }
+                      }}
+                      className="h-[300px] w-full"
+                    >
+                      <BarChart data={usersDevices.registration_trend}>
+                        <CartesianGrid vertical={false} strokeDasharray="3 3" />
+                        <XAxis
+                          dataKey="month"
+                          tickLine={false}
+                          tickMargin={10}
+                          axisLine={false}
+                          tick={{ fontSize: 12 }}
+                        />
+                        <YAxis
+                          tickLine={false}
+                          axisLine={false}
+                          tick={{ fontSize: 12 }}
+                        />
+                        <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
+                        <Bar dataKey="count" fill="hsl(var(--primary))" radius={8} />
+                      </BarChart>
+                    </ChartContainer>
+                  </CardContent>
+                </Card>
+
+                {/* Login Activity Trend */}
+                <Card className="rounded-2xl">
+                  <CardHeader>
+                    <CardTitle>Login Activity</CardTitle>
+                    <CardDescription>
+                      User login activity trends
+                      {dateFrom && dateTo && ` from ${dateFrom} to ${dateTo}`}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <ChartContainer
+                      config={{
+                        unique_users: { label: 'Unique Users', color: 'hsl(var(--primary))' },
+                        total_logins: { label: 'Total Logins', color: 'hsl(var(--chart-2))' }
+                      }}
+                      className="h-[300px] w-full"
+                    >
+                      <LineChart data={usersDevices.login_activity_trend}>
+                        <CartesianGrid vertical={false} strokeDasharray="3 3" />
+                        <XAxis
+                          dataKey="date"
+                          tickLine={false}
+                          tickMargin={10}
+                          axisLine={false}
+                          tick={{ fontSize: 12 }}
+                        />
+                        <YAxis
+                          tickLine={false}
+                          axisLine={false}
+                          tick={{ fontSize: 12 }}
+                        />
+                        <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
+                        <Line type="monotone" dataKey="unique_users" stroke="hsl(var(--primary))" strokeWidth={2} />
+                        <Line type="monotone" dataKey="total_logins" stroke="hsl(var(--chart-2))" strokeWidth={2} />
+                        <Legend
+                          formatter={(value) => {
+                            if (value === 'unique_users') return 'Unique Users';
+                            if (value === 'total_logins') return 'Total Logins';
+                            return value;
+                          }}
+                        />
+                      </LineChart>
+                    </ChartContainer>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Device Status Distribution */}
               <Card className="rounded-2xl">
                 <CardHeader>
-                  <CardTitle>Filtration Activity Log</CardTitle>
-                  <CardDescription>Recent filtration cycles and their status</CardDescription>
+                  <CardTitle>Device Status Overview</CardTitle>
+                  <CardDescription>Current status of all devices in the system</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Date</TableHead>
-                        <TableHead>Liters</TableHead>
-                        <TableHead>Status</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filtrationLogs.map((log) => (
-                        <TableRow key={log.id}>
-                          <TableCell className="font-medium">{log.date}</TableCell>
-                          <TableCell>{log.liters} L</TableCell>
-                          <TableCell>
-                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                              log.status === 'Completed'
-                                ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
-                                : log.status === 'In Progress'
-                                ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
-                                : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
-                            }`}>
-                              {log.status}
-                            </span>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="p-4 border rounded-lg">
+                      <p className="text-sm text-muted-foreground">Online Devices</p>
+                      <p className="text-2xl font-bold text-green-600">{usersDevices.devices.online}</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {usersDevices.devices.total > 0
+                          ? `${Math.round((usersDevices.devices.online / usersDevices.devices.total) * 100)}%`
+                          : '0%'} of total
+                      </p>
+                    </div>
+                    <div className="p-4 border rounded-lg">
+                      <p className="text-sm text-muted-foreground">Offline Devices</p>
+                      <p className="text-2xl font-bold text-red-600">{usersDevices.devices.offline}</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {usersDevices.devices.total > 0
+                          ? `${Math.round((usersDevices.devices.offline / usersDevices.devices.total) * 100)}%`
+                          : '0%'} of total
+                      </p>
+                    </div>
+                    <div className="p-4 border rounded-lg">
+                      <p className="text-sm text-muted-foreground">Total Devices</p>
+                      <p className="text-2xl font-bold text-foreground">{usersDevices.devices.total}</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Registered in system
+                      </p>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
-
             </div>
           </TabsContent>
 
-          {/* Crops & Harvest Tab Content */}
-          <TabsContent value="crops-harvest" className="mt-6">
+          {/* Crops, Harvest & Yields Tab Content */}
+          <TabsContent value="crops-harvest-yield" className="mt-6">
             <div className="flex flex-col gap-6">
               {/* Summary Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
                 <TextureCardStyled className="rounded-2xl">
                   <TextureCardContent className="flex items-center gap-4">
                     <div>
-                      <p className="text-sm text-muted-foreground">Total Harvest This Month</p>
-                      <p className="text-2xl font-bold text-foreground">42 <span className="text-sm font-normal text-muted-foreground">crops</span></p>
+                      <p className="text-sm text-muted-foreground">Harvest This Month</p>
+                      <p className="text-2xl font-bold text-foreground">{cropsHarvestYield.harvest_this_month} <span className="text-sm font-normal text-muted-foreground">crops</span></p>
                     </div>
                   </TextureCardContent>
                 </TextureCardStyled>
@@ -261,8 +454,8 @@ export default function Analytics() {
                 <TextureCardStyled className="rounded-2xl">
                   <TextureCardContent className="flex items-center gap-4">
                     <div>
-                      <p className="text-sm text-muted-foreground">Total Harvest This Year</p>
-                      <p className="text-2xl font-bold text-foreground">318 <span className="text-sm font-normal text-muted-foreground">total</span></p>
+                      <p className="text-sm text-muted-foreground">Harvest This Year</p>
+                      <p className="text-2xl font-bold text-foreground">{cropsHarvestYield.harvest_this_year} <span className="text-sm font-normal text-muted-foreground">total</span></p>
                     </div>
                   </TextureCardContent>
                 </TextureCardStyled>
@@ -270,24 +463,53 @@ export default function Analytics() {
                 <TextureCardStyled className="rounded-2xl">
                   <TextureCardContent className="flex items-center gap-4">
                     <div>
-                      <p className="text-sm text-muted-foreground">Most Grown Crop Type</p>
-                      <p className="text-2xl font-bold text-foreground">Romaine</p>
+                      <p className="text-sm text-muted-foreground">Total Yield Weight</p>
+                      <p className="text-2xl font-bold text-foreground">{cropsHarvestYield.total_yield_weight} <span className="text-sm font-normal text-muted-foreground">kg</span></p>
+                    </div>
+                  </TextureCardContent>
+                </TextureCardStyled>
+
+                <TextureCardStyled className="rounded-2xl">
+                  <TextureCardContent className="flex items-center gap-4">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Avg Yield/Setup</p>
+                      <p className="text-2xl font-bold text-foreground">{cropsHarvestYield.average_yield_per_setup} <span className="text-sm font-normal text-muted-foreground">kg</span></p>
+                    </div>
+                  </TextureCardContent>
+                </TextureCardStyled>
+
+                <TextureCardStyled className="rounded-2xl">
+                  <TextureCardContent className="flex items-center gap-4">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Most Grown Crop</p>
+                      <p className="text-2xl font-bold text-foreground">{cropsHarvestYield.most_grown_crop || 'N/A'}</p>
                     </div>
                   </TextureCardContent>
                 </TextureCardStyled>
               </div>
 
-              {/* Row 1: Harvest Bar Chart + Crop Type Distribution Radar */}
+              {/* Row 1: Combined Harvest & Yield Trends + Crop Type Distribution */}
               <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-                {/* Harvest Bar Chart */}
+                {/* Combined Harvest & Yield Trends */}
                 <Card className="lg:col-span-3 rounded-2xl">
                   <CardHeader>
-                    <CardTitle>Harvest Insights</CardTitle>
-                    <CardDescription>January - December 2025</CardDescription>
+                    <CardTitle>Harvest & Yield Performance</CardTitle>
+                    <CardDescription>
+                      {frequency === 'weekly'
+                        ? 'Weekly harvest count and yield weight'
+                        : 'Monthly harvest count and yield weight'}
+                      {dateFrom && dateTo && ` (${dateFrom} to ${dateTo})`}
+                    </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <ChartContainer config={harvestChartConfig}>
-                      <BarChart accessibilityLayer data={harvestData} barCategoryGap="8%">
+                    <ChartContainer
+                      config={{
+                        harvested: { label: 'Crops Harvested', color: '#cadbb7' },
+                        total_weight: { label: 'Yield Weight (kg)', color: 'hsl(var(--primary))' }
+                      }}
+                      className="h-[300px] w-full"
+                    >
+                      <BarChart data={cropsHarvestYield.monthly_harvest_trend} barCategoryGap="8%">
                         <CartesianGrid vertical={false} />
                         <XAxis
                           dataKey="month"
@@ -295,27 +517,34 @@ export default function Analytics() {
                           tickMargin={10}
                           axisLine={false}
                         />
+                        <YAxis yAxisId="left" tickLine={false} axisLine={false} />
+                        <YAxis yAxisId="right" orientation="right" tickLine={false} axisLine={false} />
                         <ChartTooltip
                           cursor={false}
-                          content={<ChartTooltipContent hideLabel />}
+                          content={<ChartTooltipContent />}
+                        />
+                        <Legend
+                          formatter={(value) => {
+                            if (value === 'harvested') return 'Crops Harvested';
+                            if (value === 'total_weight') return 'Yield Weight (kg)';
+                            return value;
+                          }}
                         />
                         <Bar
+                          yAxisId="left"
                           dataKey="harvested"
+                          fill="#cadbb7"
                           strokeWidth={2}
                           radius={20}
-                          maxBarSize={80}
-                          activeIndex={6}
-                          activeBar={({ ...props }) => {
-                            return (
-                              <Rectangle
-                                {...props}
-                                fillOpacity={0.8}
-                                stroke={props.payload.fill}
-                                strokeDasharray={4}
-                                strokeDashoffset={4}
-                              />
-                            )
-                          }}
+                          maxBarSize={60}
+                        />
+                        <Bar
+                          yAxisId="right"
+                          dataKey="total_weight"
+                          fill="hsl(var(--primary))"
+                          strokeWidth={2}
+                          radius={20}
+                          maxBarSize={60}
                         />
                       </BarChart>
                     </ChartContainer>
@@ -327,15 +556,18 @@ export default function Analytics() {
                   <CardHeader className="items-center pb-4">
                     <CardTitle>Crop Type Distribution</CardTitle>
                     <CardDescription>
-                      Harvested crops by type
+                      Popular crops by harvest count
+                      {dateFrom && dateTo && ` (filtered)`}
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="pb-0">
                     <ChartContainer
-                      config={cropRadarConfig}
-                      className="mx-auto aspect-square max-h-[350px]"
+                      config={{
+                        harvested: { label: 'Setups', color: 'hsl(142, 76%, 36%)' }
+                      }}
+                      className="mx-auto aspect-square max-h-[300px]"
                     >
-                      <RadarChart data={cropRadarData}>
+                      <RadarChart data={cropsHarvestYield.crop_type_distribution}>
                         <ChartTooltip
                           cursor={false}
                           content={<ChartTooltipContent hideLabel />}
@@ -350,9 +582,349 @@ export default function Analytics() {
                       </RadarChart>
                     </ChartContainer>
                   </CardContent>
-
                 </Card>
               </div>
+
+              {/* Top Yielding Crops */}
+              <Card className="rounded-2xl">
+                <CardHeader>
+                  <CardTitle>Top Yielding Crops</CardTitle>
+                  <CardDescription>
+                    Crops ranked by total yield weight
+                    {dateFrom && dateTo && ` within selected period`}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Crop Name</TableHead>
+                        <TableHead>Total Weight (kg)</TableHead>
+                        <TableHead>Setup Count</TableHead>
+                        <TableHead>Avg per Setup</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {cropsHarvestYield.top_yielding_crops && cropsHarvestYield.top_yielding_crops.length > 0 ? (
+                        cropsHarvestYield.top_yielding_crops.map((crop, index) => (
+                          <TableRow key={index}>
+                            <TableCell className="font-medium">{crop.crop_name}</TableCell>
+                            <TableCell>{crop.total_weight} kg</TableCell>
+                            <TableCell>{crop.setup_count}</TableCell>
+                            <TableCell>{(crop.total_weight / crop.setup_count).toFixed(2)} kg</TableCell>
+                          </TableRow>
+                        ))
+                      ) : (
+                        <TableRow>
+                          <TableCell colSpan={4} className="text-center text-muted-foreground">
+                            No yield data available
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+
+              {/* Grade Distribution */}
+              <Card className="rounded-2xl">
+                <CardHeader>
+                  <CardTitle>Yield Quality Distribution</CardTitle>
+                  <CardDescription>Breakdown of harvested yield by grade quality</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {cropsHarvestYield.grade_distribution && Object.keys(cropsHarvestYield.grade_distribution).length > 0 ? (
+                      Object.entries(cropsHarvestYield.grade_distribution).map(([grade, data]) => (
+                        <div key={grade} className="p-4 border rounded-lg">
+                          <p className="text-sm text-muted-foreground capitalize">{grade}</p>
+                          <p className="text-2xl font-bold text-foreground">{data.weight} kg</p>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {data.count} units • {data.percentage}% of total
+                          </p>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="col-span-3 text-center text-muted-foreground p-4">
+                        No grade distribution data available
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Status Distributions */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {/* Growth Stage Distribution */}
+                <Card className="rounded-2xl">
+                  <CardHeader>
+                    <CardTitle>Growth Stages</CardTitle>
+                    <CardDescription>Distribution by growth stage</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      {cropsHarvestYield.growth_stage_distribution && Object.keys(cropsHarvestYield.growth_stage_distribution).length > 0 ? (
+                        Object.entries(cropsHarvestYield.growth_stage_distribution).map(([stage, count]) => (
+                          <div key={stage} className="flex items-center justify-between p-2 border rounded">
+                            <span className="text-sm capitalize">{stage}</span>
+                            <span className="font-semibold">{count}</span>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="text-center text-muted-foreground p-4">No data</div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Health Status Distribution */}
+                <Card className="rounded-2xl">
+                  <CardHeader>
+                    <CardTitle>Health Status</CardTitle>
+                    <CardDescription>Distribution by health status</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      {cropsHarvestYield.health_status_distribution && Object.keys(cropsHarvestYield.health_status_distribution).length > 0 ? (
+                        Object.entries(cropsHarvestYield.health_status_distribution).map(([status, count]) => (
+                          <div key={status} className="flex items-center justify-between p-2 border rounded">
+                            <span className="text-sm capitalize">{status}</span>
+                            <span className="font-semibold">{count}</span>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="text-center text-muted-foreground p-4">No data</div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Setup Status Distribution */}
+                <Card className="rounded-2xl">
+                  <CardHeader>
+                    <CardTitle>Setup Status</CardTitle>
+                    <CardDescription>Distribution by setup status</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      {cropsHarvestYield.setups_by_status && Object.keys(cropsHarvestYield.setups_by_status).length > 0 ? (
+                        Object.entries(cropsHarvestYield.setups_by_status).map(([status, count]) => (
+                          <div key={status} className="flex items-center justify-between p-2 border rounded">
+                            <span className="text-sm capitalize">{status}</span>
+                            <span className="font-semibold">{count}</span>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="text-center text-muted-foreground p-4">No data</div>
+                      )}
+                      <div className="mt-4 p-3 bg-primary/10 rounded-lg">
+                        <p className="text-xs text-muted-foreground">Harvest Rate</p>
+                        <p className="text-2xl font-bold text-primary">{cropsHarvestYield.harvest_rate}%</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+          </TabsContent>
+
+          {/* Water Treatment Tab Content */}
+          <TabsContent value="water-treatment" className="mt-6">
+            <div className="flex flex-col gap-6">
+              {/* Summary Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <Card className="rounded-2xl">
+                  <CardContent className="pt-6">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Total Cycles</p>
+                      <p className="text-3xl font-bold text-foreground">{waterTreatment.total_cycles}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="rounded-2xl">
+                  <CardContent className="pt-6">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Success Rate</p>
+                      <p className="text-3xl font-bold text-green-600">{waterTreatment.success_rate}%</p>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="rounded-2xl">
+                  <CardContent className="pt-6">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Failure Rate</p>
+                      <p className="text-3xl font-bold text-red-600">{waterTreatment.failure_rate}%</p>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="rounded-2xl">
+                  <CardContent className="pt-6">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Avg Duration</p>
+                      <p className="text-3xl font-bold text-foreground">{waterTreatment.average_duration} <span className="text-lg font-normal text-muted-foreground">min</span></p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Row 1: Filtration Cycle History */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Filtration Stats Cards */}
+                <FiltrationCyclesCard />
+
+                {/* Weekly Filtration Chart */}
+                <Card className="lg:col-span-2 rounded-2xl">
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <CardTitle>Water Filtered</CardTitle>
+                        <CardDescription>
+                          {frequency === 'weekly'
+                            ? 'Total liters filtered per week'
+                            : 'Total liters filtered per month'}
+                          {dateFrom && dateTo && ` (${dateFrom} to ${dateTo})`}
+                        </CardDescription>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <ChartContainer
+                      config={{
+                        filtered: { label: 'Water Filtered (L)', color: '#60A5FA' }
+                      }}
+                      className="h-[240px] w-full aspect-auto"
+                    >
+                      <BarChart data={waterTreatment.weekly_filtration} barCategoryGap="10%">
+                        <CartesianGrid vertical={false} strokeDasharray="3 3" />
+                        <XAxis
+                          dataKey="week"
+                          tickLine={false}
+                          tickMargin={10}
+                          axisLine={false}
+                          tick={{ fontSize: 12 }}
+                        />
+                        <YAxis
+                          tickLine={false}
+                          axisLine={false}
+                          tick={{ fontSize: 12 }}
+                          tickFormatter={(value) => `${value}L`}
+                        />
+                        <ChartTooltip
+                          cursor={false}
+                          content={<ChartTooltipContent />}
+                        />
+                        <Bar
+                          dataKey="filtered"
+                          fill="#60A5FA"
+                          radius={12}
+                          barSize={60}
+                        />
+                      </BarChart>
+                    </ChartContainer>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Treatment Trends */}
+              <Card className="rounded-2xl">
+                <CardHeader>
+                  <CardTitle>Treatment Trends</CardTitle>
+                  <CardDescription>
+                    Treatment cycles and success rate
+                    {dateFrom && dateTo && ` from ${dateFrom} to ${dateTo}`}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ChartContainer
+                    config={{
+                      cycle_count: { label: 'Total Cycles', color: 'hsl(var(--primary))' },
+                      success_count: { label: 'Successful', color: 'hsl(var(--chart-2))' }
+                    }}
+                    className="h-[300px] w-full"
+                  >
+                    <LineChart data={waterTreatment.treatment_trends}>
+                      <CartesianGrid vertical={false} strokeDasharray="3 3" />
+                      <XAxis
+                        dataKey="date"
+                        tickLine={false}
+                        tickMargin={10}
+                        axisLine={false}
+                        tick={{ fontSize: 12 }}
+                      />
+                      <YAxis
+                        tickLine={false}
+                        axisLine={false}
+                        tick={{ fontSize: 12 }}
+                      />
+                      <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
+                      <Line type="monotone" dataKey="cycle_count" stroke="hsl(var(--primary))" strokeWidth={2} />
+                      <Line type="monotone" dataKey="success_count" stroke="hsl(var(--chart-2))" strokeWidth={2} />
+                      <Legend
+                        formatter={(value) => {
+                          if (value === 'cycle_count') return 'Total Cycles';
+                          if (value === 'success_count') return 'Successful';
+                          return value;
+                        }}
+                      />
+                    </LineChart>
+                  </ChartContainer>
+                </CardContent>
+              </Card>
+
+              {/* Stage Performance */}
+              <Card className="rounded-2xl">
+                <CardHeader>
+                  <CardTitle>Stage Performance Breakdown</CardTitle>
+                  <CardDescription>Performance metrics for each treatment stage</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Stage Name</TableHead>
+                        <TableHead>Total Count</TableHead>
+                        <TableHead>Pass Rate</TableHead>
+                        <TableHead>Avg pH</TableHead>
+                        <TableHead>Avg Turbidity</TableHead>
+                        <TableHead>Avg TDS</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {waterTreatment.stage_performance && waterTreatment.stage_performance.length > 0 ? (
+                        waterTreatment.stage_performance.map((stage, index) => (
+                          <TableRow key={index}>
+                            <TableCell className="font-medium">{stage.stage_name}</TableCell>
+                            <TableCell>{stage.total_count}</TableCell>
+                            <TableCell>
+                              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                stage.pass_rate >= 80
+                                  ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+                                  : stage.pass_rate >= 60
+                                  ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+                                  : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                              }`}>
+                                {stage.pass_rate}%
+                              </span>
+                            </TableCell>
+                            <TableCell>{stage.avg_ph ?? 'N/A'}</TableCell>
+                            <TableCell>{stage.avg_turbidity ?? 'N/A'}</TableCell>
+                            <TableCell>{stage.avg_tds ?? 'N/A'}</TableCell>
+                          </TableRow>
+                        ))
+                      ) : (
+                        <TableRow>
+                          <TableCell colSpan={6} className="text-center text-muted-foreground">
+                            No stage performance data available
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
             </div>
           </TabsContent>
         </Tabs>

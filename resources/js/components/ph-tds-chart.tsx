@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import { Area, AreaChart, CartesianGrid, XAxis } from "recharts"
+import axios from "axios"
 
 import {
   Card,
@@ -28,6 +29,24 @@ import {
 } from "@/components/ui/select"
 
 export const description = "An interactive area chart"
+
+interface Device {
+  id: number
+  device_name: string
+  status: string
+}
+
+interface SensorSystem {
+  id: number
+  system_type: string
+  name: string | null
+}
+
+interface ChartDataPoint {
+  date: string
+  pH: number
+  TDS: number
+}
 
 const chartData = [
   { date: "2024-04-01", pH: 7.2, TDS: 35 },
@@ -139,53 +158,148 @@ const chartConfig = {
 
 interface PhTdsChartProps {
   className?: string
+  devices?: Device[]
 }
 
-export function PhTdsChart({ className }: PhTdsChartProps) {
+export function PhTdsChart({ className, devices = [] }: PhTdsChartProps) {
   const [timeRange, setTimeRange] = React.useState("7d")
+  const [selectedDevice, setSelectedDevice] = React.useState<string>("")
+  const [selectedSensorSystem, setSelectedSensorSystem] = React.useState<string>("")
+  const [sensorSystems, setSensorSystems] = React.useState<SensorSystem[]>([])
+  const [chartDataState, setChartDataState] = React.useState<ChartDataPoint[]>(chartData)
+  const [loading, setLoading] = React.useState(false)
 
-  const filteredData = chartData.filter((item) => {
-    const date = new Date(item.date)
-    const referenceDate = new Date("2024-06-30")
-    let daysToSubtract = 90
-    if (timeRange === "15d") {
-      daysToSubtract = 15
-    } else if (timeRange === "7d") {
-      daysToSubtract = 7
+  // Fetch sensor systems when device changes
+  React.useEffect(() => {
+    if (selectedDevice) {
+      setLoading(true)
+      axios.get(`/dashboard/sensor-systems?device_id=${selectedDevice}`)
+        .then(response => {
+          if (response.data.status === 'success') {
+            setSensorSystems(response.data.data)
+            setSelectedSensorSystem("")
+          }
+        })
+        .catch(error => {
+          console.error('Error fetching sensor systems:', error)
+          setSensorSystems([])
+        })
+        .finally(() => setLoading(false))
+    } else {
+      setSensorSystems([])
+      setSelectedSensorSystem("")
     }
-    const startDate = new Date(referenceDate)
-    startDate.setDate(startDate.getDate() - daysToSubtract)
-    return date >= startDate
-  })
+  }, [selectedDevice])
+
+  // Fetch pH/TDS readings when sensor system or time range changes
+  React.useEffect(() => {
+    if (selectedSensorSystem) {
+      setLoading(true)
+      const days = timeRange === "90d" ? 90 : timeRange === "15d" ? 15 : 7
+      axios.get(`/dashboard/ph-tds-readings?sensor_system_id=${selectedSensorSystem}&days=${days}`)
+        .then(response => {
+          if (response.data.status === 'success') {
+            setChartDataState(response.data.data.length > 0 ? response.data.data : chartData)
+          }
+        })
+        .catch(error => {
+          console.error('Error fetching pH/TDS readings:', error)
+          setChartDataState(chartData)
+        })
+        .finally(() => setLoading(false))
+    } else {
+      setChartDataState(chartData)
+    }
+  }, [selectedSensorSystem, timeRange])
+
+  const filteredData = chartDataState
+
+  const getSystemTypeLabel = (systemType: string) => {
+    switch (systemType) {
+      case 'dirty_water':
+        return 'Dirty Water'
+      case 'clean_water':
+        return 'Clean Water'
+      case 'hydroponics_water':
+        return 'Hydroponics Water'
+      default:
+        return systemType
+    }
+  }
 
   return (
     <Card className={cn("pt-0 gap-0 flex flex-col", className)}>
-      <CardHeader className="flex items-center gap-2 space-y-0 border-b py-3 sm:flex-row">
-        <div className="grid flex-1 gap-0.5">
-          <CardTitle className="text-lg">pH & TDS Levels</CardTitle>
-          <CardDescription className="text-xs">
-            Water acidity & nutrient concentration
-          </CardDescription>
+      <CardHeader className="flex flex-col gap-3 space-y-0 border-b py-3">
+        <div className="flex items-center justify-between gap-2">
+          <div className="grid flex-1 gap-0.5">
+            <CardTitle className="text-lg">pH & TDS Levels</CardTitle>
+            <CardDescription className="text-xs">
+              Water acidity & nutrient concentration
+            </CardDescription>
+          </div>
+          <Select value={timeRange} onValueChange={setTimeRange}>
+            <SelectTrigger
+              className="h-8 w-[130px] rounded-lg text-xs"
+              aria-label="Select time range"
+            >
+              <SelectValue placeholder="Last 3 months" />
+            </SelectTrigger>
+            <SelectContent className="rounded-xl">
+              <SelectItem value="90d" className="rounded-lg text-xs">
+                Last 3 months
+              </SelectItem>
+              <SelectItem value="15d" className="rounded-lg text-xs">
+                Last 15 days
+              </SelectItem>
+              <SelectItem value="7d" className="rounded-lg text-xs">
+                Last 7 days
+              </SelectItem>
+            </SelectContent>
+          </Select>
         </div>
-        <Select value={timeRange} onValueChange={setTimeRange}>
-          <SelectTrigger
-            className="hidden h-8 w-[130px] rounded-lg text-xs sm:ml-auto sm:flex"
-            aria-label="Select a value"
+        
+        {/* Filter Row */}
+        <div className="flex flex-wrap items-center gap-2">
+          <Select value={selectedDevice} onValueChange={setSelectedDevice}>
+            <SelectTrigger
+              className="h-8 w-[160px] rounded-lg text-xs"
+              aria-label="Select device"
+            >
+              <SelectValue placeholder="Select Device" />
+            </SelectTrigger>
+            <SelectContent className="rounded-xl">
+              {devices.map((device) => (
+                <SelectItem key={device.id} value={device.id.toString()} className="rounded-lg text-xs">
+                  {device.device_name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select 
+            value={selectedSensorSystem} 
+            onValueChange={setSelectedSensorSystem}
+            disabled={!selectedDevice || sensorSystems.length === 0}
           >
-            <SelectValue placeholder="Last 3 months" />
-          </SelectTrigger>
-          <SelectContent className="rounded-xl">
-            <SelectItem value="90d" className="rounded-lg text-xs">
-              Last 3 months
-            </SelectItem>
-            <SelectItem value="15d" className="rounded-lg text-xs">
-              Last 15 days
-            </SelectItem>
-            <SelectItem value="7d" className="rounded-lg text-xs">
-              Last 7 days
-            </SelectItem>
-          </SelectContent>
-        </Select>
+            <SelectTrigger
+              className="h-8 w-[180px] rounded-lg text-xs"
+              aria-label="Select sensor system"
+            >
+              <SelectValue placeholder="Select Sensor System" />
+            </SelectTrigger>
+            <SelectContent className="rounded-xl">
+              {sensorSystems.map((system) => (
+                <SelectItem key={system.id} value={system.id.toString()} className="rounded-lg text-xs">
+                  {system.name || getSystemTypeLabel(system.system_type)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          {loading && (
+            <span className="text-xs text-muted-foreground">Loading...</span>
+          )}
+        </div>
       </CardHeader>
       <CardContent className="px-2 pt-3 sm:px-4 sm:pt-3 flex-1 flex flex-col">
         <ChartContainer

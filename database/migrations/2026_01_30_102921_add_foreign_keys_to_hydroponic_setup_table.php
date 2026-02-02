@@ -11,8 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('users', function (Blueprint $table) {
-            $table->enum('status', ['active', 'inactive'])->default('active');
+        Schema::table('hydroponic_setup', function (Blueprint $table) {
+            $table->foreign(['device_id'])->references(['id'])->on('devices')->onUpdate('restrict')->onDelete('cascade');
         });
     }
 
@@ -21,8 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('users', function (Blueprint $table) {
-            //
+        Schema::table('hydroponic_setup', function (Blueprint $table) {
+            $table->dropForeign('hydroponic_setup_device_id_foreign');
         });
     }
 };

@@ -1,19 +1,16 @@
 import AppLayout from '@/layouts/app-layout'
-import { BreadcrumbItem } from '@/types';
 import { Head, usePage, router } from '@inertiajs/react'
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import { cleanFilters } from '@/lib/filter-helpers'
 import {
   Table,
   TableBody,
-  TableCaption,
   TableCell,
-  TableFooter,
   TableHead,
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { ArrowUpDown, MoreHorizontal, RotateCcw, Trash2, Check, X, ArrowLeft } from 'lucide-react'
+import { ArrowUpDown, MoreHorizontal, RotateCcw, Check, X, ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -22,10 +19,18 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Badge } from '@/components/ui/badge'
-import SearchInput from '@/components/search-input'
 import { User } from "@/types/user"
 import { Pagination } from "@/types/pagination"
 import PaginationComp from "@/components/pagination"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { toast } from 'sonner';
 
 export default function ArchiveUser() {
   const { users, filters } = usePage<{
@@ -33,6 +38,10 @@ export default function ArchiveUser() {
     filters: { search?: string }
   }>().props
   const [search, setSearch] = React.useState(filters.search || "")
+
+  // Unarchive confirmation modal state
+  const [isUnarchiveConfirmOpen, setIsUnarchiveConfirmOpen] = useState(false);
+  const [userToUnarchive, setUserToUnarchive] = useState<User | null>(null);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -46,14 +55,30 @@ export default function ArchiveUser() {
     return () => clearTimeout(timer)
   }, [search])
 
-  const handleUnarchive = (userId: number) => {
-    if (confirm("Are you sure you want to restore this user?")) {
-      router.patch(`/users/${userId}/unarchive`, {}, {
-        preserveState: true,
+  const handleUnarchiveClick = (user: User) => {
+    setUserToUnarchive(user);
+    setIsUnarchiveConfirmOpen(true);
+  };
+
+  const handleUnarchiveConfirm = () => {
+    if (userToUnarchive) {
+      router.patch(`/users/${userToUnarchive.id}/unarchive`, {}, {
         preserveScroll: true,
-      })
+        onSuccess: () => {
+          setIsUnarchiveConfirmOpen(false);
+          setUserToUnarchive(null);
+          toast.success('User restored successfully', {
+            description: `${userToUnarchive.first_name} ${userToUnarchive.last_name} has been restored from archives.`,
+          });
+        },
+        onError: () => {
+          toast.error('Failed to restore user', {
+            description: 'Please try again later.',
+          });
+        },
+      });
     }
-  }
+  };
 
     const columnsHeader = ['Name', 'Email', 'Status', 'Verified'];
 
@@ -112,17 +137,23 @@ export default function ArchiveUser() {
               <TableCell className="font-medium">{user.first_name} {user.last_name}</TableCell>
               <TableCell>{user.email}</TableCell>
               <TableCell>
-                <Badge
-                  className='bg-gray-100 border-gray-300 text-gray-500'
-                >
-                  {user.status}
+                <Badge className={user.status === 'active' 
+                    ? "border-green-300 bg-green-100 text-green-600" 
+                    : "border-gray-300 bg-gray-100 text-gray-600"}>
+                  {user.status === 'active' ? 'Active' : 'Inactive'}
                 </Badge>
               </TableCell>
               <TableCell>
                 {user.email_verified_at ? (
-                  <Check className="h-5 w-5 text-green-600" />
+                  <Badge className="border-green-300 bg-green-100 text-green-600">
+                    <Check className="mr-1 h-3 w-3" />
+                    Verified
+                  </Badge>
                 ) : (
-                  <X className="h-5 w-5 text-red-500" />
+                  <Badge className="border-orange-300 bg-orange-100 text-orange-600">
+                    <X className="mr-1 h-3 w-3" />
+                    Unverified
+                  </Badge>
                 )}
               </TableCell>
               <TableCell>
@@ -133,7 +164,7 @@ export default function ArchiveUser() {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => handleUnarchive(user.id)}>
+                    <DropdownMenuItem onClick={() => handleUnarchiveClick(user)}>
                       <RotateCcw className="mr-2 h-4 w-4" />
                       Restore
                     </DropdownMenuItem>
@@ -152,6 +183,49 @@ export default function ArchiveUser() {
           <PaginationComp links={users.links} />
         </div>
       )}
+
+      {/* Unarchive Confirmation Modal */}
+      <Dialog open={isUnarchiveConfirmOpen} onOpenChange={setIsUnarchiveConfirmOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <RotateCcw className="h-5 w-5 text-green-500" />
+              Restore User
+            </DialogTitle>
+            <DialogDescription>
+              Are you sure you want to restore this user? They will be moved back to the active users list.
+            </DialogDescription>
+          </DialogHeader>
+
+          {userToUnarchive && (
+            <div className="rounded-lg border border-border bg-muted p-4">
+              <p className="text-sm font-medium text-foreground">
+                {userToUnarchive.first_name} {userToUnarchive.last_name}
+              </p>
+              <p className="text-sm text-muted-foreground">{userToUnarchive.email}</p>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button 
+              variant="secondary" 
+              onClick={() => {
+                setIsUnarchiveConfirmOpen(false);
+                setUserToUnarchive(null);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button 
+              variant="primary"
+              onClick={handleUnarchiveConfirm}
+            >
+              Restore User
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
             </div>
         </AppLayout>
   )

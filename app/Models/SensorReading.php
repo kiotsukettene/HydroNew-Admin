@@ -22,6 +22,8 @@ use Illuminate\Database\Eloquent\Model;
  * @property float|null $temperature
  * @property float|null $ec
  * @property float|null $electric_current
+ * @property string|null $ai_classification
+ * @property float|null $confidence
  * @property Carbon|null $reading_time
  * 
  * @property SensorSystem $sensor_system
@@ -43,6 +45,7 @@ class SensorReading extends Model
 		'temperature' => 'float',
 		'ec' => 'float',
 		'electric_current' => 'float',
+		'confidence' => 'float',
 		'reading_time' => 'datetime'
 	];
 
@@ -56,6 +59,8 @@ class SensorReading extends Model
 		'temperature',
 		'ec',
 		'electric_current',
+		'ai_classification',
+		'confidence',
 		'reading_time'
 	];
 

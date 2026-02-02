@@ -100,10 +100,19 @@ class DeviceController extends Controller
      */
     public function archive(string $id)
     {
-        $device = Device::findOrFail($id);
-        $device->update(['is_archived' => true]);
+        try {
+            $device = Device::findOrFail($id);
+            
+            if ($device->is_archived) {
+                return redirect()->back()->withErrors(['error' => 'Device is already archived.']);
+            }
+            
+            $device->update(['is_archived' => true]);
 
-        return redirect()->back()->with('success', 'Device archived successfully.');
+            return redirect()->back()->with('success', 'Device archived successfully.');
+        } catch (\Exception $e) {
+            return redirect()->back()->withErrors(['error' => 'Failed to archive device.']);
+        }
     }
 
     /**
@@ -111,10 +120,19 @@ class DeviceController extends Controller
      */
     public function unarchive(string $id)
     {
-        $device = Device::findOrFail($id);
-        $device->update(['is_archived' => false]);
+        try {
+            $device = Device::findOrFail($id);
+            
+            if (!$device->is_archived) {
+                return redirect()->back()->withErrors(['error' => 'Device is not archived.']);
+            }
+            
+            $device->update(['is_archived' => false]);
 
-        return redirect()->back()->with('success', 'Device unarchived successfully.');
+            return redirect()->back()->with('success', 'Device unarchived successfully.');
+        } catch (\Exception $e) {
+            return redirect()->back()->withErrors(['error' => 'Failed to restore device.']);
+        }
     }
 
 
@@ -170,19 +188,25 @@ class DeviceController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        $validated = $request->validate([
-            'device_name' => 'required|string|max:255',
-            'status' => 'nullable|string|in:online,offline',
-        ]);
+        try {
+            $validated = $request->validate([
+                'device_name' => 'required|string|max:255',
+                'status' => 'nullable|string|in:online,offline',
+            ]);
 
-        $device = Device::findOrFail($id);
-        
-        // Remove serial_number from validated data to prevent changes
-        unset($validated['serial_number']);
-        
-        $device->update($validated);
+            $device = Device::findOrFail($id);
+            
+            // Remove serial_number from validated data to prevent changes
+            unset($validated['serial_number']);
+            
+            $device->update($validated);
 
-        return redirect()->back()->with('success', 'Device updated successfully.');
+            return redirect()->back()->with('success', 'Device updated successfully.');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            throw $e;
+        } catch (\Exception $e) {
+            return redirect()->back()->withErrors(['error' => 'Failed to update device.']);
+        }
     }
 
     /**
