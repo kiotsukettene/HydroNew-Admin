@@ -3,17 +3,43 @@
 namespace App\Http\Controllers\Feedback;
 
 use App\Http\Controllers\Controller;
+use App\Models\Feedback;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class FeedbackController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * Display a listing of the resource (all user feedback, API-shaped).
      */
-    public function index()
+    public function index(Request $request)
     {
-        return Inertia::render('feedback/index');
+        $filters = $request->only(['category', 'device_id', 'search']);
+
+        $query = Feedback::with(['user', 'device'])
+            ->orderBy('created_at', 'desc');
+
+        if (!empty($filters['category']) && $filters['category'] !== 'all') {
+            $query->where('category', $filters['category']);
+        }
+
+        if (!empty($filters['device_id'])) {
+            $query->where('device_id', $filters['device_id']);
+        }
+
+        if (!empty($filters['search'])) {
+            $query->where(function ($q) use ($filters) {
+                $q->where('message', 'like', '%' . $filters['search'] . '%')
+                    ->orWhere('subject', 'like', '%' . $filters['search'] . '%');
+            });
+        }
+
+        $feedback = $query->paginate($request->input('per_page', 20));
+
+        return Inertia::render('feedback/index', [
+            'feedback' => $feedback,
+            'filters' => $filters,
+        ]);
     }
 
 
