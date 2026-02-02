@@ -2,6 +2,7 @@ import AppLayout from '@/layouts/app-layout'
 import { Head, router, useForm, usePage } from '@inertiajs/react'
 import React, { useEffect, useRef, useState } from 'react'
 import SearchInput from '@/components/search-input'
+import { cleanFilters } from '@/lib/filter-helpers'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import {
@@ -40,15 +41,17 @@ type SortField = 'name' | 'serial_number' | 'status' | 'created_at';
 type SortDirection = 'asc' | 'desc';
 
 export default function Devices() {
-  const { devices, filters, deviceCount } = usePage<{
+  const { devices, filters, deviceCount, users } = usePage<{
     devices: Pagination<Device>;
     filters: { search: string; status?: string; sort?: string; direction?: string };
     deviceCount: number;
+    users: Array<{ id: number; first_name: string; last_name: string; email: string }>;
   }>().props;
 
   const [selectedDevices, setSelectedDevices] = useState<number[]>([])
   const [isEditOpen, setIsEditOpen] = useState(false)
   const [editingDevice, setEditingDevice] = useState<Device | null>(null)
+  const [isCreateOpen, setIsCreateOpen] = useState(false)
   const [isSearching, setIsSearching] = useState(false)
 
   const { data, setData } = useForm({
@@ -66,6 +69,14 @@ export default function Devices() {
     device_name: '',
     serial_number: '',
     status: '',
+  })
+
+  // Create form
+  const { data: createData, setData: setCreateData, post, processing: creating, reset: resetCreate, errors } = useForm({
+    device_name: '',
+    serial_number: '',
+    model: '',
+    firmware_version: '',
   })
 
   const handleEditClick = (device: Device) => {
@@ -91,17 +102,27 @@ export default function Devices() {
     }
   }
 
+  const handleCreateDevice = () => {
+    post('/devices', {
+      preserveScroll: true,
+      onSuccess: () => {
+        setIsCreateOpen(false)
+        resetCreate()
+      },
+    })
+  }
+
   const handleSort = (field: SortField) => {
     const newDirection = data.sort === field && data.direction === 'asc' ? 'desc' : 'asc';
     
     router.get(
       '/devices',
-      { 
+      cleanFilters({ 
         search: data.search, 
         status: data.status,
         sort: field, 
         direction: newDirection
-      },
+      }, { sort: 'created_at', direction: 'desc', status: 'all' }),
       {
         preserveState: true,
         preserveScroll: true,
@@ -130,12 +151,12 @@ export default function Devices() {
       setIsSearching(true)
       router.get(
         '/devices',
-        { 
+        cleanFilters({ 
           search: debounceSearch, 
           status: data.status,
           sort: data.sort,
           direction: data.direction
-        },
+        }, { sort: 'created_at', direction: 'desc', status: 'all' }),
         {
           preserveState: true,
           preserveScroll: true,
@@ -149,12 +170,12 @@ export default function Devices() {
   const handleStatusChange = (status: string) => {
     router.get(
       '/devices',
-      { 
+      cleanFilters({ 
         search: data.search, 
         status: status,
         sort: data.sort,
         direction: data.direction
-      },
+      }, { sort: 'created_at', direction: 'desc', status: 'all' }),
       {
         preserveState: true,
         preserveScroll: true,
@@ -211,7 +232,7 @@ export default function Devices() {
 
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <SearchInput 
-            placeholder="Search by device name, serial number, or owner..." 
+            placeholder="Search by device name, serial number, or paired user..." 
             value={data.search}
             onChange={(value) => setData('search', value)}
           />
@@ -237,8 +258,13 @@ export default function Devices() {
           </SelectContent>
         </Select>
         <Button
+          onClick={() => setIsCreateOpen(true)}
+        >
+          Add Device
+        </Button>
+        <Button
           variant="secondary"
-          onClick={() => router.visit("/devices/archived")}
+          onClick={() => router.visit("/devices/archived", { preserveState: false })}
         >
           <Archive className="mr-2 h-4 w-4" />
           View Archived
@@ -273,7 +299,7 @@ export default function Devices() {
               </TableHead>
               <TableHead>
                 <div className="flex items-center gap-1">
-                  <Label className="text-sm font-medium">Owner</Label>
+                  <Label className="text-sm font-medium">Paired Users</Label>
                 </div>
               </TableHead>
 
@@ -363,21 +389,20 @@ export default function Devices() {
                   </TableCell>
                   <TableCell>
                     {device.users && device.users.length > 0 ? (
-                      <div className="flex flex-col">
-                        <span className="font-medium text-sm">
-                          {device.users[0].first_name} {device.users[0].last_name}
-                        </span>
-                        <span className="text-xs text-muted-foreground">
-                          {device.users[0].email}
-                        </span>
-                        {device.users.length > 1 && (
-                          <span className="text-xs text-muted-foreground">
-                            +{device.users.length - 1} more
-                          </span>
-                        )}
+                      <div className="flex flex-col gap-1">
+                        {device.users.map((user, index) => (
+                          <div key={user.id} className="flex flex-col">
+                            <span className="text-sm font-medium">
+                              {user.first_name} {user.last_name}
+                            </span>
+                            <span className="text-xs text-muted-foreground">
+                              {user.email}
+                            </span>
+                          </div>
+                        ))}
                       </div>
                     ) : (
-                      <span className="text-muted-foreground text-sm">No owner</span>
+                      <span className="text-muted-foreground text-sm">No paired users</span>
                     )}
                   </TableCell>
                   <TableCell className="font-mono text-sm">
@@ -501,6 +526,85 @@ export default function Devices() {
                 disabled={processing}
               >
                 {processing ? 'Saving...' : 'Save changes'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Create Device Modal */}
+        <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Add New Device</DialogTitle>
+              <DialogDescription>
+                Register a new device to your system.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-3">
+              <div className="grid gap-1">
+                <Label className="text-sm font-medium">Device Name *</Label>
+                <input
+                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+                  placeholder="Enter device name"
+                  value={createData.device_name}
+                  onChange={(e) => setCreateData('device_name', e.target.value)}
+                />
+                {errors.device_name && (
+                  <p className="text-xs text-red-500">{errors.device_name}</p>
+                )}
+              </div>
+              
+              <div className="grid gap-1">
+                <Label className="text-sm font-medium">Serial Number *</Label>
+                <input
+                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm font-mono"
+                  placeholder="Enter serial number"
+                  value={createData.serial_number}
+                  onChange={(e) => setCreateData('serial_number', e.target.value)}
+                />
+                {errors.serial_number && (
+                  <p className="text-xs text-red-500">{errors.serial_number}</p>
+                )}
+              </div>
+
+              <div className="grid gap-1">
+                <Label className="text-sm font-medium">Model</Label>
+                <input
+                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+                  placeholder="Enter model (optional)"
+                  value={createData.model}
+                  onChange={(e) => setCreateData('model', e.target.value)}
+                />
+              </div>
+
+              <div className="grid gap-1">
+                <Label className="text-sm font-medium">Firmware Version</Label>
+                <input
+                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+                  placeholder="Enter firmware version (optional)"
+                  value={createData.firmware_version}
+                  onChange={(e) => setCreateData('firmware_version', e.target.value)}
+                />
+              </div>
+            </div>
+
+            <DialogFooter>
+              <Button 
+                variant="secondary" 
+                onClick={() => {
+                  setIsCreateOpen(false)
+                  resetCreate()
+                }}
+                disabled={creating}
+              >
+                Cancel
+              </Button>
+              <Button 
+                onClick={handleCreateDevice}
+                disabled={creating}
+              >
+                {creating ? 'Creating...' : 'Create Device'}
               </Button>
             </DialogFooter>
           </DialogContent>
