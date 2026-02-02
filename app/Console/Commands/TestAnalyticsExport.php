@@ -52,33 +52,8 @@ class TestAnalyticsExport extends Command
                 return Command::FAILURE;
             }
 
-            // Test Image generation
-            $this->info('Generating Image...');
-            $htmlImage = view('reports.analytics-image', [
-                'usersDevices' => $usersDevices,
-                'cropsHarvestYield' => $cropsHarvestYield,
-                'waterTreatment' => $waterTreatment,
-                'dateFrom' => null,
-                'dateTo' => null,
-                'frequency' => 'monthly',
-                'deviceName' => null,
-                'activeTab' => 'users-devices',
-            ])->render();
-
-            $imageFilename = $exportService->htmlToImage($htmlImage, 'test-analytics-dashboard.png');
-            $imagePath = storage_path('app/public/exports/' . $imageFilename);
-
-            if (file_exists($imagePath)) {
-                $this->info('✓ Image generated successfully!');
-                $this->info('  Path: ' . $imagePath);
-                $this->info('  Size: ' . number_format(filesize($imagePath) / 1024, 2) . ' KB');
-            } else {
-                $this->error('✗ Image file was not created');
-                return Command::FAILURE;
-            }
-
             $this->info('');
-            $this->info('🎉 All exports generated successfully!');
+            $this->info('🎉 Export generated successfully!');
             return Command::SUCCESS;
 
         } catch (\Exception $e) {

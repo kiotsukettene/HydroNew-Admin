@@ -2,7 +2,7 @@ import AppLayout from '@/layouts/app-layout'
 import { Head, usePage, router } from '@inertiajs/react'
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, RadarChart, PolarAngleAxis, PolarGrid, Radar, LineChart, Line, Legend } from 'recharts'
-import { Users, Cast, Leaf, Waves, TrendingUp, TrendingDown, Activity, Calendar, Filter, FileDown, Image } from 'lucide-react'
+import { Users, Cast, Leaf, Waves, TrendingUp, TrendingDown, Activity, Calendar, Filter, FileDown } from 'lucide-react'
 import {
   TextureCardContent,
   TextureCardStyled
@@ -72,18 +72,6 @@ export default function Analytics() {
     window.open(`/analytics/export/pdf?${params.toString()}`, '_blank');
   };
 
-  const handleExportImage = () => {
-    const params = new URLSearchParams({
-      tab: activeTab,
-      ...(dateFrom && { date_from: dateFrom }),
-      ...(dateTo && { date_to: dateTo }),
-      frequency: frequency,
-      ...(deviceId !== 'all' && { device_id: deviceId }),
-    });
-
-    window.open(`/analytics/export/image?${params.toString()}`, '_blank');
-  };
-
   return (
     <AppLayout title="">
       <Head title="Analytics" />
@@ -107,15 +95,6 @@ export default function Analytics() {
             >
               <FileDown className="h-3.5 w-3.5" />
               <span className="text-xs">Export PDF</span>
-            </Button>
-            <Button 
-              variant="secondary" 
-              size="sm" 
-              className="h-8 gap-1.5 border-2"
-              onClick={handleExportImage}
-            >
-              <Image className="h-3.5 w-3.5" />
-              <span className="text-xs">Export Image</span>
             </Button>
             
             <Popover>
