@@ -1,0 +1,59 @@
+# Node modules
+node_modules/
+npm-debug.log
+
+# Vendor
+vendor/
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# IDE files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Tests
+tests/
+phpunit.xml
+.phpunit.result.cache
+
+# Build artifacts
+/public/hot
+/public/storage
+/storage/*.key
+
+# Logs
+storage/logs/
+*.log
+
+# Cache
+bootstrap/cache/*
+storage/framework/cache/*
+storage/framework/sessions/*
+storage/framework/views/*
+
+# Documentation
+README.md
+RAILWAY_DEPLOYMENT.md
+.cursor/
+
+# Misc
+.editorconfig
+.prettierrc
+.prettierignore
+eslint.config.js
+tsconfig.json
