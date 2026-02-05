@@ -85,6 +85,19 @@ RUN a2enmod rewrite && \
     sed -i 's!/var/www/html!/var/www/html/public!g' /etc/apache2/sites-available/000-default.conf && \
     sed -i '/<Directory \/var\/www\/>/,/<\/Directory>/ s/AllowOverride None/AllowOverride All/' /etc/apache2/apache2.conf
 
+# Create Apache configuration that respects Railway's PORT variable
+RUN echo '<VirtualHost *:${PORT}>\n\
+    ServerAdmin webmaster@localhost\n\
+    DocumentRoot /var/www/html/public\n\
+    <Directory /var/www/html/public>\n\
+        Options Indexes FollowSymLinks\n\
+        AllowOverride All\n\
+        Require all granted\n\
+    </Directory>\n\
+    ErrorLog ${APACHE_LOG_DIR}/error.log\n\
+    CustomLog ${APACHE_LOG_DIR}/access.log combined\n\
+</VirtualHost>' > /etc/apache2/sites-available/000-default.conf
+
 # Set permissions
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache && \
     chmod -R 755 /var/www/html/storage /var/www/html/bootstrap/cache
@@ -92,9 +105,25 @@ RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cac
 # Create symbolic link for storage
 RUN php artisan storage:link || true
 
-# Expose port (Railway will set PORT env variable)
-ENV PORT=80
-EXPOSE 80
+# Create startup script
+RUN echo '#!/bin/bash\n\
+set -e\n\
+\n\
+# Set Apache to listen on Railway PORT (default to 80)\n\
+export PORT=${PORT:-80}\n\
+echo "Listen ${PORT}" > /etc/apache2/ports.conf\n\
+\n\
+# Run Laravel optimizations\n\
+php artisan config:cache\n\
+php artisan route:cache\n\
+php artisan view:cache\n\
+\n\
+# Start Apache\n\
+apache2-foreground\n\
+' > /usr/local/bin/start.sh && chmod +x /usr/local/bin/start.sh
 
-# Start Apache in foreground
-CMD ["sh", "-c", "apache2-foreground"]
+# Expose port (Railway will inject the actual PORT)
+EXPOSE ${PORT:-80}
+
+# Start using our custom script
+CMD ["/usr/local/bin/start.sh"]
