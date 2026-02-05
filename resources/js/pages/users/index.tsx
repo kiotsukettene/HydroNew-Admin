@@ -33,7 +33,6 @@ import {
     Filter,
     Loader2,
     MoreHorizontal,
-    Pencil,
     Users as UsersIcon,
     AlertTriangle,
 } from 'lucide-react';
@@ -67,7 +66,15 @@ export default function Users() {
         { key: 'email', label: 'Email', sortable: true },
         { key: 'address', label: 'Address', sortable: false },
         { key: 'status', label: 'Status', sortable: false },
+        { key: 'verified', label: 'Verified', sortable: false },
+        { key: 'last_active', label: 'Last active', sortable: false },
     ];
+
+    const formatLastActive = (lastLoginAt: string | null): string => {
+        if (!lastLoginAt) return 'Never';
+        const d = new Date(lastLoginAt);
+        return d.toLocaleDateString(undefined, { dateStyle: 'medium' });
+    };
 
     const { users, filters, userCount } = usePage<{
         users: Pagination<User>;
@@ -86,52 +93,17 @@ export default function Users() {
     const [isSearching, setIsSearching] = useState(false);
     const hasMounted = useRef(false);
 
-    // Edit modal state
-    const [isEditOpen, setIsEditOpen] = useState(false);
-    const [editingUser, setEditingUser] = useState<User | null>(null);
-
     // Archive confirmation modal state
     const [isArchiveConfirmOpen, setIsArchiveConfirmOpen] = useState(false);
     const [userToArchive, setUserToArchive] = useState<User | null>(null);
 
-    // Edit form
-    const { data: editData, setData: setEditData, put, processing, reset } = useForm({
-        first_name: '',
-        last_name: '',
-        email: '',
-        address: '',
-    });
-
-    const handleEditClick = (user: User) => {
-        setEditingUser(user);
-        setEditData({
-            first_name: user.first_name,
-            last_name: user.last_name,
-            email: user.email,
-            address: user.address || '',
-        });
-        setIsEditOpen(true);
-    };
-
-    const handleSaveEdit = () => {
-        if (editingUser) {
-            put(`/users/${editingUser.id}`, {
-                preserveScroll: true,
-                onSuccess: () => {
-                    setIsEditOpen(false);
-                    reset();
-                    setEditingUser(null);
-                    toast.success('User updated successfully', {
-                        description: `${editData.first_name} ${editData.last_name}'s information has been updated.`,
-                    });
-                },
-                onError: () => {
-                    toast.error('Failed to update user', {
-                        description: 'Please check the form and try again.',
-                    });
-                },
-            });
-        }
+    /** Archive is only allowed when user is inactive for at least 1 month */
+    const canArchive = (user: User): boolean => {
+        if (user.status !== 'inactive') return false;
+        if (!user.last_login_at) return true; // never logged in = treat as inactive long enough
+        const oneMonthAgo = new Date();
+        oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+        return new Date(user.last_login_at) <= oneMonthAgo;
     };
 
     const handleArchiveClick = (user: User) => {
@@ -440,30 +412,36 @@ export default function Users() {
                                         </Badge>
                                     </TableCell>
                                     <TableCell>
-                                        <DropdownMenu>
-                                            <DropdownMenuTrigger asChild>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="sm"
-                                                >
-                                                    <MoreHorizontal className="h-4 w-4" />
-                                                </Button>
-                                            </DropdownMenuTrigger>
-                                            <DropdownMenuContent align="end">
-                                                <DropdownMenuItem
-                                                    onClick={() => handleEditClick(user)}
-                                                >
-                                                    <Pencil className="mr-2 h-4 w-4" />
-                                                    Edit
-                                                </DropdownMenuItem>
-                                                <DropdownMenuItem
-                                                    onClick={() => handleArchiveClick(user)}
-                                                >
-                                                    <Archive className="mr-2 h-4 w-4" />
-                                                    Archive
-                                                </DropdownMenuItem>
-                                            </DropdownMenuContent>
-                                        </DropdownMenu>
+                                        <Badge className={user.email_verified_at
+                                            ? "border-green-300 bg-green-100 text-green-600"
+                                            : "border-amber-300 bg-amber-100 text-amber-700"}>
+                                            {user.email_verified_at ? 'Verified' : 'Unverified'}
+                                        </Badge>
+                                    </TableCell>
+                                    <TableCell className="text-muted-foreground text-sm">
+                                        {formatLastActive(user.last_login_at)}
+                                    </TableCell>
+                                    <TableCell>
+                                        {canArchive(user) && (
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                    >
+                                                        <MoreHorizontal className="h-4 w-4" />
+                                                    </Button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent align="end">
+                                                    <DropdownMenuItem
+                                                        onClick={() => handleArchiveClick(user)}
+                                                    >
+                                                        <Archive className="mr-2 h-4 w-4" />
+                                                        Archive
+                                                    </DropdownMenuItem>
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
+                                        )}
                                     </TableCell>
                                 </TableRow>
                             ))
@@ -480,77 +458,6 @@ export default function Users() {
                         <PaginationComp links={users.links} />
                     </div>
                 )}
-
-    {/* Edit User Modal */}
-    <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Edit User</DialogTitle>
-          <DialogDescription>
-            Update user details here.
-          </DialogDescription>
-        </DialogHeader>
-
-        {editingUser && (
-          <div className="space-y-3">
-            <div className="grid gap-1">
-              <Label className="text-sm font-medium">First Name</Label>
-              <input
-                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-                value={editData.first_name}
-                onChange={(e) => setEditData('first_name', e.target.value)}
-              />
-            </div>
-            <div className="grid gap-1">
-              <Label className="text-sm font-medium">Last Name</Label>
-              <input
-                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-                value={editData.last_name}
-                onChange={(e) => setEditData('last_name', e.target.value)}
-              />
-            </div>
-            <div className="grid gap-1">
-              <Label className="text-sm font-medium">Email</Label>
-              <input
-                type="email"
-                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-                value={editData.email}
-                onChange={(e) => setEditData('email', e.target.value)}
-              />
-            </div>
-            <div className="grid gap-1">
-              <Label className="text-sm font-medium">Address</Label>
-              <textarea
-                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-                value={editData.address}
-                onChange={(e) => setEditData('address', e.target.value)}
-                rows={2}
-              />
-            </div>
-          </div>
-        )}
-
-        <DialogFooter>
-          <Button
-            variant="secondary"
-            onClick={() => {
-              setIsEditOpen(false);
-              reset();
-              setEditingUser(null);
-            }}
-            disabled={processing}
-          >
-            Cancel
-          </Button>
-          <Button
-            onClick={handleSaveEdit}
-            disabled={processing}
-          >
-            {processing ? 'Saving...' : 'Save changes'}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
 
     {/* Archive Confirmation Modal */}
     <Dialog open={isArchiveConfirmOpen} onOpenChange={setIsArchiveConfirmOpen}>
