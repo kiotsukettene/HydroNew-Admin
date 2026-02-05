@@ -87,14 +87,14 @@ export default function Analytics() {
           {/* Compact Filter Controls - Inspired by Devices Page */}
           <div className="flex flex-wrap gap-2">
             {/* Export Buttons */}
-            <Button
+            {/* <Button
               size="sm"
               className="h-8 gap-1.5 border-2 w-auto"
               onClick={handleExportPdf}
             >
               <FileDown className="h-3.5 w-3.5" />
               <span className="text-xs hidden md:inline">Export PDF</span>
-            </Button>
+            </Button> */}
 
             <Popover>
               <PopoverTrigger asChild>
