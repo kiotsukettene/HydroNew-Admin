@@ -143,19 +143,27 @@ export default function Devices() {
       onSuccess: () => {
         setIsCreateOpen(false)
         resetCreate()
+        toast.success('Device created successfully', {
+          description: `${createData.device_name} has been added to your system.`,
+        })
+      },
+      onError: () => {
+        toast.error('Failed to create device', {
+          description: 'Please check the form and try again.',
+        })
       },
     })
   }
 
   const handleSort = (field: SortField) => {
     const newDirection = data.sort === field && data.direction === 'asc' ? 'desc' : 'asc';
-    
+
     router.get(
       '/devices',
-      cleanFilters({ 
-        search: data.search, 
+      cleanFilters({
+        search: data.search,
         status: data.status,
-        sort: field, 
+        sort: field,
         direction: newDirection
       }, { sort: 'created_at', direction: 'desc', status: 'all' }),
       {
@@ -171,8 +179,8 @@ export default function Devices() {
 
   const getSortIcon = (field: string) => {
     if (data.sort !== field) return <ArrowUpDown className="h-4 w-4" />;
-    return data.direction === 'asc' 
-      ? <ArrowUp className="h-4 w-4" /> 
+    return data.direction === 'asc'
+      ? <ArrowUp className="h-4 w-4" />
       : <ArrowDown className="h-4 w-4" />;
   };
 
@@ -185,8 +193,8 @@ export default function Devices() {
     if (debounceSearch !== undefined) {
       router.get(
         '/devices',
-        cleanFilters({ 
-          search: debounceSearch, 
+        cleanFilters({
+          search: debounceSearch,
           status: data.status,
           sort: data.sort,
           direction: data.direction
@@ -205,8 +213,8 @@ export default function Devices() {
   const handleStatusChange = (status: string) => {
     router.get(
       '/devices',
-      cleanFilters({ 
-        search: data.search, 
+      cleanFilters({
+        search: data.search,
         status: status,
         sort: data.sort,
         direction: data.direction
@@ -265,9 +273,9 @@ export default function Devices() {
                     <p className="text-sm text-gray-600 mt-2">Registered devices</p>
                 </Card>
 
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <SearchInput 
-            placeholder="Search by device name, serial number, or paired user..." 
+        <div className="flex flex-wrap gap-3 items-center justify-between">
+          <SearchInput
+            placeholder="Search by device name, serial number, or paired user..."
             value={data.search}
             onChange={(value) => setData('search', value)}
           />
@@ -293,12 +301,16 @@ export default function Devices() {
           </SelectContent>
         </Select>
         <Button
+          size="sm"
+          className="w-auto"
           onClick={() => setIsCreateOpen(true)}
         >
           Add Device
         </Button>
         <Button
           variant="secondary"
+          size="sm"
+          className="w-auto"
           onClick={() => router.visit("/devices/archived", { preserveState: false })}
         >
           <Archive className="mr-2 h-4 w-4" />
@@ -321,10 +333,10 @@ export default function Devices() {
               <TableHead className=''>
                 <div className="flex items-center gap-1">
                   <Label className="text-sm font-medium">Device Name</Label>
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className="h-8 w-8" 
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
                     aria-label="Sort Device Name"
                     onClick={() => handleSort('name')}
                   >
@@ -341,10 +353,10 @@ export default function Devices() {
               <TableHead>
                 <div className="flex items-center gap-1">
                   <Label className="text-sm font-medium">Serial Number</Label>
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className="h-8 w-8" 
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
                     aria-label="Sort Serial Number"
                     onClick={() => handleSort('serial_number')}
                   >
@@ -355,10 +367,10 @@ export default function Devices() {
               <TableHead>
                 <div className="flex items-center gap-1">
                   <Label className="text-sm font-medium">Status</Label>
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className="h-8 w-8" 
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
                     aria-label="Sort Status"
                     onClick={() => handleSort('status')}
                   >
@@ -369,10 +381,10 @@ export default function Devices() {
               <TableHead>
                 <div className="flex items-center gap-1">
                   <Label className="text-sm font-medium">Date Registered</Label>
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className="h-8 w-8" 
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
                     aria-label="Sort Date Registered"
                     onClick={() => handleSort('created_at')}
                   >
@@ -541,8 +553,8 @@ export default function Devices() {
             )}
 
             <DialogFooter>
-              <Button 
-                variant="secondary" 
+              <Button
+                variant="secondary"
                 onClick={() => {
                   setIsEditOpen(false)
                   reset()
@@ -552,7 +564,7 @@ export default function Devices() {
               >
                 Cancel
               </Button>
-              <Button 
+              <Button
                 onClick={handleSaveEdit}
                 disabled={processing}
               >
@@ -585,7 +597,7 @@ export default function Devices() {
                   <p className="text-xs text-red-500">{errors.device_name}</p>
                 )}
               </div>
-              
+
               <div className="grid gap-1">
                 <Label className="text-sm font-medium">Serial Number *</Label>
                 <input
@@ -621,8 +633,8 @@ export default function Devices() {
             </div>
 
             <DialogFooter>
-              <Button 
-                variant="secondary" 
+              <Button
+                variant="secondary"
                 onClick={() => {
                   setIsCreateOpen(false)
                   resetCreate()
@@ -631,7 +643,7 @@ export default function Devices() {
               >
                 Cancel
               </Button>
-              <Button 
+              <Button
                 onClick={handleCreateDevice}
                 disabled={creating}
               >
@@ -664,8 +676,8 @@ export default function Devices() {
             )}
 
             <DialogFooter>
-              <Button 
-                variant="secondary" 
+              <Button
+                variant="secondary"
                 onClick={() => {
                   setIsArchiveConfirmOpen(false)
                   setDeviceToArchive(null)
@@ -673,7 +685,7 @@ export default function Devices() {
               >
                 Cancel
               </Button>
-              <Button 
+              <Button
                 variant="destructive"
                 onClick={handleArchiveConfirm}
               >

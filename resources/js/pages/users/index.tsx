@@ -161,12 +161,12 @@ export default function Users() {
 
     const handleSort = (field: SortField) => {
         const newDirection = data.sort === field && data.direction === 'asc' ? 'desc' : 'asc';
-        
+
         router.get(
             '/users',
-            cleanFilters({ 
-                search: data.search, 
-                sort: field, 
+            cleanFilters({
+                search: data.search,
+                sort: field,
                 direction: newDirection,
                 status: data.status,
                 verified: data.verified
@@ -212,9 +212,9 @@ export default function Users() {
         if (debounceSearch !== undefined) {
             router.get(
                 '/users',
-                cleanFilters({ 
-                    search: debounceSearch, 
-                    sort: data.sort, 
+                cleanFilters({
+                    search: debounceSearch,
+                    sort: data.sort,
                     direction: data.direction,
                     status: data.status,
                     verified: data.verified
@@ -232,8 +232,8 @@ export default function Users() {
 
     const getSortIcon = (field: string) => {
         if (data.sort !== field) return <ArrowUpDown className="h-4 w-4" />;
-        return data.direction === 'asc' 
-            ? <ArrowUp className="h-4 w-4" /> 
+        return data.direction === 'asc'
+            ? <ArrowUp className="h-4 w-4" />
             : <ArrowDown className="h-4 w-4" />;
     };
 
@@ -268,7 +268,7 @@ export default function Users() {
                     </p>
                 </div>
 
-                <div className="flex flex-wrap gap-3 items-center">
+                <div className="flex flex-wrap gap-3 items-center justify-between">
                     <SearchInput
                         value={data.search}
                         onChange={(value) => setData('search', value)}
@@ -280,7 +280,8 @@ export default function Users() {
                             <PopoverTrigger asChild>
                                 <Button
                                     variant="secondary"
-                                    className="h-8 w-[150px] border-2 rounded-lg text-xs"
+                                    size="sm"
+                                    className="w-auto"
                                     aria-label="Filter by status"
                                 >
                                     <Filter className="mr-2 h-4 w-4" />
@@ -332,9 +333,9 @@ export default function Users() {
                                         </Select>
                                     </div>
                                     {(data.status !== 'all' || data.verified !== 'all') && (
-                                        <Button 
-                                            variant="ghost" 
-                                            size="sm" 
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
                                             className="w-full"
                                             onClick={() => {
                                                 router.get(
@@ -365,8 +366,9 @@ export default function Users() {
                         </PopoverContent>
                     </Popover>
 
-                    <Button 
+                    <Button
                         variant="secondary"
+                        size="sm"
                         onClick={() => router.visit('/users/archived', { preserveState: false })}
                     >
                         <Archive className="mr-2 h-4 w-4" />
@@ -431,8 +433,8 @@ export default function Users() {
                                         {user.address}
                                     </TableCell>
                                     <TableCell>
-                                        <Badge className={user.status === 'active' 
-                                            ? "border-green-300 bg-green-100 text-green-600" 
+                                        <Badge className={user.status === 'active'
+                                            ? "border-green-300 bg-green-100 text-green-600"
                                             : "border-gray-300 bg-gray-100 text-gray-600"}>
                                             {user.status === 'active' ? 'Active' : 'Inactive'}
                                         </Badge>
@@ -529,8 +531,8 @@ export default function Users() {
         )}
 
         <DialogFooter>
-          <Button 
-            variant="secondary" 
+          <Button
+            variant="secondary"
             onClick={() => {
               setIsEditOpen(false);
               reset();
@@ -540,7 +542,7 @@ export default function Users() {
           >
             Cancel
           </Button>
-          <Button 
+          <Button
             onClick={handleSaveEdit}
             disabled={processing}
           >
@@ -573,8 +575,8 @@ export default function Users() {
         )}
 
         <DialogFooter>
-          <Button 
-            variant="secondary" 
+          <Button
+            variant="secondary"
             onClick={() => {
               setIsArchiveConfirmOpen(false);
               setUserToArchive(null);
@@ -582,7 +584,7 @@ export default function Users() {
           >
             Cancel
           </Button>
-          <Button 
+          <Button
             variant="destructive"
             onClick={handleArchiveConfirm}
           >

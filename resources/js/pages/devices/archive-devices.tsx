@@ -100,6 +100,8 @@ export default function ArchiveDevices() {
           </div>
           <Button
             variant="secondary"
+            size="default"
+            className="w-auto"
             onClick={() => router.visit("/devices", { preserveState: false })}
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
@@ -107,12 +109,10 @@ export default function ArchiveDevices() {
           </Button>
         </div>
 
-        <input
-          type="text"
+        <SearchInput
           placeholder="Search archived devices..."
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="w-full md:w-96 px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+          onChange={(value) => setSearch(value)}
         />
 
         <Table className="border">

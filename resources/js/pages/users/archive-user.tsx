@@ -19,6 +19,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Badge } from '@/components/ui/badge'
+import SearchInput from '@/components/search-input'
 import { User } from "@/types/user"
 import { Pagination } from "@/types/pagination"
 import PaginationComp from "@/components/pagination"
@@ -95,18 +96,18 @@ export default function ArchiveUser() {
                   </div>
                   <Button
                     variant="secondary"
+                    size="default"
+                    className="w-auto"
                     onClick={() => router.visit("/users", { preserveState: false })}
                   >
                     <ArrowLeft className="mr-2 h-4 w-4" />
                     Back to Users
                   </Button>
                 </div>
-                 <input
-                  type="text"
+                <SearchInput
                   placeholder="Search archived users..."
                   value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="w-full md:w-96 px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                  onChange={(value) => setSearch(value)}
                 />
                  <Table className='border'>
 
@@ -137,8 +138,8 @@ export default function ArchiveUser() {
               <TableCell className="font-medium">{user.first_name} {user.last_name}</TableCell>
               <TableCell>{user.email}</TableCell>
               <TableCell>
-                <Badge className={user.status === 'active' 
-                    ? "border-green-300 bg-green-100 text-green-600" 
+                <Badge className={user.status === 'active'
+                    ? "border-green-300 bg-green-100 text-green-600"
                     : "border-gray-300 bg-gray-100 text-gray-600"}>
                   {user.status === 'active' ? 'Active' : 'Inactive'}
                 </Badge>
@@ -207,8 +208,8 @@ export default function ArchiveUser() {
           )}
 
           <DialogFooter>
-            <Button 
-              variant="secondary" 
+            <Button
+              variant="secondary"
               onClick={() => {
                 setIsUnarchiveConfirmOpen(false);
                 setUserToUnarchive(null);
@@ -216,7 +217,7 @@ export default function ArchiveUser() {
             >
               Cancel
             </Button>
-            <Button 
+            <Button
               variant="primary"
               onClick={handleUnarchiveConfirm}
             >

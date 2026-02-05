@@ -78,28 +78,27 @@ export default function Analytics() {
       <div className="flex h-full flex-1 flex-col gap-6 rounded-xl p-4 md:p-6">
 
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-2xl font-bold text-foreground">Analytics Overview</h1>
             <p className="text-sm text-muted-foreground mt-1">Track your system performance and insights</p>
           </div>
 
           {/* Compact Filter Controls - Inspired by Devices Page */}
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             {/* Export Buttons */}
             <Button
-              variant="secondary"
               size="sm"
-              className="h-8 gap-1.5 border-2"
+              className="h-8 gap-1.5 border-2 w-auto"
               onClick={handleExportPdf}
             >
               <FileDown className="h-3.5 w-3.5" />
-              <span className="text-xs">Export PDF</span>
+              <span className="text-xs hidden md:inline">Export PDF</span>
             </Button>
 
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="secondary" size="sm" className="h-8 gap-1.5 border-2">
+                <Button variant="secondary" size="sm" className="h-8 gap-1.5 border-2 w-auto">
                   <Filter className="h-3.5 w-3.5" />
                   <span className="text-xs">
                     {frequency === 'weekly' ? 'Weekly' : 'Monthly'}
@@ -111,7 +110,7 @@ export default function Analytics() {
                   )}
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-80" align="end">
+              <PopoverContent className="w-[calc(100vw-2rem)] sm:w-80" align="end">
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <h4 className="font-medium leading-none">
@@ -220,27 +219,30 @@ export default function Analytics() {
 
         {/* Tabs */}
         <Tabs defaultValue="users-devices" className="w-full" onValueChange={setActiveTab}>
-          <TabsList className="h-12 p-1 bg-muted/60 rounded-xl">
+          <TabsList className="h-auto p-1 bg-muted/60 rounded-xl flex flex-wrap">
             <TabsTrigger
               value="users-devices"
-              className="h-10 px-4 text-sm font-medium rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md"
+              className="h-10 px-3 sm:px-4 text-xs sm:text-sm font-medium rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md"
             >
-              <Users className="w-4 h-4 mr-2" />
-              Users & Devices
+              <Users className="w-4 h-4 mr-1 sm:mr-2" />
+              <span className="hidden sm:inline">Users & Devices</span>
+              <span className="sm:hidden">Users</span>
             </TabsTrigger>
             <TabsTrigger
               value="crops-harvest-yield"
-              className="h-10 px-4 text-sm font-medium rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md"
+              className="h-10 px-3 sm:px-4 text-xs sm:text-sm font-medium rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md"
             >
-              <Leaf className="w-4 h-4 mr-2" />
-              Crops and Harvest
+              <Leaf className="w-4 h-4 mr-1 sm:mr-2" />
+              <span className="hidden sm:inline">Crops and Harvest</span>
+              <span className="sm:hidden">Crops</span>
             </TabsTrigger>
             <TabsTrigger
               value="water-treatment"
-              className="h-10 px-4 text-sm font-medium rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md"
+              className="h-10 px-3 sm:px-4 text-xs sm:text-sm font-medium rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md"
             >
-              <Waves className="w-4 h-4 mr-2" />
-              Water Treatment
+              <Waves className="w-4 h-4 mr-1 sm:mr-2" />
+              <span className="hidden sm:inline">Water Treatment</span>
+              <span className="sm:hidden">Water</span>
             </TabsTrigger>
           </TabsList>
 
@@ -328,7 +330,7 @@ export default function Analytics() {
                       config={{
                         count: { label: 'Registrations', color: 'hsl(var(--primary))' }
                       }}
-                      className="h-[300px] w-full"
+                      className="h-[250px] sm:h-[300px] w-full"
                     >
                       <BarChart data={usersDevices.registration_trend}>
                         <CartesianGrid vertical={false} strokeDasharray="3 3" />
@@ -366,7 +368,7 @@ export default function Analytics() {
                         unique_users: { label: 'Unique Users', color: 'hsl(var(--primary))' },
                         total_logins: { label: 'Total Logins', color: 'hsl(var(--chart-2))' }
                       }}
-                      className="h-[300px] w-full"
+                      className="h-[250px] sm:h-[300px] w-full"
                     >
                       <LineChart data={usersDevices.login_activity_trend}>
                         <CartesianGrid vertical={false} strokeDasharray="3 3" />
@@ -405,7 +407,7 @@ export default function Analytics() {
                   <CardDescription>Current status of all devices in the system</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                     <div className="p-4 border rounded-lg">
                       <p className="text-sm text-muted-foreground">Online Devices</p>
                       <p className="text-2xl font-bold text-green-600">{usersDevices.devices.online}</p>
@@ -441,7 +443,7 @@ export default function Analytics() {
           <TabsContent value="crops-harvest-yield" className="mt-6">
             <div className="flex flex-col gap-6">
               {/* Summary Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
                 <TextureCardStyled className="rounded-2xl">
                   <TextureCardContent className="flex items-center gap-4">
                     <div>
@@ -507,7 +509,7 @@ export default function Analytics() {
                         harvested: { label: 'Crops Harvested', color: '#cadbb7' },
                         total_weight: { label: 'Yield Weight (kg)', color: 'hsl(var(--primary))' }
                       }}
-                      className="h-[300px] w-full"
+                      className="h-[250px] sm:h-[300px] w-full"
                     >
                       <BarChart data={cropsHarvestYield.monthly_harvest_trend} barCategoryGap="8%">
                         <CartesianGrid vertical={false} />
@@ -595,15 +597,16 @@ export default function Analytics() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Crop Name</TableHead>
-                        <TableHead>Total Weight (kg)</TableHead>
-                        <TableHead>Setup Count</TableHead>
-                        <TableHead>Avg per Setup</TableHead>
-                      </TableRow>
-                    </TableHeader>
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Crop Name</TableHead>
+                          <TableHead>Total Weight (kg)</TableHead>
+                          <TableHead>Setup Count</TableHead>
+                          <TableHead>Avg per Setup</TableHead>
+                        </TableRow>
+                      </TableHeader>
                     <TableBody>
                       {cropsHarvestYield.top_yielding_crops && cropsHarvestYield.top_yielding_crops.length > 0 ? (
                         cropsHarvestYield.top_yielding_crops.map((crop, index) => (
@@ -622,7 +625,8 @@ export default function Analytics() {
                         </TableRow>
                       )}
                     </TableBody>
-                  </Table>
+                    </Table>
+                  </div>
                 </CardContent>
               </Card>
 
@@ -633,7 +637,7 @@ export default function Analytics() {
                   <CardDescription>Breakdown of harvested yield by grade quality</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                     {cropsHarvestYield.grade_distribution && Object.keys(cropsHarvestYield.grade_distribution).length > 0 ? (
                       Object.entries(cropsHarvestYield.grade_distribution).map(([grade, data]) => (
                         <div key={grade} className="p-4 border rounded-lg">
@@ -654,7 +658,7 @@ export default function Analytics() {
               </Card>
 
               {/* Status Distributions */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Growth Stage Distribution */}
                 <Card className="rounded-2xl">
                   <CardHeader>
@@ -795,7 +799,7 @@ export default function Analytics() {
                       config={{
                         filtered: { label: 'Water Filtered (L)', color: '#60A5FA' }
                       }}
-                      className="h-[240px] w-full aspect-auto"
+                      className="h-[200px] sm:h-[240px] w-full aspect-auto"
                     >
                       <BarChart data={waterTreatment.weekly_filtration} barCategoryGap="10%">
                         <CartesianGrid vertical={false} strokeDasharray="3 3" />
@@ -843,7 +847,7 @@ export default function Analytics() {
                       cycle_count: { label: 'Total Cycles', color: 'hsl(var(--primary))' },
                       success_count: { label: 'Successful', color: 'hsl(var(--chart-2))' }
                     }}
-                    className="h-[300px] w-full"
+                    className="h-[250px] sm:h-[300px] w-full"
                   >
                     <LineChart data={waterTreatment.treatment_trends}>
                       <CartesianGrid vertical={false} strokeDasharray="3 3" />
@@ -881,17 +885,18 @@ export default function Analytics() {
                   <CardDescription>Performance metrics for each treatment stage</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Stage Name</TableHead>
-                        <TableHead>Total Count</TableHead>
-                        <TableHead>Pass Rate</TableHead>
-                        <TableHead>Avg pH</TableHead>
-                        <TableHead>Avg Turbidity</TableHead>
-                        <TableHead>Avg TDS</TableHead>
-                      </TableRow>
-                    </TableHeader>
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Stage Name</TableHead>
+                          <TableHead>Total Count</TableHead>
+                          <TableHead>Pass Rate</TableHead>
+                          <TableHead>Avg pH</TableHead>
+                          <TableHead>Avg Turbidity</TableHead>
+                          <TableHead>Avg TDS</TableHead>
+                        </TableRow>
+                      </TableHeader>
                     <TableBody>
                       {waterTreatment.stage_performance && waterTreatment.stage_performance.length > 0 ? (
                         waterTreatment.stage_performance.map((stage, index) => (
@@ -922,7 +927,8 @@ export default function Analytics() {
                         </TableRow>
                       )}
                     </TableBody>
-                  </Table>
+                    </Table>
+                  </div>
                 </CardContent>
               </Card>
             </div>

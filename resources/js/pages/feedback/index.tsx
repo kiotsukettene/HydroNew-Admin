@@ -120,9 +120,9 @@ export default function Feedback() {
     <AppLayout title="">
       <Head title="Feedback" />
       <div className="flex h-full flex-1 flex-col gap-6 rounded-xl p-4 md:p-6">
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold">Feedback & User Inquiries</h1>
-          <p className="text-muted-foreground">
+        <div className="mb-4 sm:mb-6">
+          <h1 className="text-xl sm:text-2xl font-bold">Feedback & User Inquiries</h1>
+          <p className="text-sm sm:text-base text-muted-foreground">
             View and respond to questions submitted from the mobile app.
           </p>
         </div>
@@ -132,19 +132,19 @@ export default function Feedback() {
           onValueChange={handleCategoryChange}
           className="w-full"
         >
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <TabsList className="flex h-11 flex-wrap items-center gap-2 bg-muted/60 px-1">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <TabsList className="flex h-auto min-h-11 flex-wrap items-center gap-2 bg-muted/60 px-1 py-1">
               {CATEGORY_OPTIONS.map((opt) => (
                 <TabsTrigger
                   key={opt.value}
                   value={opt.value}
-                  className="rounded-full px-4 py-2 text-sm font-medium data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm"
+                  className="rounded-full px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm"
                 >
                   {opt.value === 'all' ? `All${data.category === 'all' ? ` (${total})` : ''}` : opt.label}
                 </TabsTrigger>
               ))}
             </TabsList>
-            <div className="relative">
+            <div className="relative w-full sm:w-auto">
               <SearchInput
                 placeholder="Search message or subject..."
                 value={data.search}
@@ -156,11 +156,11 @@ export default function Feedback() {
         </Tabs>
 
         {items.length === 0 ? (
-          <div className="flex flex-1 items-center justify-center rounded-2xl border border-dashed border-border bg-muted/40 p-12 text-center">
+          <div className="flex flex-1 items-center justify-center rounded-2xl border border-dashed border-border bg-muted/40 p-6 sm:p-12 text-center">
             <div className="mx-auto flex max-w-lg flex-col items-center gap-3 text-muted-foreground">
-              <Mail className="h-10 w-10 text-muted-foreground/70" />
-              <p className="text-base font-medium text-foreground">Nothing here yet.</p>
-              <p className="text-sm">
+              <Mail className="h-8 w-8 sm:h-10 sm:w-10 text-muted-foreground/70" />
+              <p className="text-sm sm:text-base font-medium text-foreground">Nothing here yet.</p>
+              <p className="text-xs sm:text-sm">
                 User messages from the mobile app will appear here once submitted.
               </p>
             </div>
@@ -215,19 +215,19 @@ export default function Feedback() {
       </div>
 
       {selectedFeedback && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-2xl rounded-2xl border border-border bg-background shadow-2xl">
-            <div className="flex items-start justify-between border-b border-border px-6 py-4">
-              <div>
-                <p className="text-lg font-semibold text-foreground">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-2 sm:p-4 backdrop-blur-sm">
+          <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl border border-border bg-background shadow-2xl">
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 border-b border-border px-4 sm:px-6 py-4">
+              <div className="min-w-0 flex-1">
+                <p className="text-base sm:text-lg font-semibold text-foreground truncate">
                   {getUserName(selectedFeedback)}
                 </p>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-xs sm:text-sm text-muted-foreground truncate">
                   {selectedFeedback.user?.email ?? '—'}
                 </p>
               </div>
-              <div className="flex items-center gap-2">
-                <Badge variant="secondary">
+              <div className="flex items-center gap-2 shrink-0">
+                <Badge variant="secondary" className="text-xs">
                   {CATEGORY_LABELS[selectedFeedback.category]}
                 </Badge>
                 <Button
@@ -241,39 +241,39 @@ export default function Feedback() {
               </div>
             </div>
 
-            <div className="space-y-6 px-6 py-6">
-              <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-                <Mail className="h-4 w-4" />
-                <span>{formatDate(selectedFeedback.created_at)}</span>
+            <div className="space-y-4 sm:space-y-6 px-4 sm:px-6 py-4 sm:py-6">
+              <div className="flex flex-wrap items-center gap-2 text-xs sm:text-sm text-muted-foreground">
+                <Mail className="h-3.5 sm:h-4 w-3.5 sm:w-4 shrink-0" />
+                <span className="break-words">{formatDate(selectedFeedback.created_at)}</span>
               </div>
 
               {selectedFeedback.device && (
-                <div className="rounded-xl border border-border bg-muted/40 p-4">
-                  <p className="text-sm font-medium text-foreground">Device</p>
-                  <p className="text-sm text-muted-foreground">
+                <div className="rounded-xl border border-border bg-muted/40 p-3 sm:p-4">
+                  <p className="text-xs sm:text-sm font-medium text-foreground">Device</p>
+                  <p className="text-xs sm:text-sm text-muted-foreground break-words">
                     {selectedFeedback.device.device_name} ({selectedFeedback.device.serial_number})
                   </p>
                 </div>
               )}
 
               {selectedFeedback.subject && (
-                <div className="rounded-xl border border-border bg-muted/40 p-4">
-                  <p className="text-sm font-medium text-foreground">Subject</p>
-                  <p className="text-sm text-muted-foreground">
+                <div className="rounded-xl border border-border bg-muted/40 p-3 sm:p-4">
+                  <p className="text-xs sm:text-sm font-medium text-foreground">Subject</p>
+                  <p className="text-xs sm:text-sm text-muted-foreground break-words">
                     {selectedFeedback.subject}
                   </p>
                 </div>
               )}
 
-              <div className="space-y-2 rounded-xl border border-border bg-muted/40 p-4">
-                <p className="text-sm font-medium text-foreground">Message</p>
-                <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">
+              <div className="space-y-2 rounded-xl border border-border bg-muted/40 p-3 sm:p-4">
+                <p className="text-xs sm:text-sm font-medium text-foreground">Message</p>
+                <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap break-words">
                   {selectedFeedback.message}
                 </p>
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground" htmlFor="reply">
+                <label className="text-xs sm:text-sm font-medium text-foreground" htmlFor="reply">
                   Reply via email
                 </label>
                 <textarea
@@ -281,22 +281,22 @@ export default function Feedback() {
                   value={replyText}
                   onChange={(e) => setReplyText(e.target.value)}
                   rows={4}
-                  className="w-full resize-none rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground shadow-sm outline-none transition focus:ring-2 focus:ring-primary/30"
+                  className="w-full resize-none rounded-xl border border-border bg-background px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-foreground shadow-sm outline-none transition focus:ring-2 focus:ring-primary/30"
                   placeholder="Type your response..."
                 />
               </div>
             </div>
 
-            <div className="flex items-center justify-between border-t border-border px-6 py-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-t border-border px-4 sm:px-6 py-4">
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <Reply className="h-3.5 w-3.5" />
-                <span>Reply will be sent to the user&apos;s email</span>
+                <Reply className="h-3.5 w-3.5 shrink-0" />
+                <span className="break-words">Reply will be sent to the user&apos;s email</span>
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
                 <Button
                   variant="secondary"
                   size="sm"
-                  className="w-auto"
+                  className="flex-1 sm:flex-none sm:w-auto"
                   type="button"
                   onClick={() => setSelectedFeedback(null)}
                 >
@@ -304,7 +304,7 @@ export default function Feedback() {
                 </Button>
                 <Button
                   size="sm"
-                  className="w-auto"
+                  className="flex-1 sm:flex-none sm:w-auto"
                   type="button"
                   onClick={handleSendReply}
                   disabled={replyText.trim().length === 0}
