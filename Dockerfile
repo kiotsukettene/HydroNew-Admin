@@ -6,6 +6,10 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y \
     git curl unzip zip \
     libpng-dev libonig-dev libxml2-dev libzip-dev \
+    # PostgreSQL client libraries
+    libpq-dev postgresql-client \
+    # Freetype and JPEG for GD extension
+    libfreetype6-dev libjpeg62-turbo-dev \
     chromium \
     fonts-liberation \
     libasound2 libatk-bridge2.0-0 libatk1.0-0 libc6 libcairo2 libcups2 \
@@ -21,6 +25,9 @@ RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
  && apt-get update && apt-get install -y nodejs \
  && node -v && npm -v \
  && rm -rf /var/lib/apt/lists/*
+
+# Configure GD with freetype and jpeg support
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg
 
 # PHP extensions
 RUN docker-php-ext-install pdo pdo_mysql pdo_pgsql mbstring exif pcntl bcmath gd zip
