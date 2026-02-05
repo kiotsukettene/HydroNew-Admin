@@ -3,8 +3,7 @@ import { Card, CardDescription, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import AppLayout from '@/layouts/app-layout';
 import { Head, Link, usePage } from '@inertiajs/react';
-import { Cast, Leaf, User, Droplet, CheckCircle, Clock, TrendingUp } from 'lucide-react';
-import TextureCard from '@/components/ui/texture-card';
+import { Cast, Leaf, User, Droplet, CheckCircle, Clock } from 'lucide-react';
 import { index as devicesIndex } from '@/routes/devices';
 import { DashboardStats, WaterTreatmentStats } from '@/types/dashboard';
 
@@ -37,22 +36,16 @@ export default function Dashboard() {
       {/* Welcome Card - Left Side */}
       <Card className='bg-[#ebfff0d7] shadow-none w-full lg:w-[60%] overflow-hidden p-0 relative min-h-[180px]'>
         {/* Text Content */}
-        <div className='px-6 pt-6 pb-4'>
+        <div className='px-6 pt-6 pb-4 mb-6'>
           <CardTitle className='text-2xl  font-semibold leading-tight mt-4'>Welcome to<br/>Dashboard!</CardTitle>
-          <CardDescription className=' text-sm mt-2'>Monitor your hydroponics system activity here.</CardDescription>
+          <CardDescription className=' text-sm mt-2 mb-6'>Monitor your hydroponics system activity here.</CardDescription>
         </div>
 
-        {/* White Pill Button - Crop Info */}
-        <div className='absolute bottom-8 left-6'>
-          {/* <Button className=' rounded-full px-4 py-2 flex items-center transition-shadow'>
-            <span className='text-sm font-medium '>🥬 Romaine Lettuce</span>
-            <span className='text-xs '>• Day 23</span>
-          </Button> */}
-
+        {/* View Devices Button - Bottom Left */}
+        <div className='absolute bottom-6 left-6 z-10'>
           <Button size='sm' asChild>
             <Link href={devicesIndex.url()}>View Devices</Link>
           </Button>
-
         </div>
 
         {/* Illustration */}

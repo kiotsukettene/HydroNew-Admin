@@ -133,12 +133,12 @@ export default function Feedback() {
           className="w-full"
         >
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <TabsList className="flex h-auto min-h-11 flex-wrap items-center gap-2 bg-muted/60 px-1 py-1">
+            <TabsList className="flex h-auto min-h-11 w-full flex-nowrap items-center justify-start gap-2 overflow-x-auto bg-muted/60 px-1 py-1 sm:w-fit sm:flex-wrap sm:justify-center">
               {CATEGORY_OPTIONS.map((opt) => (
                 <TabsTrigger
                   key={opt.value}
                   value={opt.value}
-                  className="rounded-full px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm"
+                  className="shrink-0 rounded-full px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm"
                 >
                   {opt.value === 'all' ? `All${data.category === 'all' ? ` (${total})` : ''}` : opt.label}
                 </TabsTrigger>
