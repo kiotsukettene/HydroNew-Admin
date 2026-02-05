@@ -9,6 +9,7 @@ use App\Models\HydroponicYield;
 use App\Models\HydroponicSetup;
 use App\Models\SensorSystem;
 use App\Models\SensorReading;
+use App\Services\AdminAnalyticsService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Inertia\Inertia;
@@ -16,8 +17,15 @@ use Carbon\Carbon;
 
 class DashboardController extends Controller
 {
+    protected $analyticsService;
+
+    public function __construct(AdminAnalyticsService $analyticsService)
+    {
+        $this->analyticsService = $analyticsService;
+    }
+
     /**
-     * Display the dashboard with statistics and harvest status
+     * Display the dashboard with statistics and water treatment data
      */
     public function index()
     {
@@ -26,21 +34,16 @@ class DashboardController extends Controller
         $totalDevices = Device::where('is_archived', false)->count();
         $totalHarvestedCrops = HydroponicYield::count();
 
-        // Get the most recent active hydroponic setup for harvest status
-        $activeSetup = HydroponicSetup::where('status', 'active')
-            ->orderBy('created_at', 'desc')
-            ->first();
+        // Get water treatment analytics
+        $waterTreatmentData = $this->analyticsService->getWaterTreatmentAnalytics();
 
-        // Calculate harvest status data
-        $harvestStatus = [
-            'waterTankLevel' => 85, // This would come from actual sensor data
-            'currentGrowthStage' => $activeSetup ? $this->getGrowthStage($activeSetup) : 'No active setup',
-            'estimatedHarvestDate' => $activeSetup && $activeSetup->expected_harvest_date 
-                ? Carbon::parse($activeSetup->expected_harvest_date)->format('M d, Y') 
-                : null,
-            'daysRemaining' => $activeSetup && $activeSetup->expected_harvest_date
-                ? Carbon::now()->diffInDays(Carbon::parse($activeSetup->expected_harvest_date), false)
-                : null,
+        // Format water treatment data for dashboard
+        $waterTreatmentStats = [
+            'totalCycles' => $waterTreatmentData['total_cycles'],
+            'successRate' => $waterTreatmentData['success_rate'],
+            'averageDuration' => $waterTreatmentData['average_duration'],
+            'successfulCycles' => $waterTreatmentData['successful_cycles'],
+            'failedCycles' => $waterTreatmentData['failed_cycles'],
         ];
 
         // Get all devices for the filter dropdown
@@ -54,7 +57,7 @@ class DashboardController extends Controller
                 'totalDevices' => $totalDevices,
                 'totalHarvestedCrops' => $totalHarvestedCrops,
             ],
-            'harvestStatus' => $harvestStatus,
+            'waterTreatmentStats' => $waterTreatmentStats,
             'devices' => $devices,
         ]);
     }
