@@ -96,6 +96,7 @@ export default function Users() {
     // Archive confirmation modal state
     const [isArchiveConfirmOpen, setIsArchiveConfirmOpen] = useState(false);
     const [userToArchive, setUserToArchive] = useState<User | null>(null);
+    const { patch: archivePatch, processing: isArchiving } = useForm({});
 
     /** Archive is only allowed when user is inactive for at least 1 month */
     const canArchive = (user: User): boolean => {
@@ -113,7 +114,7 @@ export default function Users() {
 
     const handleArchiveConfirm = () => {
         if (userToArchive) {
-            router.patch(`/users/${userToArchive.id}/archive`, {}, {
+            archivePatch(`/users/${userToArchive.id}/archive`, {
                 preserveScroll: true,
                 onSuccess: () => {
                     setIsArchiveConfirmOpen(false);
@@ -488,14 +489,16 @@ export default function Users() {
               setIsArchiveConfirmOpen(false);
               setUserToArchive(null);
             }}
+            disabled={isArchiving}
           >
             Cancel
           </Button>
           <Button
             variant="destructive"
             onClick={handleArchiveConfirm}
+            disabled={isArchiving}
           >
-            Archive User
+            {isArchiving ? 'Archiving...' : 'Archive User'}
           </Button>
         </DialogFooter>
       </DialogContent>

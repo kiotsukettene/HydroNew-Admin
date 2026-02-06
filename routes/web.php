@@ -32,6 +32,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('analytics', \App\Http\Controllers\Analytics\AnalyticsController::class);
 
     Route::get('devices/archived', [DeviceController::class, 'archived'])->name('devices.archived');
+    Route::patch('devices/bulk-unarchive', [DeviceController::class, 'bulkUnarchive'])->name('devices.bulk-unarchive');
     Route::patch('devices/{id}/archive', [DeviceController::class, 'archive'])->name('devices.archive');
     Route::patch('devices/{id}/unarchive', [DeviceController::class, 'unarchive'])->name('devices.unarchive');
     Route::resource('devices', DeviceController::class);

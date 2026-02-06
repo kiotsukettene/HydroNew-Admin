@@ -1,5 +1,5 @@
 import AppLayout from '@/layouts/app-layout'
-import { Head, usePage, router } from '@inertiajs/react'
+import { Head, usePage, router, useForm } from '@inertiajs/react'
 import React, { useEffect, useState } from 'react'
 import { cleanFilters } from '@/lib/filter-helpers'
 import {
@@ -43,6 +43,7 @@ export default function ArchiveUser() {
   // Unarchive confirmation modal state
   const [isUnarchiveConfirmOpen, setIsUnarchiveConfirmOpen] = useState(false);
   const [userToUnarchive, setUserToUnarchive] = useState<User | null>(null);
+  const { patch: unarchivePatch, processing: isRestoring } = useForm({});
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -63,7 +64,7 @@ export default function ArchiveUser() {
 
   const handleUnarchiveConfirm = () => {
     if (userToUnarchive) {
-      router.patch(`/users/${userToUnarchive.id}/unarchive`, {}, {
+      unarchivePatch(`/users/${userToUnarchive.id}/unarchive`, {
         preserveScroll: true,
         onSuccess: () => {
           setIsUnarchiveConfirmOpen(false);
@@ -214,14 +215,16 @@ export default function ArchiveUser() {
                 setIsUnarchiveConfirmOpen(false);
                 setUserToUnarchive(null);
               }}
+              disabled={isRestoring}
             >
               Cancel
             </Button>
             <Button
               variant="primary"
               onClick={handleUnarchiveConfirm}
+              disabled={isRestoring}
             >
-              Restore User
+              {isRestoring ? 'Restoring...' : 'Restore User'}
             </Button>
           </DialogFooter>
         </DialogContent>

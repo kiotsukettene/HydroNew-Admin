@@ -8,6 +8,7 @@ export interface Device {
     is_archived: boolean;
     created_at: string;
     updated_at: string;
+    active_setups_count?: number;
     users?: Array<{
         id: number;
         first_name: string;

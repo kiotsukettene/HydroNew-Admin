@@ -55,6 +55,7 @@ export default function Devices() {
   const [isSearching, setIsSearching] = useState(false)
   const [isArchiveConfirmOpen, setIsArchiveConfirmOpen] = useState(false)
   const [deviceToArchive, setDeviceToArchive] = useState<Device | null>(null)
+  const { patch: archivePatch, processing: isArchiving } = useForm({})
 
   const { data, setData } = useForm({
     search: filters.search || '',
@@ -112,6 +113,13 @@ export default function Devices() {
     }
   }
 
+  /** Archive is only allowed when device is offline and has no active hydroponic setups */
+  const canArchive = (device: Device): boolean => {
+    if (device.status === 'online') return false
+    const activeSetups = device.active_setups_count ?? 0
+    return activeSetups === 0
+  }
+
   const handleArchiveClick = (device: Device) => {
     setDeviceToArchive(device)
     setIsArchiveConfirmOpen(true)
@@ -119,7 +127,7 @@ export default function Devices() {
 
   const handleArchiveConfirm = () => {
     if (deviceToArchive) {
-      router.patch(`/devices/${deviceToArchive.id}/archive`, {}, {
+      archivePatch(`/devices/${deviceToArchive.id}/archive`, {
         preserveScroll: true,
         onSuccess: () => {
           setIsArchiveConfirmOpen(false)
@@ -128,9 +136,10 @@ export default function Devices() {
             description: `${deviceToArchive.device_name} has been moved to archives.`,
           })
         },
-        onError: () => {
+        onError: (errors) => {
+          const message = typeof errors?.error === 'string' ? errors.error : (Array.isArray(errors?.error) ? errors.error[0] : null)
           toast.error('Failed to archive device', {
-            description: 'Please try again later.',
+            description: message || 'Please try again later.',
           })
         },
       })
@@ -488,10 +497,12 @@ export default function Devices() {
                           <Pencil className="mr-2 h-4 w-4" />
                           Edit
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleArchiveClick(device)}>
-                          <Archive className="mr-2 h-4 w-4" />
-                          Archive
-                        </DropdownMenuItem>
+                        {canArchive(device) && (
+                          <DropdownMenuItem onClick={() => handleArchiveClick(device)}>
+                            <Archive className="mr-2 h-4 w-4" />
+                            Archive
+                          </DropdownMenuItem>
+                        )}
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>
@@ -682,14 +693,16 @@ export default function Devices() {
                   setIsArchiveConfirmOpen(false)
                   setDeviceToArchive(null)
                 }}
+                disabled={isArchiving}
               >
                 Cancel
               </Button>
               <Button
                 variant="destructive"
                 onClick={handleArchiveConfirm}
+                disabled={isArchiving}
               >
-                Archive Device
+                {isArchiving ? 'Archiving...' : 'Archive Device'}
               </Button>
             </DialogFooter>
           </DialogContent>
