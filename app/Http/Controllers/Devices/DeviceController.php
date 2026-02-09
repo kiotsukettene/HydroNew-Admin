@@ -45,7 +45,7 @@ class DeviceController extends Controller
         // Apply sorting
         $sortField = $filters['sort'] ?? 'created_at';
         $sortDirection = $filters['direction'] ?? 'desc';
-        
+
         $query->orderBy($sortField, $sortDirection);
 
         $devices = $query->paginate(10);
@@ -161,26 +161,17 @@ class DeviceController extends Controller
     {
         try {
             $device = Device::findOrFail($id);
-            
+
             if (!$device->is_archived) {
                 return redirect()->back()->withErrors(['error' => 'Device is not archived.']);
             }
-            
+
             $device->update(['is_archived' => false]);
 
             return redirect()->back()->with('success', 'Device restored successfully.');
         } catch (\Exception $e) {
             return redirect()->back()->withErrors(['error' => 'Failed to restore device.']);
         }
-    }
-
-
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
     }
 
     /**
@@ -234,10 +225,10 @@ class DeviceController extends Controller
             ]);
 
             $device = Device::findOrFail($id);
-            
+
             // Remove serial_number from validated data to prevent changes
             unset($validated['serial_number']);
-            
+
             $device->update($validated);
 
             return redirect()->back()->with('success', 'Device updated successfully.');
