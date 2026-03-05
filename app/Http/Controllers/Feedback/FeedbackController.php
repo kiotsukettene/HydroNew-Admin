@@ -3,7 +3,10 @@
 namespace App\Http\Controllers\Feedback;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Feedback\ReplyFeedbackRequest;
+use App\Jobs\SendFeedbackReplyJob;
 use App\Models\Feedback;
+use App\Models\FeedbackReply;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -19,8 +22,17 @@ class FeedbackController extends Controller
         $query = Feedback::with(['user', 'device'])
             ->orderBy('created_at', 'desc');
 
-        if (!empty($filters['category']) && $filters['category'] !== 'all') {
+        // Handle "replied" special category
+        if (!empty($filters['category']) && $filters['category'] === 'replied') {
+            $query->where('replied', true);
+        } elseif (!empty($filters['category']) && $filters['category'] !== 'all') {
+            // Exclude replied feedbacks from "All" and other categories
             $query->where('category', $filters['category']);
+        } else {
+            // For "All" tab, exclude replied feedbacks
+            if (empty($filters['category']) || $filters['category'] === 'all') {
+                $query->where('replied', false);
+            }
         }
 
         if (!empty($filters['device_id'])) {
@@ -90,5 +102,30 @@ class FeedbackController extends Controller
     public function destroy(string $id)
     {
         //
+    }
+
+    /**
+     * Send a reply email to the user who submitted feedback.
+     */
+    public function reply(ReplyFeedbackRequest $request, Feedback $feedback)
+    {
+        $feedback->load('user');
+
+        if (!$feedback->user || !$feedback->user->email) {
+            return back()->with('error', 'Cannot send reply: User email not found.');
+        }
+
+        $feedbackReply = FeedbackReply::create([
+            'feedback_id' => $feedback->id,
+            'reply_message' => $request->validated()['reply_message'],
+            'sent_to_email' => $feedback->user->email,
+            'status' => FeedbackReply::STATUS_PENDING,
+        ]);
+
+        $feedback->update(['replied' => true]);
+
+        SendFeedbackReplyJob::dispatch($feedbackReply);
+
+        return back()->with('success', 'Reply sent successfully!');
     }
 }
