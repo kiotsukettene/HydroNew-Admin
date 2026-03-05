@@ -484,7 +484,7 @@ export default function Analytics() {
                   <TextureCardContent className="flex items-center gap-4">
                     <div>
                       <p className="text-sm text-muted-foreground">Most Grown Crop</p>
-                      <p className="text-2xl font-bold text-foreground">{cropsHarvestYield.most_grown_crop || 'N/A'}</p>
+                      <p className="text-2xl font-bold text-foreground">{cropsHarvestYield.most_grown_crop ? cropsHarvestYield.most_grown_crop.charAt(0).toUpperCase() + cropsHarvestYield.most_grown_crop.slice(1) : '-'}</p>
                     </div>
                   </TextureCardContent>
                 </TextureCardStyled>
