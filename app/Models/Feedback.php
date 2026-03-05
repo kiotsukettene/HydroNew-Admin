@@ -32,7 +32,8 @@ class Feedback extends Model
 
 	protected $casts = [
 		'user_id' => 'int',
-		'device_id' => 'int'
+		'device_id' => 'int',
+		'replied' => 'boolean'
 	];
 
 	protected $fillable = [
@@ -40,7 +41,8 @@ class Feedback extends Model
 		'device_id',
 		'category',
 		'subject',
-		'message'
+		'message',
+		'replied'
 	];
 
 	public function device()

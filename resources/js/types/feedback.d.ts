@@ -25,6 +25,7 @@ export interface Feedback {
   category: FeedbackCategory
   subject: string | null
   message: string
+  replied: boolean
   created_at: string
   updated_at: string
   user?: FeedbackUser

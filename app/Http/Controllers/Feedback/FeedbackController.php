@@ -3,8 +3,11 @@
 namespace App\Http\Controllers\Feedback;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Feedback\ReplyFeedbackRequest;
+use App\Mail\FeedbackReplyMail;
 use App\Models\Feedback;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
 use Inertia\Inertia;
 
 class FeedbackController extends Controller
@@ -19,8 +22,17 @@ class FeedbackController extends Controller
         $query = Feedback::with(['user', 'device'])
             ->orderBy('created_at', 'desc');
 
-        if (!empty($filters['category']) && $filters['category'] !== 'all') {
+        // Handle "replied" special category
+        if (!empty($filters['category']) && $filters['category'] === 'replied') {
+            $query->where('replied', true);
+        } elseif (!empty($filters['category']) && $filters['category'] !== 'all') {
+            // Exclude replied feedbacks from "All" and other categories
             $query->where('category', $filters['category']);
+        } else {
+            // For "All" tab, exclude replied feedbacks
+            if (empty($filters['category']) || $filters['category'] === 'all') {
+                $query->where('replied', false);
+            }
         }
 
         if (!empty($filters['device_id'])) {
@@ -90,5 +102,26 @@ class FeedbackController extends Controller
     public function destroy(string $id)
     {
         //
+    }
+
+    /**
+     * Send a reply email to the user who submitted feedback.
+     */
+    public function reply(ReplyFeedbackRequest $request, Feedback $feedback)
+    {
+        $feedback->load('user', 'device');
+
+        if (!$feedback->user || !$feedback->user->email) {
+            return back()->with('error', 'Cannot send reply: User email not found.');
+        }
+
+        // Send email directly
+        Mail::to($feedback->user->email)
+            ->send(new FeedbackReplyMail($feedback, $request->validated()['reply_message']));
+
+        // Mark as replied
+        $feedback->update(['replied' => true]);
+
+        return back()->with('success', 'Reply sent successfully!');
     }
 }

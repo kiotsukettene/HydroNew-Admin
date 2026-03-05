@@ -5,13 +5,14 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { CheckCircle2, Mail, Reply, X } from 'lucide-react'
+import { CheckCircle2, Loader2, Mail, Reply, X } from 'lucide-react'
 import SearchInput from '@/components/search-input'
 import { cleanFilters } from '@/lib/filter-helpers'
 import { Pagination } from '@/types/pagination'
 import { Feedback as FeedbackType, FeedbackCategory } from '@/types/feedback'
 import PaginationComp from '@/components/pagination'
 import { useDebounce } from 'use-debounce'
+import { toast } from 'sonner'
 
 const CATEGORY_LABELS: Record<FeedbackCategory, string> = {
   bug_report: 'Bug report',
@@ -21,8 +22,9 @@ const CATEGORY_LABELS: Record<FeedbackCategory, string> = {
   other: 'Other',
 }
 
-const CATEGORY_OPTIONS: { value: 'all' | FeedbackCategory; label: string }[] = [
+const CATEGORY_OPTIONS: { value: 'all' | 'replied' | FeedbackCategory; label: string }[] = [
   { value: 'all', label: 'All' },
+  { value: 'replied', label: 'Replied' },
   { value: 'bug_report', label: 'Bug report' },
   { value: 'feature_request', label: 'Feature request' },
   { value: 'general_feedback', label: 'General feedback' },
@@ -62,6 +64,8 @@ export default function Feedback() {
 
   const [selectedFeedback, setSelectedFeedback] = useState<FeedbackType | null>(null)
   const [replyText, setReplyText] = useState('')
+  const [isSending, setIsSending] = useState(false)
+  const [replyError, setReplyError] = useState('')
 
   const items = feedback.data
   const total = feedback.total
@@ -102,14 +106,47 @@ export default function Feedback() {
   const handleSelect = (item: FeedbackType) => {
     setSelectedFeedback(item)
     setReplyText('')
+    setReplyError('')
   }
 
   const handleSendReply = () => {
-    if (selectedFeedback?.user?.email) {
-      console.info('Send reply to:', selectedFeedback.user.email, replyText)
+    if (!selectedFeedback || !selectedFeedback.user?.email || replyText.trim().length === 0) {
+      return
     }
-    setSelectedFeedback(null)
-    setReplyText('')
+
+    setIsSending(true)
+    setReplyError('')
+
+    router.post(
+      `/feedback/${selectedFeedback.id}/reply`,
+      { reply_message: replyText },
+      {
+        preserveScroll: true,
+        onSuccess: () => {
+          setSelectedFeedback(null)
+          setReplyText('')
+          setReplyError('')
+          toast.success('Reply sent successfully!', {
+            description: 'Your reply has been sent to the user\'s email.',
+          })
+        },
+        onError: (errors) => {
+          console.error('Failed to send reply:', errors)
+          
+          // Set error message for display below the field
+          if (errors.reply_message) {
+            setReplyError(errors.reply_message)
+          } else if (errors.error) {
+            setReplyError(errors.error)
+          } else {
+            setReplyError('Failed to send reply. Please try again.')
+          }
+        },
+        onFinish: () => {
+          setIsSending(false)
+        },
+      }
+    )
   }
 
   const handlePagination = (url: string) => {
@@ -140,7 +177,7 @@ export default function Feedback() {
                   value={opt.value}
                   className="shrink-0 rounded-full px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm"
                 >
-                  {opt.value === 'all' ? `All${data.category === 'all' ? ` (${total})` : ''}` : opt.label}
+                  {opt.value === 'all' || opt.value === 'replied' ? `${opt.label}${data.category === opt.value ? ` (${total})` : ''}` : opt.label}
                 </TabsTrigger>
               ))}
             </TabsList>
@@ -197,9 +234,16 @@ export default function Feedback() {
                       {item.message}
                     </p>
                   </div>
-                  <div className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
-                    <Mail className="h-3.5 w-3.5 shrink-0" />
-                    <span>{formatDate(item.created_at)}</span>
+                  <div className="mt-3 flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <Mail className="h-3.5 w-3.5 shrink-0" />
+                      <span>{formatDate(item.created_at)}</span>
+                    </div>
+                    {item.replied && (
+                      <Badge variant="default" className="text-xs bg-green-500 hover:bg-green-600 shrink-0">
+                        Replied
+                      </Badge>
+                    )}
                   </div>
                 </Card>
               ))}
@@ -230,6 +274,11 @@ export default function Feedback() {
                 <Badge variant="secondary" className="text-xs">
                   {CATEGORY_LABELS[selectedFeedback.category]}
                 </Badge>
+                {selectedFeedback.replied && (
+                  <Badge variant="default" className="text-xs bg-green-500 hover:bg-green-600">
+                    Replied
+                  </Badge>
+                )}
                 <Button
                   variant="icon"
                   size="icon"
@@ -279,11 +328,23 @@ export default function Feedback() {
                 <textarea
                   id="reply"
                   value={replyText}
-                  onChange={(e) => setReplyText(e.target.value)}
+                  onChange={(e) => {
+                    setReplyText(e.target.value)
+                    if (replyError) setReplyError('')
+                  }}
                   rows={4}
-                  className="w-full resize-none rounded-xl border border-border bg-background px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-foreground shadow-sm outline-none transition focus:ring-2 focus:ring-primary/30"
+                  className={`w-full resize-none rounded-xl border bg-background px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-foreground shadow-sm outline-none transition focus:ring-2 ${
+                    replyError 
+                      ? 'border-red-500 focus:ring-red-500/30' 
+                      : 'border-border focus:ring-primary/30'
+                  }`}
                   placeholder="Type your response..."
                 />
+                {replyError && (
+                  <p className="text-xs sm:text-sm text-red-500 mt-1">
+                    {replyError}
+                  </p>
+                )}
               </div>
             </div>
 
@@ -307,10 +368,19 @@ export default function Feedback() {
                   className="flex-1 sm:flex-none sm:w-auto"
                   type="button"
                   onClick={handleSendReply}
-                  disabled={replyText.trim().length === 0}
+                  disabled={replyText.trim().length === 0 || isSending}
                 >
-                  <CheckCircle2 className="h-4 w-4" />
-                  Send Reply
+                  {isSending ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Sending...
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle2 className="h-4 w-4" />
+                      Send Reply
+                    </>
+                  )}
                 </Button>
               </div>
             </div>
