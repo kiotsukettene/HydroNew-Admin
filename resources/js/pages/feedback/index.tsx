@@ -13,6 +13,7 @@ import { Feedback as FeedbackType, FeedbackCategory } from '@/types/feedback'
 import PaginationComp from '@/components/pagination'
 import { useDebounce } from 'use-debounce'
 import { toast } from 'sonner'
+import { HighlightText } from '@/components/highlight-text'
 
 const CATEGORY_LABELS: Record<FeedbackCategory, string> = {
   bug_report: 'Bug report',
@@ -183,7 +184,7 @@ export default function Feedback() {
             </TabsList>
             <div className="relative w-full sm:w-auto">
               <SearchInput
-                placeholder="Search message or subject..."
+                placeholder="Search by name, email, category, subject, or message..."
                 value={data.search}
                 onChange={(value) => setData('search', value)}
                 isLoading={isSearching}
@@ -214,24 +215,24 @@ export default function Feedback() {
                   <div className="flex items-start justify-between gap-3">
                     <div className="space-y-1 min-w-0">
                       <p className="text-sm font-semibold text-foreground truncate">
-                        {getUserName(item)}
+                        <HighlightText text={getUserName(item)} highlight={data.search} />
                       </p>
                       <p className="text-xs text-muted-foreground truncate">
-                        {item.user?.email ?? '—'}
+                        <HighlightText text={item.user?.email ?? '—'} highlight={data.search} />
                       </p>
                     </div>
                     <Badge variant="secondary" className="shrink-0 text-xs">
-                      {CATEGORY_LABELS[item.category]}
+                      <HighlightText text={CATEGORY_LABELS[item.category]} highlight={data.search} />
                     </Badge>
                   </div>
                   <div className="mt-3 space-y-1">
                     {item.subject && (
                       <p className="text-xs font-medium text-foreground truncate">
-                        {item.subject}
+                        <HighlightText text={item.subject} highlight={data.search} />
                       </p>
                     )}
                     <p className="text-xs text-muted-foreground line-clamp-2">
-                      {item.message}
+                      <HighlightText text={item.message} highlight={data.search} />
                     </p>
                   </div>
                   <div className="mt-3 flex items-center justify-between gap-2">
@@ -264,15 +265,15 @@ export default function Feedback() {
             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 border-b border-border px-4 sm:px-6 py-4">
               <div className="min-w-0 flex-1">
                 <p className="text-base sm:text-lg font-semibold text-foreground truncate">
-                  {getUserName(selectedFeedback)}
+                  <HighlightText text={getUserName(selectedFeedback)} highlight={data.search} />
                 </p>
                 <p className="text-xs sm:text-sm text-muted-foreground truncate">
-                  {selectedFeedback.user?.email ?? '—'}
+                  <HighlightText text={selectedFeedback.user?.email ?? '—'} highlight={data.search} />
                 </p>
               </div>
               <div className="flex items-center gap-2 shrink-0">
                 <Badge variant="secondary" className="text-xs">
-                  {CATEGORY_LABELS[selectedFeedback.category]}
+                  <HighlightText text={CATEGORY_LABELS[selectedFeedback.category]} highlight={data.search} />
                 </Badge>
                 {selectedFeedback.replied && (
                   <Badge variant="default" className="text-xs bg-green-500 hover:bg-green-600">
@@ -309,7 +310,7 @@ export default function Feedback() {
                 <div className="rounded-xl border border-border bg-muted/40 p-3 sm:p-4">
                   <p className="text-xs sm:text-sm font-medium text-foreground">Subject</p>
                   <p className="text-xs sm:text-sm text-muted-foreground break-words">
-                    {selectedFeedback.subject}
+                    <HighlightText text={selectedFeedback.subject} highlight={data.search} />
                   </p>
                 </div>
               )}
@@ -317,7 +318,7 @@ export default function Feedback() {
               <div className="space-y-2 rounded-xl border border-border bg-muted/40 p-3 sm:p-4">
                 <p className="text-xs sm:text-sm font-medium text-foreground">Message</p>
                 <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap break-words">
-                  {selectedFeedback.message}
+                  <HighlightText text={selectedFeedback.message} highlight={data.search} />
                 </p>
               </div>
 

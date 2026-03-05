@@ -38,7 +38,7 @@ import {
 } from '@/components/ui/dialog'
 import { toast } from 'sonner';
 
-type SortField = 'name' | 'serial_number' | 'status' | 'created_at';
+type SortField = 'device_name' | 'serial_number' | 'status' | 'created_at';
 type SortDirection = 'asc' | 'desc';
 
 export default function Devices() {
@@ -347,9 +347,9 @@ export default function Devices() {
                     size="icon"
                     className="h-8 w-8"
                     aria-label="Sort Device Name"
-                    onClick={() => handleSort('name')}
+                    onClick={() => handleSort('device_name')}
                   >
-                    {getSortIcon('name')}
+                    {getSortIcon('device_name')}
                   </Button>
                 </div>
               </TableHead>
