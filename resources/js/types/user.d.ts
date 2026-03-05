@@ -8,6 +8,7 @@ export interface User {
     email_verified_at: string | null;
     status: 'active' | 'inactive';
     is_archived: boolean;
+    last_login_at: string | null;
     role?: string;
     profile_picture?: string | null;
 }

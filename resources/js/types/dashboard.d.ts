@@ -4,14 +4,15 @@ export interface DashboardStats {
     totalHarvestedCrops: number;
 }
 
-export interface HarvestStatus {
-    waterTankLevel: number;
-    currentGrowthStage: string;
-    estimatedHarvestDate: string | null;
-    daysRemaining: number | null;
+export interface WaterTreatmentStats {
+    totalCycles: number;
+    successRate: number;
+    averageDuration: number;
+    successfulCycles: number;
+    failedCycles: number;
 }
 
 export interface DashboardData {
     stats: DashboardStats;
-    harvestStatus: HarvestStatus;
+    waterTreatmentStats: WaterTreatmentStats;
 }

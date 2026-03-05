@@ -3,10 +3,9 @@ import { Card, CardDescription, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import AppLayout from '@/layouts/app-layout';
 import { Head, Link, usePage } from '@inertiajs/react';
-import { Cast, Leaf, User, Droplet, Calendar, Sprout } from 'lucide-react';
-import TextureCard from '@/components/ui/texture-card';
+import { Cast, Leaf, User, Droplet, CheckCircle, Clock } from 'lucide-react';
 import { index as devicesIndex } from '@/routes/devices';
-import { DashboardStats, HarvestStatus } from '@/types/dashboard';
+import { DashboardStats, WaterTreatmentStats } from '@/types/dashboard';
 
 
 
@@ -17,9 +16,9 @@ interface Device {
 }
 
 export default function Dashboard() {
-    const { stats, harvestStatus, devices } = usePage<{
+    const { stats, waterTreatmentStats, devices } = usePage<{
         stats: DashboardStats;
-        harvestStatus: HarvestStatus;
+        waterTreatmentStats: WaterTreatmentStats;
         devices: Device[];
     }>().props;
 
@@ -37,22 +36,16 @@ export default function Dashboard() {
       {/* Welcome Card - Left Side */}
       <Card className='bg-[#ebfff0d7] shadow-none w-full lg:w-[60%] overflow-hidden p-0 relative min-h-[180px]'>
         {/* Text Content */}
-        <div className='px-6 pt-6 pb-4'>
+        <div className='px-6 pt-6 pb-4 mb-6'>
           <CardTitle className='text-2xl  font-semibold leading-tight mt-4'>Welcome to<br/>Dashboard!</CardTitle>
-          <CardDescription className=' text-sm mt-2'>Monitor your hydroponics system activity here.</CardDescription>
+          <CardDescription className=' text-sm mt-2 mb-6'>Monitor your hydroponics system activity here.</CardDescription>
         </div>
 
-        {/* White Pill Button - Crop Info */}
-        <div className='absolute bottom-8 left-6'>
-          {/* <Button className=' rounded-full px-4 py-2 flex items-center transition-shadow'>
-            <span className='text-sm font-medium '>🥬 Romaine Lettuce</span>
-            <span className='text-xs '>• Day 23</span>
-          </Button> */}
-
+        {/* View Devices Button - Bottom Left */}
+        <div className='absolute bottom-6 left-6 z-10'>
           <Button size='sm' asChild>
             <Link href={devicesIndex.url()}>View Devices</Link>
           </Button>
-
         </div>
 
         {/* Illustration */}
@@ -100,7 +93,7 @@ export default function Dashboard() {
   </div>
 
   <div className='sm:w-[30%] flex flex-col gap-4 md:-mr-2'>
-    {/* Harvest Schedule Section with Overlay */}
+    {/* Water Treatment Section with Overlay */}
     <Card className='bg-[#2C5F5D] shadow-none overflow-hidden p-0 relative flex-1 flex flex-col md:rounded-r-none'>
       <div className='w-full flex-1'>
         <img
@@ -112,50 +105,48 @@ export default function Dashboard() {
 
       {/* Overlay Content */}
       <div className='absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-[#2C5F5D] via-[#2C5F5D]/95 to-transparent'>
-        <CardTitle className='text-xl text-white font-semibold mb-1'>Harvest Status</CardTitle>
+        <CardTitle className='text-xl text-white font-semibold mb-1'>Water Treatment</CardTitle>
         <CardDescription className='text-white/70 text-xs mb-4'>
-         Monitor progress and estimated timeline for a successful harvest.
+         Monitor treatment cycles, success rates, and performance metrics.
         </CardDescription>
 
-        {/* Harvest Items */}
+        {/* Treatment Items */}
         <div className='flex flex-col gap-3'>
-          {/* Water Tank Level */}
+          {/* Total Cycles */}
           <div className='flex items-center gap-3 bg-white/10 backdrop-blur-sm rounded-lg p-3 hover:bg-white/15 transition-colors'>
-            <div className='w-12 h-12 rounded-lg bg-green-400/20 flex items-center justify-center flex-shrink-0'>
+            <div className='w-12 h-12 rounded-lg bg-blue-400/20 flex items-center justify-center flex-shrink-0'>
               <Droplet className='text-white' size={24} fill="currentColor" />
             </div>
             <div className='flex-1'>
-              <div className='text-white font-medium text-sm'>Water Tank Level</div>
+              <div className='text-white font-medium text-sm'>Total Cycles</div>
               <div className='text-white/70 text-xs mt-1'>
-                Water level at {harvestStatus.waterTankLevel}%
+                {waterTreatmentStats.totalCycles} treatment cycles completed
               </div>
             </div>
           </div>
 
-          {/* Current Growth Stage */}
+          {/* Success Rate */}
           <div className='flex items-center gap-3 bg-white/10 backdrop-blur-sm rounded-lg p-3 hover:bg-white/15 transition-colors'>
             <div className='w-12 h-12 rounded-lg bg-green-400/20 flex items-center justify-center flex-shrink-0'>
-              <Sprout className='text-white' size={24} />
+              <CheckCircle className='text-white' size={24} />
             </div>
             <div className='flex-1'>
-              <div className='text-white font-medium text-sm'>Current Growth Stage</div>
+              <div className='text-white font-medium text-sm'>Success Rate</div>
               <div className='text-white/70 text-xs mt-1'>
-                {harvestStatus.currentGrowthStage}
+                {waterTreatmentStats.successRate}% successful treatments
               </div>
             </div>
           </div>
 
-          {/* Estimated Harvest Date */}
+          {/* Average Duration */}
           <div className='flex items-center gap-3 bg-white/10 backdrop-blur-sm rounded-lg p-3 hover:bg-white/15 transition-colors'>
-            <div className='w-12 h-12 rounded-lg bg-green-400/20 flex items-center justify-center flex-shrink-0'>
-              <Calendar className='text-white' size={24} />
+            <div className='w-12 h-12 rounded-lg bg-amber-400/20 flex items-center justify-center flex-shrink-0'>
+              <Clock className='text-white' size={24} />
             </div>
             <div className='flex-1'>
-              <div className='text-white font-medium text-sm'>Estimated Harvest Date</div>
+              <div className='text-white font-medium text-sm'>Avg Duration</div>
               <div className='text-white/70 text-xs mt-1'>
-                {harvestStatus.estimatedHarvestDate 
-                  ? `${harvestStatus.estimatedHarvestDate} • ${harvestStatus.daysRemaining} days remaining`
-                  : 'No active harvest scheduled'}
+                {waterTreatmentStats.averageDuration} minutes per cycle
               </div>
             </div>
           </div>

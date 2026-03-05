@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Device;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 
 class DeviceController extends Controller
@@ -18,6 +19,9 @@ class DeviceController extends Controller
         $filters = $request->only(['search', 'status', 'sort', 'direction']);
 
         $query = Device::with('users')
+            ->withCount(['hydroponic_setups as active_setups_count' => function ($q) {
+                $q->where('is_archived', false)->where('status', 'active');
+            }])
             ->where('is_archived', false);
 
         // Apply search filter
@@ -41,7 +45,7 @@ class DeviceController extends Controller
         // Apply sorting
         $sortField = $filters['sort'] ?? 'created_at';
         $sortDirection = $filters['direction'] ?? 'desc';
-        
+
         $query->orderBy($sortField, $sortDirection);
 
         $devices = $query->paginate(10);
@@ -96,17 +100,35 @@ class DeviceController extends Controller
     }
 
     /**
-     * Archive a device
+     * Archive a device.
+     * Business rules: device must be offline and have no active hydroponic setups.
      */
     public function archive(string $id)
     {
         try {
-            $device = Device::findOrFail($id);
-            
+            $device = Device::with('hydroponic_setups')->findOrFail($id);
+
             if ($device->is_archived) {
                 return redirect()->back()->withErrors(['error' => 'Device is already archived.']);
             }
-            
+
+            if ($device->status === 'online') {
+                throw ValidationException::withMessages([
+                    'error' => 'Cannot archive an online device. Take the device offline first.',
+                ]);
+            }
+
+            $activeSetupsCount = $device->hydroponic_setups()
+                ->where('is_archived', false)
+                ->where('status', 'active')
+                ->count();
+
+            if ($activeSetupsCount > 0) {
+                throw ValidationException::withMessages([
+                    'error' => 'Cannot archive device with active hydroponic setups. Archive or deactivate the setups first.',
+                ]);
+            }
+
             $device->update(['is_archived' => true]);
 
             return redirect()->back()->with('success', 'Device archived successfully.');
@@ -116,32 +138,40 @@ class DeviceController extends Controller
     }
 
     /**
+     * Bulk unarchive devices
+     */
+    public function bulkUnarchive(Request $request)
+    {
+        $validated = $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'integer|exists:devices,id',
+        ]);
+
+        $count = Device::whereIn('id', $validated['ids'])
+            ->where('is_archived', true)
+            ->update(['is_archived' => false]);
+
+        return redirect()->back()->with('success', "{$count} device(s) restored successfully.");
+    }
+
+    /**
      * Unarchive a device
      */
     public function unarchive(string $id)
     {
         try {
             $device = Device::findOrFail($id);
-            
+
             if (!$device->is_archived) {
                 return redirect()->back()->withErrors(['error' => 'Device is not archived.']);
             }
-            
+
             $device->update(['is_archived' => false]);
 
-            return redirect()->back()->with('success', 'Device unarchived successfully.');
+            return redirect()->back()->with('success', 'Device restored successfully.');
         } catch (\Exception $e) {
             return redirect()->back()->withErrors(['error' => 'Failed to restore device.']);
         }
-    }
-
-
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
     }
 
     /**
@@ -195,10 +225,10 @@ class DeviceController extends Controller
             ]);
 
             $device = Device::findOrFail($id);
-            
+
             // Remove serial_number from validated data to prevent changes
             unset($validated['serial_number']);
-            
+
             $device->update($validated);
 
             return redirect()->back()->with('success', 'Device updated successfully.');

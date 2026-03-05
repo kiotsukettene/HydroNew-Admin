@@ -181,7 +181,7 @@ class DevicesTest extends TestCase
     public function test_device_can_be_archived()
     {
         $admin = User::factory()->create(['roles' => 'admin']);
-        $device = Device::factory()->create(['is_archived' => false]);
+        $device = Device::factory()->offline()->create(['is_archived' => false]);
 
         $response = $this->actingAs($admin)->patch(route('devices.archive', $device->id));
 
@@ -190,6 +190,20 @@ class DevicesTest extends TestCase
         $this->assertDatabaseHas('devices', [
             'id' => $device->id,
             'is_archived' => true,
+        ]);
+    }
+
+    public function test_online_device_cannot_be_archived()
+    {
+        $admin = User::factory()->create(['roles' => 'admin']);
+        $device = Device::factory()->online()->create(['is_archived' => false]);
+
+        $response = $this->actingAs($admin)->patch(route('devices.archive', $device->id));
+
+        $response->assertStatus(422);
+        $this->assertDatabaseHas('devices', [
+            'id' => $device->id,
+            'is_archived' => false,
         ]);
     }
 

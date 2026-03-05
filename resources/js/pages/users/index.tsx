@@ -33,7 +33,6 @@ import {
     Filter,
     Loader2,
     MoreHorizontal,
-    Pencil,
     Users as UsersIcon,
     AlertTriangle,
 } from 'lucide-react';
@@ -67,7 +66,15 @@ export default function Users() {
         { key: 'email', label: 'Email', sortable: true },
         { key: 'address', label: 'Address', sortable: false },
         { key: 'status', label: 'Status', sortable: false },
+        { key: 'verified', label: 'Verified', sortable: false },
+        { key: 'last_active', label: 'Last active', sortable: false },
     ];
+
+    const formatLastActive = (lastLoginAt: string | null): string => {
+        if (!lastLoginAt) return 'Never';
+        const d = new Date(lastLoginAt);
+        return d.toLocaleDateString(undefined, { dateStyle: 'medium' });
+    };
 
     const { users, filters, userCount } = usePage<{
         users: Pagination<User>;
@@ -86,52 +93,18 @@ export default function Users() {
     const [isSearching, setIsSearching] = useState(false);
     const hasMounted = useRef(false);
 
-    // Edit modal state
-    const [isEditOpen, setIsEditOpen] = useState(false);
-    const [editingUser, setEditingUser] = useState<User | null>(null);
-
     // Archive confirmation modal state
     const [isArchiveConfirmOpen, setIsArchiveConfirmOpen] = useState(false);
     const [userToArchive, setUserToArchive] = useState<User | null>(null);
+    const { patch: archivePatch, processing: isArchiving } = useForm({});
 
-    // Edit form
-    const { data: editData, setData: setEditData, put, processing, reset } = useForm({
-        first_name: '',
-        last_name: '',
-        email: '',
-        address: '',
-    });
-
-    const handleEditClick = (user: User) => {
-        setEditingUser(user);
-        setEditData({
-            first_name: user.first_name,
-            last_name: user.last_name,
-            email: user.email,
-            address: user.address || '',
-        });
-        setIsEditOpen(true);
-    };
-
-    const handleSaveEdit = () => {
-        if (editingUser) {
-            put(`/users/${editingUser.id}`, {
-                preserveScroll: true,
-                onSuccess: () => {
-                    setIsEditOpen(false);
-                    reset();
-                    setEditingUser(null);
-                    toast.success('User updated successfully', {
-                        description: `${editData.first_name} ${editData.last_name}'s information has been updated.`,
-                    });
-                },
-                onError: () => {
-                    toast.error('Failed to update user', {
-                        description: 'Please check the form and try again.',
-                    });
-                },
-            });
-        }
+    /** Archive is only allowed when user is inactive for at least 1 month */
+    const canArchive = (user: User): boolean => {
+        if (user.status !== 'inactive') return false;
+        if (!user.last_login_at) return true; // never logged in = treat as inactive long enough
+        const oneMonthAgo = new Date();
+        oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+        return new Date(user.last_login_at) <= oneMonthAgo;
     };
 
     const handleArchiveClick = (user: User) => {
@@ -141,7 +114,7 @@ export default function Users() {
 
     const handleArchiveConfirm = () => {
         if (userToArchive) {
-            router.patch(`/users/${userToArchive.id}/archive`, {}, {
+            archivePatch(`/users/${userToArchive.id}/archive`, {
                 preserveScroll: true,
                 onSuccess: () => {
                     setIsArchiveConfirmOpen(false);
@@ -161,12 +134,12 @@ export default function Users() {
 
     const handleSort = (field: SortField) => {
         const newDirection = data.sort === field && data.direction === 'asc' ? 'desc' : 'asc';
-        
+
         router.get(
             '/users',
-            cleanFilters({ 
-                search: data.search, 
-                sort: field, 
+            cleanFilters({
+                search: data.search,
+                sort: field,
                 direction: newDirection,
                 status: data.status,
                 verified: data.verified
@@ -212,9 +185,9 @@ export default function Users() {
         if (debounceSearch !== undefined) {
             router.get(
                 '/users',
-                cleanFilters({ 
-                    search: debounceSearch, 
-                    sort: data.sort, 
+                cleanFilters({
+                    search: debounceSearch,
+                    sort: data.sort,
                     direction: data.direction,
                     status: data.status,
                     verified: data.verified
@@ -232,8 +205,8 @@ export default function Users() {
 
     const getSortIcon = (field: string) => {
         if (data.sort !== field) return <ArrowUpDown className="h-4 w-4" />;
-        return data.direction === 'asc' 
-            ? <ArrowUp className="h-4 w-4" /> 
+        return data.direction === 'asc'
+            ? <ArrowUp className="h-4 w-4" />
             : <ArrowDown className="h-4 w-4" />;
     };
 
@@ -268,7 +241,7 @@ export default function Users() {
                     </p>
                 </div>
 
-                <div className="flex flex-wrap gap-3 items-center">
+                <div className="flex flex-wrap gap-3 items-center justify-between">
                     <SearchInput
                         value={data.search}
                         onChange={(value) => setData('search', value)}
@@ -280,7 +253,8 @@ export default function Users() {
                             <PopoverTrigger asChild>
                                 <Button
                                     variant="secondary"
-                                    className="h-8 w-[150px] border-2 rounded-lg text-xs"
+                                    size="sm"
+                                    className="w-auto"
                                     aria-label="Filter by status"
                                 >
                                     <Filter className="mr-2 h-4 w-4" />
@@ -332,9 +306,9 @@ export default function Users() {
                                         </Select>
                                     </div>
                                     {(data.status !== 'all' || data.verified !== 'all') && (
-                                        <Button 
-                                            variant="ghost" 
-                                            size="sm" 
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
                                             className="w-full"
                                             onClick={() => {
                                                 router.get(
@@ -365,8 +339,9 @@ export default function Users() {
                         </PopoverContent>
                     </Popover>
 
-                    <Button 
+                    <Button
                         variant="secondary"
+                        size="sm"
                         onClick={() => router.visit('/users/archived', { preserveState: false })}
                     >
                         <Archive className="mr-2 h-4 w-4" />
@@ -431,37 +406,43 @@ export default function Users() {
                                         {user.address}
                                     </TableCell>
                                     <TableCell>
-                                        <Badge className={user.status === 'active' 
-                                            ? "border-green-300 bg-green-100 text-green-600" 
+                                        <Badge className={user.status === 'active'
+                                            ? "border-green-300 bg-green-100 text-green-600"
                                             : "border-gray-300 bg-gray-100 text-gray-600"}>
                                             {user.status === 'active' ? 'Active' : 'Inactive'}
                                         </Badge>
                                     </TableCell>
                                     <TableCell>
-                                        <DropdownMenu>
-                                            <DropdownMenuTrigger asChild>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="sm"
-                                                >
-                                                    <MoreHorizontal className="h-4 w-4" />
-                                                </Button>
-                                            </DropdownMenuTrigger>
-                                            <DropdownMenuContent align="end">
-                                                <DropdownMenuItem
-                                                    onClick={() => handleEditClick(user)}
-                                                >
-                                                    <Pencil className="mr-2 h-4 w-4" />
-                                                    Edit
-                                                </DropdownMenuItem>
-                                                <DropdownMenuItem
-                                                    onClick={() => handleArchiveClick(user)}
-                                                >
-                                                    <Archive className="mr-2 h-4 w-4" />
-                                                    Archive
-                                                </DropdownMenuItem>
-                                            </DropdownMenuContent>
-                                        </DropdownMenu>
+                                        <Badge className={user.email_verified_at
+                                            ? "border-green-300 bg-green-100 text-green-600"
+                                            : "border-amber-300 bg-amber-100 text-amber-700"}>
+                                            {user.email_verified_at ? 'Verified' : 'Unverified'}
+                                        </Badge>
+                                    </TableCell>
+                                    <TableCell className="text-muted-foreground text-sm">
+                                        {formatLastActive(user.last_login_at)}
+                                    </TableCell>
+                                    <TableCell>
+                                        {canArchive(user) && (
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                    >
+                                                        <MoreHorizontal className="h-4 w-4" />
+                                                    </Button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent align="end">
+                                                    <DropdownMenuItem
+                                                        onClick={() => handleArchiveClick(user)}
+                                                    >
+                                                        <Archive className="mr-2 h-4 w-4" />
+                                                        Archive
+                                                    </DropdownMenuItem>
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
+                                        )}
                                     </TableCell>
                                 </TableRow>
                             ))
@@ -478,77 +459,6 @@ export default function Users() {
                         <PaginationComp links={users.links} />
                     </div>
                 )}
-
-    {/* Edit User Modal */}
-    <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Edit User</DialogTitle>
-          <DialogDescription>
-            Update user details here.
-          </DialogDescription>
-        </DialogHeader>
-
-        {editingUser && (
-          <div className="space-y-3">
-            <div className="grid gap-1">
-              <Label className="text-sm font-medium">First Name</Label>
-              <input
-                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-                value={editData.first_name}
-                onChange={(e) => setEditData('first_name', e.target.value)}
-              />
-            </div>
-            <div className="grid gap-1">
-              <Label className="text-sm font-medium">Last Name</Label>
-              <input
-                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-                value={editData.last_name}
-                onChange={(e) => setEditData('last_name', e.target.value)}
-              />
-            </div>
-            <div className="grid gap-1">
-              <Label className="text-sm font-medium">Email</Label>
-              <input
-                type="email"
-                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-                value={editData.email}
-                onChange={(e) => setEditData('email', e.target.value)}
-              />
-            </div>
-            <div className="grid gap-1">
-              <Label className="text-sm font-medium">Address</Label>
-              <textarea
-                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-                value={editData.address}
-                onChange={(e) => setEditData('address', e.target.value)}
-                rows={2}
-              />
-            </div>
-          </div>
-        )}
-
-        <DialogFooter>
-          <Button 
-            variant="secondary" 
-            onClick={() => {
-              setIsEditOpen(false);
-              reset();
-              setEditingUser(null);
-            }}
-            disabled={processing}
-          >
-            Cancel
-          </Button>
-          <Button 
-            onClick={handleSaveEdit}
-            disabled={processing}
-          >
-            {processing ? 'Saving...' : 'Save changes'}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
 
     {/* Archive Confirmation Modal */}
     <Dialog open={isArchiveConfirmOpen} onOpenChange={setIsArchiveConfirmOpen}>
@@ -573,20 +483,22 @@ export default function Users() {
         )}
 
         <DialogFooter>
-          <Button 
-            variant="secondary" 
+          <Button
+            variant="secondary"
             onClick={() => {
               setIsArchiveConfirmOpen(false);
               setUserToArchive(null);
             }}
+            disabled={isArchiving}
           >
             Cancel
           </Button>
-          <Button 
+          <Button
             variant="destructive"
             onClick={handleArchiveConfirm}
+            disabled={isArchiving}
           >
-            Archive User
+            {isArchiving ? 'Archiving...' : 'Archive User'}
           </Button>
         </DialogFooter>
       </DialogContent>

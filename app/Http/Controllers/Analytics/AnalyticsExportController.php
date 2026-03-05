@@ -57,7 +57,7 @@ class AnalyticsExportController extends Controller
             // Generate PDF
             $filename = 'analytics-report-' . now()->format('Y-m-d-His') . '.pdf';
             $this->exportService->htmlToPdf($html, $filename);
-            
+
             $path = storage_path('app/public/exports/' . $filename);
 
             // Return file download

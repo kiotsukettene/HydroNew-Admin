@@ -46,7 +46,7 @@ class UserController extends Controller
 
         $users = $query->paginate(10);
 
-        $userCount = User::where('role', '=', 'user')->count();
+        $userCount = User::where('role', '=', 'user')->where('is_archived', false)->count();
 
         return Inertia::render('users/index',[
             'users' => $users,
