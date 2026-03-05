@@ -18,6 +18,16 @@ export interface FeedbackDevice {
   serial_number: string
 }
 
+export interface FeedbackReply {
+  id: number
+  feedback_id: number
+  reply_message: string
+  sent_to_email: string
+  status: 'pending' | 'sent' | 'failed'
+  sent_at: string | null
+  created_at: string
+}
+
 export interface Feedback {
   id: number
   user_id: number
@@ -25,8 +35,10 @@ export interface Feedback {
   category: FeedbackCategory
   subject: string | null
   message: string
+  replied: boolean
   created_at: string
   updated_at: string
   user?: FeedbackUser
   device?: FeedbackDevice
+  replies?: FeedbackReply[]
 }
