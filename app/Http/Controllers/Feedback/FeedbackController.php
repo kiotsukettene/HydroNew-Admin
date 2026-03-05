@@ -4,10 +4,10 @@ namespace App\Http\Controllers\Feedback;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Feedback\ReplyFeedbackRequest;
-use App\Jobs\SendFeedbackReplyJob;
+use App\Mail\FeedbackReplyMail;
 use App\Models\Feedback;
-use App\Models\FeedbackReply;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
 use Inertia\Inertia;
 
 class FeedbackController extends Controller
@@ -109,22 +109,18 @@ class FeedbackController extends Controller
      */
     public function reply(ReplyFeedbackRequest $request, Feedback $feedback)
     {
-        $feedback->load('user');
+        $feedback->load('user', 'device');
 
         if (!$feedback->user || !$feedback->user->email) {
             return back()->with('error', 'Cannot send reply: User email not found.');
         }
 
-        $feedbackReply = FeedbackReply::create([
-            'feedback_id' => $feedback->id,
-            'reply_message' => $request->validated()['reply_message'],
-            'sent_to_email' => $feedback->user->email,
-            'status' => FeedbackReply::STATUS_PENDING,
-        ]);
+        // Send email directly
+        Mail::to($feedback->user->email)
+            ->send(new FeedbackReplyMail($feedback, $request->validated()['reply_message']));
 
+        // Mark as replied
         $feedback->update(['replied' => true]);
-
-        SendFeedbackReplyJob::dispatch($feedbackReply);
 
         return back()->with('success', 'Reply sent successfully!');
     }
