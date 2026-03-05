@@ -17,6 +17,14 @@ import { Button } from '@/components/ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { useState } from 'react'
 
 export default function Analytics() {
@@ -60,7 +68,7 @@ export default function Analytics() {
     });
   };
 
-  const handleExportPdf = () => {
+  const handleExportPdf = (engine: 'browsershot' | 'dompdf') => {
     const params = new URLSearchParams({
       tab: activeTab,
       ...(dateFrom && { date_from: dateFrom }),
@@ -69,7 +77,11 @@ export default function Analytics() {
       ...(deviceId !== 'all' && { device_id: deviceId }),
     });
 
-    window.open(`/analytics/export/pdf?${params.toString()}`, '_blank');
+    const endpoint = engine === 'dompdf' 
+      ? `/analytics/export/pdf-dompdf?${params.toString()}`
+      : `/analytics/export/pdf?${params.toString()}`;
+
+    window.open(endpoint, '_blank');
   };
 
   return (
@@ -86,15 +98,30 @@ export default function Analytics() {
 
           {/* Compact Filter Controls - Inspired by Devices Page */}
           <div className="flex flex-wrap gap-2">
-            {/* Export Buttons */}
-            {/* <Button
-              size="sm"
-              className="h-8 gap-1.5 border-2 w-auto"
-              onClick={handleExportPdf}
-            >
-              <FileDown className="h-3.5 w-3.5" />
-              <span className="text-xs hidden md:inline">Export PDF</span>
-            </Button> */}
+            {/* Export Dropdown Menu */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  size="sm"
+                  className="h-8 gap-1.5 border-2 w-auto"
+                >
+                  <FileDown className="h-3.5 w-3.5" />
+                  <span className="text-xs hidden md:inline">Export PDF</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel>Export Options</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => handleExportPdf('browsershot')}>
+                  <FileDown className="h-4 w-4" />
+                  Export PDF (Browsershot)
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleExportPdf('dompdf')}>
+                  <FileDown className="h-4 w-4" />
+                  Export PDF (DomPDF)
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
 
             <Popover>
               <PopoverTrigger asChild>

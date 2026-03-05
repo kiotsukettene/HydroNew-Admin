@@ -29,6 +29,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('analytics/api/yields', [AnalyticsController::class, 'getYields'])->name('analytics.api.yields');
     Route::get('analytics/api/water-treatment', [AnalyticsController::class, 'getWaterTreatment'])->name('analytics.api.water-treatment');
     Route::get('analytics/export/pdf', [AnalyticsExportController::class, 'exportPdf'])->name('analytics.export.pdf');
+    Route::get('analytics/export/pdf-dompdf', [AnalyticsExportController::class, 'exportPdfDompdf'])->name('analytics.export.pdf-dompdf');
     Route::resource('analytics', \App\Http\Controllers\Analytics\AnalyticsController::class);
 
     Route::get('devices/archived', [DeviceController::class, 'archived'])->name('devices.archived');
