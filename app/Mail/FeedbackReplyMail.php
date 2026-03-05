@@ -2,7 +2,7 @@
 
 namespace App\Mail;
 
-use App\Models\FeedbackReply;
+use App\Models\Feedback;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
@@ -13,14 +13,16 @@ class FeedbackReplyMail extends Mailable
 {
     use Queueable, SerializesModels;
 
-    public $feedbackReply;
+    public $feedback;
+    public $replyMessage;
 
     /**
      * Create a new message instance.
      */
-    public function __construct(FeedbackReply $feedbackReply)
+    public function __construct(Feedback $feedback, string $replyMessage)
     {
-        $this->feedbackReply = $feedbackReply;
+        $this->feedback = $feedback;
+        $this->replyMessage = $replyMessage;
     }
 
     /**
@@ -28,10 +30,9 @@ class FeedbackReplyMail extends Mailable
      */
     public function envelope(): Envelope
     {
-        $feedback = $this->feedbackReply->feedback;
-        $subject = $feedback->subject 
-            ? "Re: {$feedback->subject}" 
-            : "Re: Your {$this->getCategoryLabel($feedback->category)}";
+        $subject = $this->feedback->subject 
+            ? "Re: {$this->feedback->subject}" 
+            : "Re: Your {$this->getCategoryLabel($this->feedback->category)}";
 
         return new Envelope(
             subject: $subject,

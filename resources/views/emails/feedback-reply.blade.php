@@ -18,12 +18,12 @@
         <h2 style="color: #2E2E2E; font-size: 26px; margin-bottom: 10px;">Response to Your Feedback</h2>
         
         <p style="color: #555; font-size: 16px; margin-bottom: 25px;">
-            Hello{{ $feedbackReply->feedback->user ? ' ' . $feedbackReply->feedback->user->first_name : '' }}! Thank you for sharing your feedback with us.
+            Hello{{ $feedback->user ? ' ' . $feedback->user->first_name : '' }}! Thank you for sharing your feedback with us.
         </p>
 
         <div style="background-color: #f8f9fa; border-radius: 8px; padding: 25px; margin: 25px 0; border-left: 4px solid #445104;">
             <h3 style="color: #445104; font-size: 18px; margin: 0 0 15px 0; text-align: left;">Our Response:</h3>
-            <p style="color: #2E2E2E; font-size: 15px; line-height: 1.6; text-align: left; white-space: pre-wrap; word-wrap: break-word; margin: 0;">{{ $feedbackReply->reply_message }}</p>
+            <p style="color: #2E2E2E; font-size: 15px; line-height: 1.6; text-align: left; white-space: pre-wrap; word-wrap: break-word; margin: 0;">{{ $replyMessage }}</p>
         </div>
 
         <div style="border-top: 1px solid #e5e7eb; margin: 30px 0;"></div>
@@ -35,7 +35,7 @@
                 <span style="color: #555; font-size: 14px;">
                     <strong>Category:</strong> 
                     <span style="background-color: #e8f4f8; color: #445104; padding: 3px 10px; border-radius: 10px; font-size: 12px; font-weight: 600;">
-                        @switch($feedbackReply->feedback->category)
+                        @switch($feedback->category)
                             @case('bug_report')
                                 Bug Report
                                 @break
@@ -55,31 +55,31 @@
                 </span>
             </div>
 
-            @if($feedbackReply->feedback->subject)
+            @if($feedback->subject)
             <div style="margin-bottom: 10px;">
                 <span style="color: #555; font-size: 14px;">
-                    <strong>Subject:</strong> {{ $feedbackReply->feedback->subject }}
+                    <strong>Subject:</strong> {{ $feedback->subject }}
                 </span>
             </div>
             @endif
 
-            @if($feedbackReply->feedback->device)
+            @if($feedback->device)
             <div style="margin-bottom: 10px;">
                 <span style="color: #555; font-size: 14px;">
-                    <strong>Device:</strong> {{ $feedbackReply->feedback->device->device_name }} ({{ $feedbackReply->feedback->device->serial_number }})
+                    <strong>Device:</strong> {{ $feedback->device->device_name }} ({{ $feedback->device->serial_number }})
                 </span>
             </div>
             @endif
 
             <div style="margin-bottom: 10px;">
                 <span style="color: #555; font-size: 14px;">
-                    <strong>Submitted:</strong> {{ $feedbackReply->feedback->created_at->format('M d, Y \a\t g:i A') }}
+                    <strong>Submitted:</strong> {{ $feedback->created_at->format('M d, Y \a\t g:i A') }}
                 </span>
             </div>
 
             <div style="margin-top: 15px;">
                 <p style="color: #555; font-size: 14px; margin: 5px 0;"><strong>Your Message:</strong></p>
-                <p style="color: #555; font-size: 14px; line-height: 1.6; white-space: pre-wrap; word-wrap: break-word; margin: 10px 0;">{{ $feedbackReply->feedback->message }}</p>
+                <p style="color: #555; font-size: 14px; line-height: 1.6; white-space: pre-wrap; word-wrap: break-word; margin: 10px 0;">{{ $feedback->message }}</p>
             </div>
         </div>
 
