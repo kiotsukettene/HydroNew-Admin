@@ -644,7 +644,7 @@ export default function Analytics() {
                           <p className="text-sm text-muted-foreground capitalize">{grade}</p>
                           <p className="text-2xl font-bold text-foreground">{data.weight} kg</p>
                           <p className="text-xs text-muted-foreground mt-1">
-                            {data.count} units • {data.percentage}% of total
+                            {data.count} pcs • {data.percentage}% of total
                           </p>
                         </div>
                       ))
