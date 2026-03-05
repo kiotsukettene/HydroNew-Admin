@@ -38,6 +38,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('devices', DeviceController::class);
 
      Route::resource('feedback', FeedbackController::class);
+     Route::post('feedback/{feedback}/reply', [FeedbackController::class, 'reply'])->name('feedback.reply');
 
 
 });
