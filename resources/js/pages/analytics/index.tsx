@@ -86,15 +86,15 @@ export default function Analytics() {
 
           {/* Compact Filter Controls - Inspired by Devices Page */}
           <div className="flex flex-wrap gap-2">
-            {/* Export Buttons */}
-            {/* <Button
+            {/* Export Button */}
+            <Button
               size="sm"
               className="h-8 gap-1.5 border-2 w-auto"
               onClick={handleExportPdf}
             >
               <FileDown className="h-3.5 w-3.5" />
               <span className="text-xs hidden md:inline">Export PDF</span>
-            </Button> */}
+            </Button>
 
             <Popover>
               <PopoverTrigger asChild>
@@ -484,7 +484,7 @@ export default function Analytics() {
                   <TextureCardContent className="flex items-center gap-4">
                     <div>
                       <p className="text-sm text-muted-foreground">Most Grown Crop</p>
-                      <p className="text-2xl font-bold text-foreground">{cropsHarvestYield.most_grown_crop || 'N/A'}</p>
+                      <p className="text-2xl font-bold text-foreground">{cropsHarvestYield.most_grown_crop ? cropsHarvestYield.most_grown_crop.charAt(0).toUpperCase() + cropsHarvestYield.most_grown_crop.slice(1) : '-'}</p>
                     </div>
                   </TextureCardContent>
                 </TextureCardStyled>
@@ -644,7 +644,7 @@ export default function Analytics() {
                           <p className="text-sm text-muted-foreground capitalize">{grade}</p>
                           <p className="text-2xl font-bold text-foreground">{data.weight} kg</p>
                           <p className="text-xs text-muted-foreground mt-1">
-                            {data.count} units • {data.percentage}% of total
+                            {data.count} pcs • {data.percentage}% of total
                           </p>
                         </div>
                       ))

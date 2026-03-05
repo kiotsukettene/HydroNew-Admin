@@ -12,178 +12,183 @@
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Arial', sans-serif;
             line-height: 1.6;
-            color: #333;
-            background: #fff;
-            padding: 40px;
-            font-size: 14px;
+            color: #2c3e50;
+            background: #ffffff;
+            padding: 40px 30px;
+            font-size: 10px;
         }
 
         .header {
-            border-bottom: 3px solid #2563eb;
-            padding-bottom: 15px;
+            border-bottom: 3px solid #000000;
+            padding: 0 0 15px 0;
             margin-bottom: 30px;
+            color: #000000;
         }
 
         .header h1 {
-            color: #1e40af;
-            font-size: 32px;
-            margin-bottom: 10px;
+            font-size: 28px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+            color: #000000;
         }
 
         .header .meta {
-            display: flex;
-            justify-content: space-between;
-            color: #666;
-            font-size: 14px;
-            margin-top: 8px;
+            font-size: 10px;
+            letter-spacing: 0.3px;
+            color: #666666;
+        }
+
+        .header .meta strong {
+            font-weight: 600;
+            color: #000000;
         }
 
         .section {
-            margin-bottom: 40px;
+            margin-bottom: 35px;
             page-break-inside: avoid;
         }
 
         .section-title {
-            background: #f1f5f9;
-            padding: 12px 20px;
-            border-left: 4px solid #2563eb;
-            font-size: 20px;
+            font-size: 15px;
             font-weight: 600;
-            color: #1e40af;
-            margin-bottom: 20px;
+            color: #000000;
+            margin-bottom: 18px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #e0e0e0;
+            letter-spacing: 0.3px;
         }
 
         .metrics-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 20px;
-            margin-bottom: 30px;
+            display: table;
+            width: 100%;
+            margin-bottom: 20px;
+            border-spacing: 8px 0;
+        }
+
+        .metrics-row {
+            display: table-row;
         }
 
         .metric-card {
-            background: #f8fafc;
-            border: 1px solid #e2e8f0;
-            border-radius: 8px;
-            padding: 20px;
+            display: table-cell;
+            background: #f8f9fa;
+            border-left: 3px solid #000000;
+            padding: 15px 12px;
             text-align: center;
+            width: 25%;
+            vertical-align: middle;
         }
 
         .metric-card .label {
-            color: #64748b;
-            font-size: 12px;
+            font-size: 8px;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.8px;
             margin-bottom: 8px;
+            color: #666666;
+            font-weight: 600;
         }
 
         .metric-card .value {
-            color: #1e293b;
-            font-size: 28px;
-            font-weight: 700;
-            margin-bottom: 4px;
+            font-size: 20px;
+            font-weight: 600;
+            margin: 6px 0;
+            color: #000000;
         }
 
         .metric-card .unit {
-            color: #64748b;
-            font-size: 12px;
+            font-size: 7px;
+            color: #999999;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
         .data-table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 15px;
-            font-size: 13px;
+            margin-top: 12px;
+            background: #ffffff;
+            border: 1px solid #dddddd;
         }
 
-        .data-table thead {
-            background: #1e40af;
-            color: white;
+        .data-table th,
+        .data-table td {
+            padding: 12px 15px;
+            text-align: left;
+            font-size: 10px;
+            border: 1px solid #dddddd;
         }
 
         .data-table th {
-            padding: 12px;
-            text-align: left;
+            background: #f5f5f5;
+            color: #000000;
             font-weight: 600;
-        }
-
-        .data-table td {
-            padding: 10px 12px;
-            border-bottom: 1px solid #e2e8f0;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-size: 9px;
         }
 
         .data-table tbody tr:nth-child(even) {
-            background: #f8fafc;
+            background: #fafafa;
         }
 
         .data-table tbody tr:hover {
-            background: #f1f5f9;
+            background: #f0f0f0;
+        }
+
+        .data-table td strong {
+            font-weight: 600;
+            color: #000000;
         }
 
         .filter-info {
-            background: #eff6ff;
-            border: 1px solid #bfdbfe;
-            border-radius: 6px;
-            padding: 15px;
+            background: #f5f5f5;
+            border-left: 3px solid #000000;
+            padding: 12px 15px;
             margin-bottom: 25px;
-            font-size: 14px;
+            font-size: 9px;
+            color: #333333;
+            line-height: 1.7;
         }
 
         .filter-info strong {
-            color: #1e40af;
+            font-weight: 600;
+            color: #000000;
         }
 
         .footer {
             margin-top: 50px;
             padding-top: 20px;
-            border-top: 2px solid #e2e8f0;
+            border-top: 1px solid #e0e0e0;
             text-align: center;
-            color: #64748b;
-            font-size: 12px;
+            font-size: 8px;
+            color: #666666;
         }
 
-        .status-badge {
-            display: inline-block;
-            padding: 4px 8px;
-            border-radius: 12px;
-            font-size: 11px;
-            font-weight: 600;
-            text-transform: uppercase;
+        .footer p {
+            margin: 3px 0;
         }
 
-        .status-online {
-            background: #d1fae5;
-            color: #065f46;
-        }
-
-        .status-offline {
-            background: #fee2e2;
-            color: #991b1b;
-        }
-
-        .trend-up {
-            color: #059669;
-            font-weight: 600;
-        }
-
-        .trend-down {
-            color: #dc2626;
+        .footer strong {
+            color: #000000;
             font-weight: 600;
         }
 
         h3 {
-            margin: 30px 0 15px 0;
-            color: #1e293b;
-            font-size: 16px;
+            margin: 20px 0 10px 0;
+            font-size: 12px;
             font-weight: 600;
+            color: #000000;
+            letter-spacing: 0.2px;
         }
 
         @media print {
             body {
-                padding: 30px;
+                padding: 30px 20px;
             }
-            
+
             .section {
                 page-break-inside: avoid;
             }
@@ -193,14 +198,10 @@
 <body>
     <!-- Header -->
     <div class="header">
-        <h1>📊 Analytics Report</h1>
+        <h1>Analytics Report</h1>
         <div class="meta">
-            <div>
-                <strong>Generated:</strong> {{ now()->format('F d, Y - h:i A') }}
-            </div>
-            <div>
-                <strong>Report Type:</strong> {{ ucfirst(str_replace('-', ' & ', $activeTab ?? 'Overview')) }}
-            </div>
+            <strong>Generated:</strong> {{ now()->format('F d, Y - h:i A') }}
+            <span style="margin-left: 20px;"><strong>Report Type:</strong> {{ ucfirst(str_replace('-', ' & ', $activeTab ?? 'Overview')) }}</span>
         </div>
     </div>
 
@@ -222,27 +223,29 @@
     @if(($activeTab ?? 'users-devices') === 'users-devices' || !isset($activeTab))
     <div class="section">
         <div class="section-title">Users & Devices Overview</div>
-        
+
         <div class="metrics-grid">
-            <div class="metric-card">
-                <div class="label">Total Users</div>
-                <div class="value">{{ $usersDevices['users']['total'] ?? 0 }}</div>
-                <div class="unit">registered</div>
-            </div>
-            <div class="metric-card">
-                <div class="label">Active Users</div>
-                <div class="value">{{ $usersDevices['users']['active'] ?? 0 }}</div>
-                <div class="unit">active</div>
-            </div>
-            <div class="metric-card">
-                <div class="label">Total Devices</div>
-                <div class="value">{{ $usersDevices['devices']['total'] ?? 0 }}</div>
-                <div class="unit">registered</div>
-            </div>
-            <div class="metric-card">
-                <div class="label">Online Devices</div>
-                <div class="value">{{ $usersDevices['devices']['online'] ?? 0 }}</div>
-                <div class="unit">active now</div>
+            <div class="metrics-row">
+                <div class="metric-card">
+                    <div class="label">Total Users</div>
+                    <div class="value">{{ $usersDevices['users']['total'] ?? 0 }}</div>
+                    <div class="unit">registered</div>
+                </div>
+                <div class="metric-card">
+                    <div class="label">Active Users</div>
+                    <div class="value">{{ $usersDevices['users']['active'] ?? 0 }}</div>
+                    <div class="unit">active</div>
+                </div>
+                <div class="metric-card">
+                    <div class="label">Total Devices</div>
+                    <div class="value">{{ $usersDevices['devices']['total'] ?? 0 }}</div>
+                    <div class="unit">registered</div>
+                </div>
+                <div class="metric-card">
+                    <div class="label">Online Devices</div>
+                    <div class="value">{{ $usersDevices['devices']['online'] ?? 0 }}</div>
+                    <div class="unit">active now</div>
+                </div>
             </div>
         </div>
 
@@ -294,27 +297,29 @@
     @if(($activeTab ?? '') === 'crops-harvest-yield')
     <div class="section">
         <div class="section-title">Crops & Harvest Performance</div>
-        
+
         <div class="metrics-grid">
-            <div class="metric-card">
-                <div class="label">Harvest This Month</div>
-                <div class="value">{{ $cropsHarvestYield['harvest_this_month'] ?? 0 }}</div>
-                <div class="unit">crops</div>
-            </div>
-            <div class="metric-card">
-                <div class="label">Harvest This Year</div>
-                <div class="value">{{ $cropsHarvestYield['harvest_this_year'] ?? 0 }}</div>
-                <div class="unit">total</div>
-            </div>
-            <div class="metric-card">
-                <div class="label">Total Yield Weight</div>
-                <div class="value">{{ number_format($cropsHarvestYield['total_yield_weight'] ?? 0, 2) }}</div>
-                <div class="unit">kg</div>
-            </div>
-            <div class="metric-card">
-                <div class="label">Harvest Rate</div>
-                <div class="value">{{ number_format($cropsHarvestYield['harvest_rate'] ?? 0, 1) }}%</div>
-                <div class="unit">success</div>
+            <div class="metrics-row">
+                <div class="metric-card">
+                    <div class="label">Harvest This Month</div>
+                    <div class="value">{{ $cropsHarvestYield['harvest_this_month'] ?? 0 }}</div>
+                    <div class="unit">crops</div>
+                </div>
+                <div class="metric-card">
+                    <div class="label">Harvest This Year</div>
+                    <div class="value">{{ $cropsHarvestYield['harvest_this_year'] ?? 0 }}</div>
+                    <div class="unit">total</div>
+                </div>
+                <div class="metric-card">
+                    <div class="label">Total Yield Weight</div>
+                    <div class="value">{{ number_format($cropsHarvestYield['total_yield_weight'] ?? 0, 2) }}</div>
+                    <div class="unit">kg</div>
+                </div>
+                <div class="metric-card">
+                    <div class="label">Harvest Rate</div>
+                    <div class="value">{{ number_format($cropsHarvestYield['harvest_rate'] ?? 0, 1) }}%</div>
+                    <div class="unit">success</div>
+                </div>
             </div>
         </div>
 
@@ -366,27 +371,29 @@
     @if(($activeTab ?? '') === 'water-treatment')
     <div class="section">
         <div class="section-title">Water Treatment Analytics</div>
-        
+
         <div class="metrics-grid">
-            <div class="metric-card">
-                <div class="label">Total Cycles</div>
-                <div class="value">{{ $waterTreatment['total_cycles'] ?? 0 }}</div>
-                <div class="unit">completed</div>
-            </div>
-            <div class="metric-card">
-                <div class="label">Successful Cycles</div>
-                <div class="value">{{ $waterTreatment['successful_cycles'] ?? 0 }}</div>
-                <div class="unit">success</div>
-            </div>
-            <div class="metric-card">
-                <div class="label">Success Rate</div>
-                <div class="value">{{ number_format($waterTreatment['success_rate'] ?? 0, 1) }}%</div>
-                <div class="unit">rate</div>
-            </div>
-            <div class="metric-card">
-                <div class="label">Avg Duration</div>
-                <div class="value">{{ number_format($waterTreatment['average_duration'] ?? 0, 1) }}</div>
-                <div class="unit">minutes</div>
+            <div class="metrics-row">
+                <div class="metric-card">
+                    <div class="label">Total Cycles</div>
+                    <div class="value">{{ $waterTreatment['total_cycles'] ?? 0 }}</div>
+                    <div class="unit">completed</div>
+                </div>
+                <div class="metric-card">
+                    <div class="label">Successful Cycles</div>
+                    <div class="value">{{ $waterTreatment['successful_cycles'] ?? 0 }}</div>
+                    <div class="unit">success</div>
+                </div>
+                <div class="metric-card">
+                    <div class="label">Success Rate</div>
+                    <div class="value">{{ number_format($waterTreatment['success_rate'] ?? 0, 1) }}%</div>
+                    <div class="unit">rate</div>
+                </div>
+                <div class="metric-card">
+                    <div class="label">Avg Duration</div>
+                    <div class="value">{{ number_format($waterTreatment['average_duration'] ?? 0, 1) }}</div>
+                    <div class="unit">minutes</div>
+                </div>
             </div>
         </div>
 
@@ -407,11 +414,7 @@
                 <tr>
                     <td><strong>{{ $stage['stage_name'] }}</strong></td>
                     <td>{{ $stage['total_count'] }}</td>
-                    <td>
-                        <span class="{{ $stage['pass_rate'] >= 80 ? 'trend-up' : 'trend-down' }}">
-                            {{ number_format($stage['pass_rate'], 1) }}%
-                        </span>
-                    </td>
+                    <td>{{ number_format($stage['pass_rate'], 1) }}%</td>
                     <td>{{ $stage['avg_ph'] ? number_format($stage['avg_ph'], 2) : 'N/A' }}</td>
                     <td>{{ $stage['avg_turbidity'] ? number_format($stage['avg_turbidity'], 2) : 'N/A' }}</td>
                 </tr>
@@ -447,7 +450,6 @@
     <!-- Footer -->
     <div class="footer">
         <p><strong>HydroNew Admin Dashboard</strong> - Analytics Report</p>
-        <p>This report is generated automatically and contains confidential information.</p>
         <p>© {{ now()->year }} HydroNew. All rights reserved.</p>
     </div>
 </body>
