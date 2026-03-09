@@ -88,15 +88,9 @@ export default function ArchiveUser() {
   return (
      <AppLayout title="">
             <Head title="Archived Users" />
-            <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
 
-                <div className='mb-6 flex items-center justify-between'>
-                  <div>
-                    <h1 className="text-2xl font-bold">Archived Users</h1>
-                    <p className="text-muted-foreground">View and manage archived users</p>
-                  </div>
+            <div className='p-4'>
                   <Button
-                    variant="secondary"
                     size="default"
                     className="w-auto"
                     onClick={() => router.visit("/users", { preserveState: false })}
@@ -104,6 +98,15 @@ export default function ArchiveUser() {
                     <ArrowLeft className="mr-2 h-4 w-4" />
                     Back to Users
                   </Button>
+            </div>
+            <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
+
+                <div className='mb-6 flex items-center '>
+                  <div>
+                    <h1 className="text-2xl font-bold">Archived Users</h1>
+                    <p className="text-muted-foreground">View and manage archived users</p>
+                  </div>
+                
                 </div>
                 <SearchInput
                   placeholder="Search archived users..."

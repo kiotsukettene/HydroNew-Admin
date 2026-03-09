@@ -35,6 +35,8 @@ import {
     MoreHorizontal,
     Users as UsersIcon,
     AlertTriangle,
+    UserIcon,
+    Leaf,
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useDebounce } from 'use-debounce';
@@ -56,6 +58,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { toast } from 'sonner';
+import { Card, CardTitle } from '@/components/ui/card';
 
 type SortField = 'name' | 'email' | 'created_at';
 type SortDirection = 'asc' | 'desc';
@@ -222,24 +225,20 @@ export default function Users() {
                 </div>
 
                 {/* Total Users Card */}
-                <div className="mb-4 w-fit rounded-lg bg-orange-100/60 p-4">
-                    <div className="flex items-center gap-10">
-                        <div className="flex items-center gap-2">
-                            <span className="text-3xl font-bold">
-                                {userCount}
-                            </span>
-                            <Badge className="bg-green-600 px-2 py-0.5 text-xs text-white hover:bg-green-700">
-                                Total
-                            </Badge>
-                        </div>
-                        <div className="rounded-md bg-white p-2">
-                            <UsersIcon className="size-8 text-orange-500" />
-                        </div>
-                    </div>
-                    <p className="mt-2 text-sm text-gray-600">
-                        Registered users
-                    </p>
-                </div>
+
+
+          <Card className="rounded-lg p-4 w-3xs mb-4 border">
+                            <div className="flex items-center gap-10">
+                                <div className="flex items-center gap-2">
+                                    <span className="text-3xl font-bold">{userCount}</span>
+                                    <Badge className="bg-gray-500 px-2 py-0.5 text-xs text-white">
+                                        Total
+                                    </Badge>
+                                </div>
+                                
+                            </div>
+                            <p className="text-sm text-gray-600 mt-2">Registered users</p>
+                        </Card>
 
                 <div className="flex flex-wrap gap-3 items-center justify-between">
                     <SearchInput

@@ -267,17 +267,15 @@ export default function Devices() {
         </div>
 
           {/* Total Devices Card */}
-                <Card className="bg-orange-100/60  rounded-lg p-4 w-3xs mb-4 border-none">
+                <Card className="rounded-lg p-4 w-3xs mb-4 border">
                     <div className="flex items-center gap-10">
                         <div className="flex items-center gap-2">
                             <span className="text-3xl font-bold">{deviceCount}</span>
-                            <Badge className="bg-green-600 px-2 py-0.5 text-xs text-white hover:bg-green-700">
+                            <Badge className="bg-gray-500 px-2 py-0.5 text-xs text-white">
                                 Total
                             </Badge>
                         </div>
-                        <div className="rounded-md bg-white p-2">
-                            <Airplay className="size-8 text-orange-500" />
-                        </div>
+                        
                     </div>
                     <p className="text-sm text-gray-600 mt-2">Registered devices</p>
                 </Card>
