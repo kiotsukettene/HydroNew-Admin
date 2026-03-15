@@ -4,6 +4,7 @@ import SearchInput from '@/components/search-input';
 import { cleanFilters } from '@/lib/filter-helpers';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -33,10 +34,7 @@ import {
     Filter,
     Loader2,
     MoreHorizontal,
-    Users as UsersIcon,
     AlertTriangle,
-    UserIcon,
-    Leaf,
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useDebounce } from 'use-debounce';
@@ -58,31 +56,23 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { toast } from 'sonner';
-import { Card, CardTitle } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 
 type SortField = 'name' | 'email' | 'created_at';
 type SortDirection = 'asc' | 'desc';
 
 export default function Users() {
-    const columnsHeader = [
-        { key: 'name', label: 'Name', sortable: true },
-        { key: 'email', label: 'Email', sortable: true },
-        { key: 'address', label: 'Address', sortable: false },
-        { key: 'status', label: 'Status', sortable: false },
-        { key: 'verified', label: 'Verified', sortable: false },
-        { key: 'last_active', label: 'Last active', sortable: false },
-    ];
-
     const formatLastActive = (lastLoginAt: string | null): string => {
         if (!lastLoginAt) return 'Never';
         const d = new Date(lastLoginAt);
         return d.toLocaleDateString(undefined, { dateStyle: 'medium' });
     };
 
-    const { users, filters, userCount } = usePage<{
+    const { users, filters, userCount, filteredCount } = usePage<{
         users: Pagination<User>;
-        filters: { search: string; sort?: string; direction?: string; status?: string };
+        filters: { search: string; sort?: string; direction?: string; status?: string; per_page?: number };
         userCount: number;
+        filteredCount: number;
     }>().props;
 
     const { data, setData } = useForm({
@@ -91,15 +81,21 @@ export default function Users() {
         direction: (filters.direction as SortDirection) || 'desc',
         status: filters.status || 'all',
         verified: 'all',
+        per_page: filters.per_page || 10,
     });
     const [debounceSearch] = useDebounce(data.search, 500);
     const [isSearching, setIsSearching] = useState(false);
     const hasMounted = useRef(false);
 
+    const [selectedUsers, setSelectedUsers] = useState<number[]>([]);
+
     // Archive confirmation modal state
     const [isArchiveConfirmOpen, setIsArchiveConfirmOpen] = useState(false);
     const [userToArchive, setUserToArchive] = useState<User | null>(null);
     const { patch: archivePatch, processing: isArchiving } = useForm({});
+
+    // Bulk archive confirmation modal state
+    const [isBulkArchiveConfirmOpen, setIsBulkArchiveConfirmOpen] = useState(false);
 
     /** Archive is only allowed when user is inactive for at least 1 month */
     const canArchive = (user: User): boolean => {
@@ -122,17 +118,57 @@ export default function Users() {
                 onSuccess: () => {
                     setIsArchiveConfirmOpen(false);
                     setUserToArchive(null);
+                    setSelectedUsers([]);
                     toast.success('User archived successfully', {
                         description: `${userToArchive.first_name} ${userToArchive.last_name} has been moved to archives.`,
                     });
                 },
-                onError: () => {
+                onError: (errors) => {
+                    const message = typeof errors?.error === 'string' ? errors.error : (Array.isArray(errors?.error) ? errors.error[0] : null);
                     toast.error('Failed to archive user', {
-                        description: 'Please try again later.',
+                        description: message || 'Please try again later.',
                     });
                 },
             });
         }
+    };
+
+    const getEligibleUsersForArchive = () => {
+        return users.data.filter(user => 
+            selectedUsers.includes(user.id) && canArchive(user)
+        );
+    };
+
+    const handleBulkArchive = () => {
+        const eligibleUsers = getEligibleUsersForArchive();
+        if (eligibleUsers.length === 0) {
+            toast.error('No eligible users selected', {
+                description: 'Only inactive users (inactive for at least 1 month) can be archived.',
+            });
+            return;
+        }
+        setIsBulkArchiveConfirmOpen(true);
+    };
+
+    const handleBulkArchiveConfirm = () => {
+        const eligibleUserIds = getEligibleUsersForArchive().map(u => u.id);
+        
+        router.patch('/users/bulk-archive', { ids: eligibleUserIds }, {
+            preserveScroll: true,
+            onSuccess: () => {
+                setSelectedUsers([]);
+                setIsBulkArchiveConfirmOpen(false);
+                toast.success('Users archived successfully', {
+                    description: `${eligibleUserIds.length} user(s) have been moved to archives.`,
+                });
+            },
+            onError: (errors) => {
+                const message = typeof errors?.error === 'string' ? errors.error : (Array.isArray(errors?.error) ? errors.error[0] : null);
+                toast.error('Failed to archive users', {
+                    description: message || 'Please try again later.',
+                });
+            },
+        });
     };
 
     const handleSort = (field: SortField) => {
@@ -145,8 +181,9 @@ export default function Users() {
                 sort: field,
                 direction: newDirection,
                 status: data.status,
-                verified: data.verified
-            }, { sort: 'created_at', direction: 'desc', status: 'all', verified: 'all' }),
+                verified: data.verified,
+                per_page: data.per_page
+            }, { sort: 'created_at', direction: 'desc', status: 'all', verified: 'all', per_page: 10 }),
             {
                 preserveState: true,
                 preserveScroll: true,
@@ -167,13 +204,37 @@ export default function Users() {
                 direction: data.direction,
                 status: filterType === 'status' ? value : data.status,
                 verified: filterType === 'verified' ? value : data.verified,
-            }, { sort: 'created_at', direction: 'desc', status: 'all', verified: 'all' }),
+                per_page: data.per_page
+            }, { sort: 'created_at', direction: 'desc', status: 'all', verified: 'all', per_page: 10 }),
             {
                 preserveState: true,
                 preserveScroll: true,
                 replace: true,
                 onSuccess: () => {
                     setData(filterType, value);
+                }
+            }
+        );
+    };
+
+    const handlePerPageChange = (value: string) => {
+        const perPage = parseInt(value);
+        router.get(
+            '/users',
+            cleanFilters({
+                search: data.search,
+                sort: data.sort,
+                direction: data.direction,
+                status: data.status,
+                verified: data.verified,
+                per_page: perPage
+            }, { sort: 'created_at', direction: 'desc', status: 'all', verified: 'all', per_page: 10 }),
+            {
+                preserveState: true,
+                preserveScroll: true,
+                replace: true,
+                onSuccess: () => {
+                    setData('per_page', perPage);
                 }
             }
         );
@@ -193,8 +254,9 @@ export default function Users() {
                     sort: data.sort,
                     direction: data.direction,
                     status: data.status,
-                    verified: data.verified
-                }, { sort: 'created_at', direction: 'desc', status: 'all', verified: 'all' }),
+                    verified: data.verified,
+                    per_page: data.per_page
+                }, { sort: 'created_at', direction: 'desc', status: 'all', verified: 'all', per_page: 10 }),
                 {
                     preserveState: true,
                     preserveScroll: true,
@@ -204,13 +266,29 @@ export default function Users() {
                 },
             );
         }
-    }, [debounceSearch, data.sort, data.direction, data.status, data.verified]);
+    }, [debounceSearch, data.sort, data.direction, data.status, data.verified, data.per_page]);
 
     const getSortIcon = (field: string) => {
         if (data.sort !== field) return <ArrowUpDown className="h-4 w-4" />;
         return data.direction === 'asc'
             ? <ArrowUp className="h-4 w-4" />
             : <ArrowDown className="h-4 w-4" />;
+    };
+
+    const handleSelectAll = (checked: boolean) => {
+        if (checked) {
+            setSelectedUsers(users.data.map((user) => user.id));
+        } else {
+            setSelectedUsers([]);
+        }
+    };
+
+    const handleSelectUser = (userId: number, checked: boolean) => {
+        if (checked) {
+            setSelectedUsers([...selectedUsers, userId]);
+        } else {
+            setSelectedUsers(selectedUsers.filter((id) => id !== userId));
+        }
     };
 
     return (
@@ -226,28 +304,57 @@ export default function Users() {
 
                 {/* Total Users Card */}
 
-
           <Card className="rounded-lg p-4 w-3xs mb-4 border">
                             <div className="flex items-center gap-10">
                                 <div className="flex items-center gap-2">
-                                    <span className="text-3xl font-bold">{userCount}</span>
+                                    <span className="text-3xl font-bold">{filteredCount}</span>
                                     <Badge className="bg-gray-500 px-2 py-0.5 text-xs text-white">
-                                        Total
+                                        {filteredCount === userCount ? 'Total' : `${filteredCount} of ${userCount}`}
                                     </Badge>
                                 </div>
                                 
                             </div>
-                            <p className="text-sm text-gray-600 mt-2">Registered users</p>
+                            <p className="text-sm text-gray-600 mt-2">
+                                {filteredCount === userCount ? 'Registered users' : 'Filtered users'}
+                            </p>
                         </Card>
 
                 <div className="flex flex-wrap gap-3 items-center justify-between">
-                    <SearchInput
-                        value={data.search}
-                        onChange={(value) => setData('search', value)}
-                        placeholder="Search users..."
-                    />
+                    <div className="flex gap-3 items-center">
+                        <SearchInput
+                            value={data.search}
+                            onChange={(value) => setData('search', value)}
+                            placeholder="Search users..."
+                        />
+                        <div className="flex items-center gap-2">
+                            <Label className="text-sm text-muted-foreground whitespace-nowrap">Show</Label>
+                            <Select value={data.per_page.toString()} onValueChange={handlePerPageChange}>
+                                <SelectTrigger className="w-[70px] h-9">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="10">10</SelectItem>
+                                    <SelectItem value="25">25</SelectItem>
+                                    <SelectItem value="50">50</SelectItem>
+                                    <SelectItem value="100">100</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </div>
 
                     <div className="flex gap-3">
+                        {selectedUsers.length > 0 && getEligibleUsersForArchive().length > 0 && (
+                            <Button
+                                variant="destructive"
+                                size="sm"
+                                className="w-auto"
+                                onClick={handleBulkArchive}
+                            >
+                                <Archive className="mr-2 h-4 w-4" />
+                                Archive {getEligibleUsersForArchive().length} selected
+                            </Button>
+                        )}
+
                         <Popover>
                             <PopoverTrigger asChild>
                                 <Button
@@ -310,7 +417,7 @@ export default function Users() {
                                             size="sm"
                                             className="w-full"
                                             onClick={() => {
-                                                router.get(
+                                                        router.get(
                                                     '/users',
                                                     cleanFilters({
                                                         search: data.search,
@@ -318,7 +425,8 @@ export default function Users() {
                                                         direction: data.direction,
                                                         status: 'all',
                                                         verified: 'all',
-                                                    }, { sort: 'created_at', direction: 'desc', status: 'all', verified: 'all' }),
+                                                        per_page: data.per_page
+                                                    }, { sort: 'created_at', direction: 'desc', status: 'all', verified: 'all', per_page: 10 }),
                                                     {
                                                         preserveState: true,
                                                         preserveScroll: true,
@@ -341,6 +449,7 @@ export default function Users() {
                     <Button
                         variant="secondary"
                         size="sm"
+                        className="w-auto"
                         onClick={() => router.visit('/users/archived', { preserveState: false })}
                     >
                         <Archive className="mr-2 h-4 w-4" />
@@ -351,23 +460,62 @@ export default function Users() {
                 <Table className="border">
                     <TableHeader>
                         <TableRow>
-                            {columnsHeader.map((column) => (
-                                <TableHead key={column.key}>
-                                    {column.sortable ? (
-                                        <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            className="flex items-center gap-1"
-                                            onClick={() => handleSort(column.key as SortField)}
-                                        >
-                                            {column.label}
-                                            {getSortIcon(column.key)}
-                                        </Button>
-                                    ) : (
-                                        <span className="px-3">{column.label}</span>
-                                    )}
-                                </TableHead>
-                            ))}
+                            <TableHead className="w-12">
+                                <Checkbox
+                                    className="border-gray-300"
+                                    checked={selectedUsers.length === users.data.length && users.data.length > 0}
+                                    onCheckedChange={handleSelectAll}
+                                    aria-label="Select all"
+                                />
+                            </TableHead>
+                            <TableHead>
+                                <div className="flex items-center gap-1">
+                                    <Label className="text-sm font-medium">Name</Label>
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-8 w-8"
+                                        aria-label="Sort Name"
+                                        onClick={() => handleSort('name')}
+                                    >
+                                        {getSortIcon('name')}
+                                    </Button>
+                                </div>
+                            </TableHead>
+                            <TableHead>
+                                <div className="flex items-center gap-1">
+                                    <Label className="text-sm font-medium">Email</Label>
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-8 w-8"
+                                        aria-label="Sort Email"
+                                        onClick={() => handleSort('email')}
+                                    >
+                                        {getSortIcon('email')}
+                                    </Button>
+                                </div>
+                            </TableHead>
+                            <TableHead>
+                                <div className="flex items-center gap-1">
+                                    <Label className="text-sm font-medium">Address</Label>
+                                </div>
+                            </TableHead>
+                            <TableHead>
+                                <div className="flex items-center gap-1">
+                                    <Label className="text-sm font-medium">Status</Label>
+                                </div>
+                            </TableHead>
+                            <TableHead>
+                                <div className="flex items-center gap-1">
+                                    <Label className="text-sm font-medium">Verified</Label>
+                                </div>
+                            </TableHead>
+                            <TableHead>
+                                <div className="flex items-center gap-1">
+                                    <Label className="text-sm font-medium">Last active</Label>
+                                </div>
+                            </TableHead>
                             <TableHead></TableHead>
                         </TableRow>
                     </TableHeader>
@@ -376,7 +524,7 @@ export default function Users() {
                         {isSearching ? (
                             <TableRow>
                                 <TableCell
-                                    colSpan={columnsHeader.length + 1}
+                                    colSpan={8}
                                     className="h-24 text-center"
                                 >
                                     <div className="flex items-center justify-center gap-2 text-gray-500">
@@ -388,15 +536,25 @@ export default function Users() {
                         ) : users.data.length === 0 ? (
                             <TableRow>
                                 <TableCell
-                                    colSpan={columnsHeader.length + 1}
+                                    colSpan={8}
                                     className="h-24 text-center text-gray-500"
                                 >
-                                    No registered users found.
+                                    No users found.
                                 </TableCell>
                             </TableRow>
                         ) : (
                             users.data.map((user) => (
                                 <TableRow key={user.email}>
+                                    <TableCell className="w-12">
+                                        <Checkbox
+                                            className="border-gray-300"
+                                            checked={selectedUsers.includes(user.id)}
+                                            onCheckedChange={(checked) =>
+                                                handleSelectUser(user.id, checked as boolean)
+                                            }
+                                            aria-label={`Select ${user.first_name} ${user.last_name}`}
+                                        />
+                                    </TableCell>
                                     <TableCell className="font-medium">
                                         {user.first_name} {user.last_name}
                                     </TableCell>
@@ -498,6 +656,52 @@ export default function Users() {
             disabled={isArchiving}
           >
             {isArchiving ? 'Archiving...' : 'Archive User'}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+
+    {/* Bulk Archive Confirmation Modal */}
+    <Dialog open={isBulkArchiveConfirmOpen} onOpenChange={setIsBulkArchiveConfirmOpen}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <AlertTriangle className="h-5 w-5 text-orange-500" />
+            Archive Users
+          </DialogTitle>
+          <DialogDescription>
+            Are you sure you want to archive {getEligibleUsersForArchive().length} user(s)? They will be moved to the archived users list.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="rounded-lg border border-border bg-muted p-4">
+          <p className="text-sm font-medium text-foreground">
+            {getEligibleUsersForArchive().length} eligible user(s) selected
+          </p>
+          <p className="text-xs text-muted-foreground mt-1">
+            Only inactive users (inactive for at least 1 month) will be archived.
+          </p>
+          {selectedUsers.length > getEligibleUsersForArchive().length && (
+            <p className="text-xs text-amber-600 mt-2">
+              Note: {selectedUsers.length - getEligibleUsersForArchive().length} user(s) do not meet archive requirements and will be skipped.
+            </p>
+          )}
+        </div>
+
+        <DialogFooter>
+          <Button
+            variant="secondary"
+            onClick={() => {
+              setIsBulkArchiveConfirmOpen(false);
+            }}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="destructive"
+            onClick={handleBulkArchiveConfirm}
+          >
+            Archive {getEligibleUsersForArchive().length} User(s)
           </Button>
         </DialogFooter>
       </DialogContent>
