@@ -44,16 +44,19 @@ class UserController extends Controller
             $query->orderBy($sortField, $sortDirection);
         }
 
-        $filteredCount = $query->count();
-        
         // Get per_page value from request, default to 10, allow only [10, 25, 50, 100]
         $perPage = in_array($filters['per_page'] ?? 10, [10, 25, 50, 100]) 
             ? ($filters['per_page'] ?? 10) 
             : 10;
         
         $users = $query->paginate($perPage);
+        $filteredCount = $users->total();
 
-        $userCount = User::where('role', '=', 'user')->where('is_archived', false)->count();
+        // Only query total count if filters are applied, otherwise use filtered count
+        $hasFilters = !empty($filters['search']) || (!empty($filters['status']) && $filters['status'] !== 'all');
+        $userCount = $hasFilters 
+            ? User::where('role', '=', 'user')->where('is_archived', false)->count()
+            : $filteredCount;
 
         return Inertia::render('users/index',[
             'users' => $users,
@@ -93,18 +96,19 @@ class UserController extends Controller
             $query->orderBy($sortField, $sortDirection);
         }
 
-        $filteredArchivedCount = $query->count();
-        
         // Get per_page value from request, default to 10, allow only [10, 25, 50, 100]
         $perPage = in_array($filters['per_page'] ?? 10, [10, 25, 50, 100]) 
             ? ($filters['per_page'] ?? 10) 
             : 10;
         
         $users = $query->paginate($perPage);
+        $filteredArchivedCount = $users->total();
 
-        $archivedCount = User::where('role', '=', 'user')
-                            ->where('is_archived', true)
-                            ->count();
+        // Only query total count if filters are applied, otherwise use filtered count
+        $hasFilters = !empty($filters['search']);
+        $archivedCount = $hasFilters
+            ? User::where('role', '=', 'user')->where('is_archived', true)->count()
+            : $filteredArchivedCount;
 
         return Inertia::render('users/archive-user', [
             'users' => $users,

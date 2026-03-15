@@ -91,7 +91,7 @@ export default function ArchiveDevices() {
     }, 500)
 
     return () => clearTimeout(timer)
-  }, [data.search, data.sort, data.direction, data.per_page])
+  }, [data.search])
 
   const handleSort = (field: SortField) => {
     const newDirection = data.sort === field && data.direction === 'asc' ? 'desc' : 'asc';
