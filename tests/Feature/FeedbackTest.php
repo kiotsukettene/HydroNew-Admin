@@ -145,6 +145,7 @@ class FeedbackTest extends TestCase
         Feedback::factory()->create([
             'user_id' => $user->id,
             'device_id' => $device->id,
+            'category' => 'General Inquiry',
             'subject' => 'Important Bug',
             'message' => 'This is a critical issue',
             'replied' => false,
@@ -152,6 +153,7 @@ class FeedbackTest extends TestCase
         Feedback::factory()->create([
             'user_id' => $user->id,
             'device_id' => $device->id,
+            'category' => 'Feature Request',
             'subject' => 'Feature Request',
             'message' => 'Please add this feature',
             'replied' => false,
