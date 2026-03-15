@@ -45,16 +45,16 @@ class UserController extends Controller
         }
 
         // Get per_page value from request, default to 10, allow only [10, 25, 50, 100]
-        $perPage = in_array($filters['per_page'] ?? 10, [10, 25, 50, 100]) 
-            ? ($filters['per_page'] ?? 10) 
+        $perPage = in_array($filters['per_page'] ?? 10, [10, 25, 50, 100])
+            ? ($filters['per_page'] ?? 10)
             : 10;
-        
+
         $users = $query->paginate($perPage);
         $filteredCount = $users->total();
 
         // Only query total count if filters are applied, otherwise use filtered count
         $hasFilters = !empty($filters['search']) || (!empty($filters['status']) && $filters['status'] !== 'all');
-        $userCount = $hasFilters 
+        $userCount = $hasFilters
             ? User::where('role', '=', 'user')->where('is_archived', false)->count()
             : $filteredCount;
 
@@ -97,10 +97,10 @@ class UserController extends Controller
         }
 
         // Get per_page value from request, default to 10, allow only [10, 25, 50, 100]
-        $perPage = in_array($filters['per_page'] ?? 10, [10, 25, 50, 100]) 
-            ? ($filters['per_page'] ?? 10) 
+        $perPage = in_array($filters['per_page'] ?? 10, [10, 25, 50, 100])
+            ? ($filters['per_page'] ?? 10)
             : 10;
-        
+
         $users = $query->paginate($perPage);
         $filteredArchivedCount = $users->total();
 
@@ -125,7 +125,7 @@ class UserController extends Controller
     {
         try {
             $user = User::findOrFail($id);
-            
+
             if ($user->is_archived) {
                 return redirect()->back()->withErrors(['error' => 'User is already archived.']);
             }
@@ -142,7 +142,7 @@ class UserController extends Controller
                     return redirect()->back()->withErrors(['error' => 'User must be inactive for at least 1 month before archiving.']);
                 }
             }
-            
+
             $user->is_archived = true;
             $user->save();
 
@@ -163,7 +163,7 @@ class UserController extends Controller
         ]);
 
         $oneMonthAgo = now()->subMonth();
-        
+
         // Find users that meet archive conditions
         $eligibleUsers = User::whereIn('id', $validated['ids'])
             ->where('is_archived', false)
@@ -199,11 +199,11 @@ class UserController extends Controller
     {
         try {
             $user = User::findOrFail($id);
-            
+
             if (!$user->is_archived) {
                 return redirect()->back()->withErrors(['error' => 'User is not archived.']);
             }
-            
+
             $user->is_archived = false;
             $user->save();
 
