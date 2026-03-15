@@ -20,7 +20,7 @@ class UsersTest extends TestCase
 
     public function test_authenticated_users_can_access_users_page()
     {
-        $admin = User::factory()->create(['roles' => 'admin']);
+        $admin = User::factory()->create(['role' => 'admin']);
 
         $response = $this->actingAs($admin)->get(route('users.index'));
 
@@ -32,9 +32,9 @@ class UsersTest extends TestCase
 
     public function test_users_page_displays_only_regular_users()
     {
-        $admin = User::factory()->create(['roles' => 'admin']);
-        User::factory()->count(5)->create(['roles' => 'user']);
-        User::factory()->count(2)->create(['roles' => 'admin']);
+        $admin = User::factory()->create(['role' => 'admin']);
+        User::factory()->count(5)->create(['role' => 'user']);
+        User::factory()->count(2)->create(['role' => 'admin']);
 
         $response = $this->actingAs($admin)->get(route('users.index'));
 
@@ -47,9 +47,9 @@ class UsersTest extends TestCase
 
     public function test_users_page_excludes_archived_users()
     {
-        $admin = User::factory()->create(['roles' => 'admin']);
-        User::factory()->count(3)->create(['roles' => 'user', 'is_archived' => false]);
-        User::factory()->count(2)->create(['roles' => 'user', 'is_archived' => true]);
+        $admin = User::factory()->create(['role' => 'admin']);
+        User::factory()->count(3)->create(['role' => 'user', 'is_archived' => false]);
+        User::factory()->count(2)->create(['role' => 'user', 'is_archived' => true]);
 
         $response = $this->actingAs($admin)->get(route('users.index'));
 
@@ -61,15 +61,15 @@ class UsersTest extends TestCase
 
     public function test_users_can_be_searched()
     {
-        $admin = User::factory()->create(['roles' => 'admin']);
+        $admin = User::factory()->create(['role' => 'admin']);
         User::factory()->create([
-            'roles' => 'user',
+            'role' => 'user',
             'first_name' => 'John',
             'last_name' => 'Doe',
             'email' => 'john@example.com'
         ]);
         User::factory()->create([
-            'roles' => 'user',
+            'role' => 'user',
             'first_name' => 'Jane',
             'last_name' => 'Smith',
             'email' => 'jane@example.com'
@@ -86,8 +86,8 @@ class UsersTest extends TestCase
 
     public function test_user_can_be_updated()
     {
-        $admin = User::factory()->create(['roles' => 'admin']);
-        $user = User::factory()->create(['roles' => 'user']);
+        $admin = User::factory()->create(['role' => 'admin']);
+        $user = User::factory()->create(['role' => 'user']);
 
         $response = $this->actingAs($admin)->patch(route('users.update', $user->id), [
             'first_name' => 'Updated',
@@ -108,8 +108,13 @@ class UsersTest extends TestCase
 
     public function test_user_can_be_archived()
     {
-        $admin = User::factory()->create(['roles' => 'admin']);
-        $user = User::factory()->create(['roles' => 'user', 'is_archived' => false]);
+        $admin = User::factory()->create(['role' => 'admin']);
+        $user = User::factory()->create([
+            'role' => 'user',
+            'is_archived' => false,
+            'status' => 'inactive',
+            'last_login_at' => now()->subMonths(2),
+        ]);
 
         $response = $this->actingAs($admin)->patch(route('users.archive', $user->id));
 
@@ -123,8 +128,8 @@ class UsersTest extends TestCase
 
     public function test_user_can_be_unarchived()
     {
-        $admin = User::factory()->create(['roles' => 'admin']);
-        $user = User::factory()->create(['roles' => 'user', 'is_archived' => true]);
+        $admin = User::factory()->create(['role' => 'admin']);
+        $user = User::factory()->create(['role' => 'user', 'is_archived' => true]);
 
         $response = $this->actingAs($admin)->patch(route('users.unarchive', $user->id));
 
@@ -138,9 +143,9 @@ class UsersTest extends TestCase
 
     public function test_archived_users_page_shows_only_archived_users()
     {
-        $admin = User::factory()->create(['roles' => 'admin']);
-        User::factory()->count(3)->create(['roles' => 'user', 'is_archived' => false]);
-        User::factory()->count(2)->create(['roles' => 'user', 'is_archived' => true]);
+        $admin = User::factory()->create(['role' => 'admin']);
+        User::factory()->count(3)->create(['role' => 'user', 'is_archived' => false]);
+        User::factory()->count(2)->create(['role' => 'user', 'is_archived' => true]);
 
         $response = $this->actingAs($admin)->get(route('users.archived'));
 
@@ -153,16 +158,16 @@ class UsersTest extends TestCase
 
     public function test_archived_users_can_be_searched()
     {
-        $admin = User::factory()->create(['roles' => 'admin']);
+        $admin = User::factory()->create(['role' => 'admin']);
         User::factory()->create([
-            'roles' => 'user',
+            'role' => 'user',
             'first_name' => 'Archived',
             'last_name' => 'User',
             'email' => 'archived@example.com',
             'is_archived' => true
         ]);
         User::factory()->create([
-            'roles' => 'user',
+            'role' => 'user',
             'first_name' => 'Another',
             'last_name' => 'Archived',
             'email' => 'another@example.com',
@@ -179,8 +184,8 @@ class UsersTest extends TestCase
 
     public function test_users_page_includes_pagination_data()
     {
-        $admin = User::factory()->create(['roles' => 'admin']);
-        User::factory()->count(15)->create(['roles' => 'user']);
+        $admin = User::factory()->create(['role' => 'admin']);
+        User::factory()->count(15)->create(['role' => 'user']);
 
         $response = $this->actingAs($admin)->get(route('users.index'));
 
@@ -194,9 +199,9 @@ class UsersTest extends TestCase
 
     public function test_user_update_validates_email_uniqueness()
     {
-        $admin = User::factory()->create(['roles' => 'admin']);
-        $user1 = User::factory()->create(['roles' => 'user', 'email' => 'existing@example.com']);
-        $user2 = User::factory()->create(['roles' => 'user', 'email' => 'user2@example.com']);
+        $admin = User::factory()->create(['role' => 'admin']);
+        $user1 = User::factory()->create(['role' => 'user', 'email' => 'existing@example.com']);
+        $user2 = User::factory()->create(['role' => 'user', 'email' => 'user2@example.com']);
 
         $response = $this->actingAs($admin)->patch(route('users.update', $user2->id), [
             'first_name' => 'Test',
@@ -206,6 +211,53 @@ class UsersTest extends TestCase
         ]);
 
         $response->assertSessionHasErrors('email');
+    }
+
+    public function test_users_can_be_bulk_archived()
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $users = User::factory()->count(3)->create([
+            'role' => 'user',
+            'is_archived' => false,
+            'status' => 'inactive',
+            'last_login_at' => now()->subMonths(2),
+        ]);
+
+        $userIds = $users->pluck('id')->toArray();
+
+        $response = $this->actingAs($admin)->patch(route('users.bulk-archive'), [
+            'ids' => $userIds,
+        ]);
+
+        $response->assertRedirect();
+
+        foreach ($users as $user) {
+            $this->assertDatabaseHas('users', [
+                'id' => $user->id,
+                'is_archived' => true,
+            ]);
+        }
+    }
+
+    public function test_users_can_be_bulk_unarchived()
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+        $users = User::factory()->count(3)->create(['role' => 'user', 'is_archived' => true]);
+
+        $userIds = $users->pluck('id')->toArray();
+
+        $response = $this->actingAs($admin)->patch(route('users.bulk-unarchive'), [
+            'ids' => $userIds,
+        ]);
+
+        $response->assertRedirect();
+
+        foreach ($users as $user) {
+            $this->assertDatabaseHas('users', [
+                'id' => $user->id,
+                'is_archived' => false,
+            ]);
+        }
     }
 }
 

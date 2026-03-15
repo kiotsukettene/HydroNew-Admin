@@ -39,6 +39,40 @@ class AdminAnalyticsService
     }
 
     /**
+     * Get database-agnostic SQL expression for grouping by date period.
+     * Works with both MySQL (production) and SQLite (testing).
+     */
+    private function getDatePeriodExpression(string $column, string $frequency): string
+    {
+        $driver = DB::connection()->getDriverName();
+
+        if ($driver === 'sqlite') {
+            if ($frequency === 'weekly') {
+                return "strftime('%Y', {$column}) || '-' || substr('0' || strftime('%W', {$column}), -2)";
+            }
+            return "strftime('%Y-%m', {$column})";
+        }
+
+        // MySQL
+        $format = $frequency === 'weekly' ? '%Y-%u' : '%Y-%m';
+        return "DATE_FORMAT({$column}, '{$format}')";
+    }
+
+    /**
+     * Get database-agnostic SQL for average duration in minutes between two datetime columns.
+     */
+    private function getAvgDurationExpression(string $startColumn, string $endColumn): string
+    {
+        $driver = DB::connection()->getDriverName();
+
+        if ($driver === 'sqlite') {
+            return "(julianday({$endColumn}) - julianday({$startColumn})) * 24 * 60";
+        }
+
+        return "TIMESTAMPDIFF(MINUTE, {$startColumn}, {$endColumn})";
+    }
+
+    /**
      * Get users and devices overview analytics
      */
     public function getUsersDevicesAnalytics(array $filters = []): array
@@ -77,13 +111,13 @@ class AdminAnalyticsService
             ->count();
 
         // User registration trend based on frequency
-        $dateFormat = $frequency === 'weekly' ? '%Y-%u' : '%Y-%m';
         $labelFormat = $frequency === 'weekly' ? 'W%W %Y' : 'M Y';
+        $periodExpr = $this->getDatePeriodExpression('created_at', $frequency);
 
         $registrationData = User::regularUsers()
             ->whereBetween('created_at', [$dateFrom, $dateTo])
             ->select(
-                DB::raw("DATE_FORMAT(created_at, '{$dateFormat}') as period"),
+                DB::raw("{$periodExpr} as period"),
                 DB::raw('COUNT(*) as count')
             )
             ->groupBy('period')
@@ -110,12 +144,12 @@ class AdminAnalyticsService
         });
 
         // Login activity trend based on frequency and date range
-        $loginDateFormat = $frequency === 'weekly' ? '%Y-%u' : '%Y-%m-%d';
         $loginLabelFormat = $frequency === 'weekly' ? 'W%W' : 'M d';
+        $loginPeriodExpr = $this->getDatePeriodExpression('created_at', $frequency);
 
         $loginData = LoginHistory::whereBetween('created_at', [$dateFrom, $dateTo])
             ->select(
-                DB::raw("DATE_FORMAT(created_at, '{$loginDateFormat}') as period"),
+                DB::raw("{$loginPeriodExpr} as period"),
                 DB::raw('COUNT(DISTINCT user_id) as unique_users'),
                 DB::raw('COUNT(*) as total_logins')
             )
@@ -310,15 +344,16 @@ class AdminAnalyticsService
         // === COMBINED TRENDS ===
 
         // Combined harvest and yield trends based on frequency
-        $dateFormat = $frequency === 'weekly' ? '%Y-%u' : '%Y-%m';
         $labelFormat = $frequency === 'weekly' ? 'W%W' : 'M';
+        $harvestPeriodExpr = $this->getDatePeriodExpression('harvest_date', $frequency);
+        $yieldPeriodExpr = $this->getDatePeriodExpression('created_at', $frequency);
 
         $monthlyHarvestData = HydroponicSetup::where('harvest_status', 'harvested')
             ->when($deviceId, fn($query) => $query->where('device_id', $deviceId))
             ->whereNotNull('harvest_date')
             ->whereBetween('harvest_date', [$dateFrom, $dateTo])
             ->select(
-                DB::raw("DATE_FORMAT(harvest_date, '{$dateFormat}') as period"),
+                DB::raw("{$harvestPeriodExpr} as period"),
                 DB::raw('COUNT(*) as harvested')
             )
             ->groupBy('period')
@@ -332,7 +367,7 @@ class AdminAnalyticsService
             })
             ->whereBetween('created_at', [$dateFrom, $dateTo])
             ->select(
-                DB::raw("DATE_FORMAT(created_at, '{$dateFormat}') as period"),
+                DB::raw("{$yieldPeriodExpr} as period"),
                 DB::raw('SUM(total_weight) as total_weight')
             )
             ->groupBy('period')
@@ -421,9 +456,10 @@ class AdminAnalyticsService
         $failureRate = $totalCycles > 0 ? round(($failedCycles / $totalCycles) * 100, 2) : 0;
 
         // Average treatment duration (in minutes)
+        $durationExpr = $this->getAvgDurationExpression('start_time', 'end_time');
         $averageDuration = TreatmentReport::when($deviceId, fn($query) => $query->where('device_id', $deviceId))
             ->whereNotNull('end_time')
-            ->selectRaw('AVG(TIMESTAMPDIFF(MINUTE, start_time, end_time)) as avg_duration')
+            ->selectRaw("AVG({$durationExpr}) as avg_duration")
             ->value('avg_duration');
         $averageDuration = $averageDuration ? round((float) $averageDuration, 2) : 0;
 
@@ -457,13 +493,13 @@ class AdminAnalyticsService
             });
 
         // Treatment trends over time based on frequency
-        $dateFormat = $frequency === 'weekly' ? '%Y-%u' : '%Y-%m';
         $labelFormat = $frequency === 'weekly' ? 'W%W' : 'M';
+        $treatmentPeriodExpr = $this->getDatePeriodExpression('start_time', $frequency);
 
         $treatmentData = TreatmentReport::when($deviceId, fn($query) => $query->where('device_id', $deviceId))
             ->whereBetween('start_time', [$dateFrom, $dateTo])
             ->select(
-                DB::raw("DATE_FORMAT(start_time, '{$dateFormat}') as period"),
+                DB::raw("{$treatmentPeriodExpr} as period"),
                 DB::raw('COUNT(*) as cycle_count'),
                 DB::raw('SUM(CASE WHEN final_status = "success" THEN 1 ELSE 0 END) as success_count')
             )
@@ -495,7 +531,7 @@ class AdminAnalyticsService
             ->whereBetween('start_time', [$dateFrom, $dateTo])
             ->where('final_status', 'success')
             ->select(
-                DB::raw("DATE_FORMAT(start_time, '{$dateFormat}') as period"),
+                DB::raw("{$treatmentPeriodExpr} as period"),
                 DB::raw('COUNT(*) as cycles'),
                 DB::raw('SUM(water_liter) as total_water')
             )

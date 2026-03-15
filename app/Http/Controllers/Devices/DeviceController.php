@@ -162,6 +162,8 @@ class DeviceController extends Controller
             $device->update(['is_archived' => true]);
 
             return redirect()->back()->with('success', 'Device archived successfully.');
+        } catch (ValidationException $e) {
+            throw $e;
         } catch (\Exception $e) {
             return redirect()->back()->withErrors(['error' => 'Failed to archive device.']);
         }
