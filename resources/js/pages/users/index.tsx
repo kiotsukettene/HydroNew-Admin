@@ -92,6 +92,9 @@ export default function Users() {
     const [userToArchive, setUserToArchive] = useState<User | null>(null);
     const { patch: archivePatch, processing: isArchiving } = useForm({});
 
+    // Bulk archive confirmation modal state
+    const [isBulkArchiveConfirmOpen, setIsBulkArchiveConfirmOpen] = useState(false);
+
     /** Archive is only allowed when user is inactive for at least 1 month */
     const canArchive = (user: User): boolean => {
         if (user.status !== 'inactive') return false;
@@ -113,17 +116,57 @@ export default function Users() {
                 onSuccess: () => {
                     setIsArchiveConfirmOpen(false);
                     setUserToArchive(null);
+                    setSelectedUsers([]);
                     toast.success('User archived successfully', {
                         description: `${userToArchive.first_name} ${userToArchive.last_name} has been moved to archives.`,
                     });
                 },
-                onError: () => {
+                onError: (errors) => {
+                    const message = typeof errors?.error === 'string' ? errors.error : (Array.isArray(errors?.error) ? errors.error[0] : null);
                     toast.error('Failed to archive user', {
-                        description: 'Please try again later.',
+                        description: message || 'Please try again later.',
                     });
                 },
             });
         }
+    };
+
+    const getEligibleUsersForArchive = () => {
+        return users.data.filter(user => 
+            selectedUsers.includes(user.id) && canArchive(user)
+        );
+    };
+
+    const handleBulkArchive = () => {
+        const eligibleUsers = getEligibleUsersForArchive();
+        if (eligibleUsers.length === 0) {
+            toast.error('No eligible users selected', {
+                description: 'Only inactive users (inactive for at least 1 month) can be archived.',
+            });
+            return;
+        }
+        setIsBulkArchiveConfirmOpen(true);
+    };
+
+    const handleBulkArchiveConfirm = () => {
+        const eligibleUserIds = getEligibleUsersForArchive().map(u => u.id);
+        
+        router.patch('/users/bulk-archive', { ids: eligibleUserIds }, {
+            preserveScroll: true,
+            onSuccess: () => {
+                setSelectedUsers([]);
+                setIsBulkArchiveConfirmOpen(false);
+                toast.success('Users archived successfully', {
+                    description: `${eligibleUserIds.length} user(s) have been moved to archives.`,
+                });
+            },
+            onError: (errors) => {
+                const message = typeof errors?.error === 'string' ? errors.error : (Array.isArray(errors?.error) ? errors.error[0] : null);
+                toast.error('Failed to archive users', {
+                    description: message || 'Please try again later.',
+                });
+            },
+        });
     };
 
     const handleSort = (field: SortField) => {
@@ -255,6 +298,18 @@ export default function Users() {
                     />
 
                     <div className="flex gap-3">
+                        {selectedUsers.length > 0 && getEligibleUsersForArchive().length > 0 && (
+                            <Button
+                                variant="destructive"
+                                size="sm"
+                                className="w-auto"
+                                onClick={handleBulkArchive}
+                            >
+                                <Archive className="mr-2 h-4 w-4" />
+                                Archive {getEligibleUsersForArchive().length} selected
+                            </Button>
+                        )}
+
                         <Popover>
                             <PopoverTrigger asChild>
                                 <Button
@@ -348,6 +403,7 @@ export default function Users() {
                     <Button
                         variant="secondary"
                         size="sm"
+                        className="w-auto"
                         onClick={() => router.visit('/users/archived', { preserveState: false })}
                     >
                         <Archive className="mr-2 h-4 w-4" />
@@ -554,6 +610,52 @@ export default function Users() {
             disabled={isArchiving}
           >
             {isArchiving ? 'Archiving...' : 'Archive User'}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+
+    {/* Bulk Archive Confirmation Modal */}
+    <Dialog open={isBulkArchiveConfirmOpen} onOpenChange={setIsBulkArchiveConfirmOpen}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <AlertTriangle className="h-5 w-5 text-orange-500" />
+            Archive Users
+          </DialogTitle>
+          <DialogDescription>
+            Are you sure you want to archive {getEligibleUsersForArchive().length} user(s)? They will be moved to the archived users list.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="rounded-lg border border-border bg-muted p-4">
+          <p className="text-sm font-medium text-foreground">
+            {getEligibleUsersForArchive().length} eligible user(s) selected
+          </p>
+          <p className="text-xs text-muted-foreground mt-1">
+            Only inactive users (inactive for at least 1 month) will be archived.
+          </p>
+          {selectedUsers.length > getEligibleUsersForArchive().length && (
+            <p className="text-xs text-amber-600 mt-2">
+              Note: {selectedUsers.length - getEligibleUsersForArchive().length} user(s) do not meet archive requirements and will be skipped.
+            </p>
+          )}
+        </div>
+
+        <DialogFooter>
+          <Button
+            variant="secondary"
+            onClick={() => {
+              setIsBulkArchiveConfirmOpen(false);
+            }}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="destructive"
+            onClick={handleBulkArchiveConfirm}
+          >
+            Archive {getEligibleUsersForArchive().length} User(s)
           </Button>
         </DialogFooter>
       </DialogContent>
