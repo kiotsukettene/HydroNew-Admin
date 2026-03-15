@@ -68,10 +68,11 @@ export default function Users() {
         return d.toLocaleDateString(undefined, { dateStyle: 'medium' });
     };
 
-    const { users, filters, userCount } = usePage<{
+    const { users, filters, userCount, filteredCount } = usePage<{
         users: Pagination<User>;
         filters: { search: string; sort?: string; direction?: string; status?: string };
         userCount: number;
+        filteredCount: number;
     }>().props;
 
     const { data, setData } = useForm({
@@ -276,18 +277,19 @@ export default function Users() {
 
                 {/* Total Users Card */}
 
-
           <Card className="rounded-lg p-4 w-3xs mb-4 border">
                             <div className="flex items-center gap-10">
                                 <div className="flex items-center gap-2">
-                                    <span className="text-3xl font-bold">{userCount}</span>
+                                    <span className="text-3xl font-bold">{filteredCount}</span>
                                     <Badge className="bg-gray-500 px-2 py-0.5 text-xs text-white">
-                                        Total
+                                        {filteredCount === userCount ? 'Total' : `${filteredCount} of ${userCount}`}
                                     </Badge>
                                 </div>
                                 
                             </div>
-                            <p className="text-sm text-gray-600 mt-2">Registered users</p>
+                            <p className="text-sm text-gray-600 mt-2">
+                                {filteredCount === userCount ? 'Registered users' : 'Filtered users'}
+                            </p>
                         </Card>
 
                 <div className="flex flex-wrap gap-3 items-center justify-between">

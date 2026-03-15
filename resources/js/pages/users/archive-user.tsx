@@ -34,14 +34,17 @@ import {
 } from '@/components/ui/dialog'
 import { toast } from 'sonner';
 import { Label } from '@/components/ui/label'
+import { Card } from '@/components/ui/card';
 
 type SortField = 'name' | 'email' | 'created_at';
 type SortDirection = 'asc' | 'desc';
 
 export default function ArchiveUser() {
-  const { users, filters } = usePage<{
+  const { users, filters, archivedCount, filteredArchivedCount } = usePage<{
     users: Pagination<User>
     filters: { search?: string; sort?: string; direction?: string }
+    archivedCount: number
+    filteredArchivedCount: number
   }>().props
 
   const { data, setData } = useForm({
@@ -202,6 +205,22 @@ export default function ArchiveUser() {
                   </div>
                 
                 </div>
+
+                {/* Archived Users Count Card */}
+                <Card className="rounded-lg p-4 w-3xs mb-4 border">
+                    <div className="flex items-center gap-10">
+                        <div className="flex items-center gap-2">
+                            <span className="text-3xl font-bold">{filteredArchivedCount}</span>
+                            <Badge className="bg-gray-500 px-2 py-0.5 text-xs text-white">
+                                {filteredArchivedCount === archivedCount ? 'Total' : `${filteredArchivedCount} of ${archivedCount}`}
+                            </Badge>
+                        </div>
+                    </div>
+                    <p className="text-sm text-gray-600 mt-2">
+                        {filteredArchivedCount === archivedCount ? 'Archived users' : 'Filtered archived users'}
+                    </p>
+                </Card>
+
                 <div className="flex flex-wrap gap-3 items-center justify-between">
                   <SearchInput
                     placeholder="Search archived users..."

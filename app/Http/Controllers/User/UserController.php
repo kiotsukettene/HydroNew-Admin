@@ -44,6 +44,7 @@ class UserController extends Controller
             $query->orderBy($sortField, $sortDirection);
         }
 
+        $filteredCount = $query->count();
         $users = $query->paginate(10);
 
         $userCount = User::where('role', '=', 'user')->where('is_archived', false)->count();
@@ -51,6 +52,7 @@ class UserController extends Controller
         return Inertia::render('users/index',[
             'users' => $users,
             'userCount' => $userCount,
+            'filteredCount' => $filteredCount,
             'filters' => $filters,
         ]);
     }
@@ -85,6 +87,7 @@ class UserController extends Controller
             $query->orderBy($sortField, $sortDirection);
         }
 
+        $filteredArchivedCount = $query->count();
         $users = $query->paginate(10);
 
         $archivedCount = User::where('role', '=', 'user')
@@ -94,6 +97,7 @@ class UserController extends Controller
         return Inertia::render('users/archive-user', [
             'users' => $users,
             'archivedCount' => $archivedCount,
+            'filteredArchivedCount' => $filteredArchivedCount,
             'filters' => $filters,
         ]);
     }
