@@ -261,7 +261,7 @@ export default function Devices() {
         }
       )
     }
-  }, [debounceSearch, data.status, data.sort, data.direction, data.per_page])
+  }, [debounceSearch])
 
   const handleStatusChange = (status: string) => {
     router.get(

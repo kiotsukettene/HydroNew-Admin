@@ -44,16 +44,19 @@ class UserController extends Controller
             $query->orderBy($sortField, $sortDirection);
         }
 
-        $filteredCount = $query->count();
-        
         // Get per_page value from request, default to 10, allow only [10, 25, 50, 100]
-        $perPage = in_array($filters['per_page'] ?? 10, [10, 25, 50, 100]) 
-            ? ($filters['per_page'] ?? 10) 
+        $perPage = in_array($filters['per_page'] ?? 10, [10, 25, 50, 100])
+            ? ($filters['per_page'] ?? 10)
             : 10;
-        
-        $users = $query->paginate($perPage);
 
-        $userCount = User::where('role', '=', 'user')->where('is_archived', false)->count();
+        $users = $query->paginate($perPage);
+        $filteredCount = $users->total();
+
+        // Only query total count if filters are applied, otherwise use filtered count
+        $hasFilters = !empty($filters['search']) || (!empty($filters['status']) && $filters['status'] !== 'all');
+        $userCount = $hasFilters
+            ? User::where('role', '=', 'user')->where('is_archived', false)->count()
+            : $filteredCount;
 
         return Inertia::render('users/index',[
             'users' => $users,
@@ -93,18 +96,19 @@ class UserController extends Controller
             $query->orderBy($sortField, $sortDirection);
         }
 
-        $filteredArchivedCount = $query->count();
-        
         // Get per_page value from request, default to 10, allow only [10, 25, 50, 100]
-        $perPage = in_array($filters['per_page'] ?? 10, [10, 25, 50, 100]) 
-            ? ($filters['per_page'] ?? 10) 
+        $perPage = in_array($filters['per_page'] ?? 10, [10, 25, 50, 100])
+            ? ($filters['per_page'] ?? 10)
             : 10;
-        
-        $users = $query->paginate($perPage);
 
-        $archivedCount = User::where('role', '=', 'user')
-                            ->where('is_archived', true)
-                            ->count();
+        $users = $query->paginate($perPage);
+        $filteredArchivedCount = $users->total();
+
+        // Only query total count if filters are applied, otherwise use filtered count
+        $hasFilters = !empty($filters['search']);
+        $archivedCount = $hasFilters
+            ? User::where('role', '=', 'user')->where('is_archived', true)->count()
+            : $filteredArchivedCount;
 
         return Inertia::render('users/archive-user', [
             'users' => $users,
@@ -121,7 +125,7 @@ class UserController extends Controller
     {
         try {
             $user = User::findOrFail($id);
-            
+
             if ($user->is_archived) {
                 return redirect()->back()->withErrors(['error' => 'User is already archived.']);
             }
@@ -138,7 +142,7 @@ class UserController extends Controller
                     return redirect()->back()->withErrors(['error' => 'User must be inactive for at least 1 month before archiving.']);
                 }
             }
-            
+
             $user->is_archived = true;
             $user->save();
 
@@ -159,7 +163,7 @@ class UserController extends Controller
         ]);
 
         $oneMonthAgo = now()->subMonth();
-        
+
         // Find users that meet archive conditions
         $eligibleUsers = User::whereIn('id', $validated['ids'])
             ->where('is_archived', false)
@@ -195,11 +199,11 @@ class UserController extends Controller
     {
         try {
             $user = User::findOrFail($id);
-            
+
             if (!$user->is_archived) {
                 return redirect()->back()->withErrors(['error' => 'User is not archived.']);
             }
-            
+
             $user->is_archived = false;
             $user->save();
 

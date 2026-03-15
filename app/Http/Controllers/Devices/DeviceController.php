@@ -48,16 +48,19 @@ class DeviceController extends Controller
 
         $query->orderBy($sortField, $sortDirection);
 
-        $filteredCount = $query->count();
-        
         // Get per_page value from request, default to 10, allow only [10, 25, 50, 100]
         $perPage = in_array($filters['per_page'] ?? 10, [10, 25, 50, 100]) 
             ? ($filters['per_page'] ?? 10) 
             : 10;
         
         $devices = $query->paginate($perPage);
+        $filteredCount = $devices->total();
 
-        $deviceCount = Device::where('is_archived', false)->count();
+        // Only query total count if filters are applied, otherwise use filtered count
+        $hasFilters = !empty($filters['search']) || (!empty($filters['status']) && $filters['status'] !== 'all');
+        $deviceCount = $hasFilters
+            ? Device::where('is_archived', false)->count()
+            : $filteredCount;
 
         $users = User::where('role', 'user')
             ->where('is_archived', false)
@@ -104,16 +107,19 @@ class DeviceController extends Controller
 
         $query->orderBy($sortField, $sortDirection);
 
-        $filteredArchivedCount = $query->count();
-        
         // Get per_page value from request, default to 10, allow only [10, 25, 50, 100]
         $perPage = in_array($filters['per_page'] ?? 10, [10, 25, 50, 100]) 
             ? ($filters['per_page'] ?? 10) 
             : 10;
         
         $devices = $query->paginate($perPage);
+        $filteredArchivedCount = $devices->total();
 
-        $archivedCount = Device::where('is_archived', true)->count();
+        // Only query total count if filters are applied, otherwise use filtered count
+        $hasFilters = !empty($filters['search']);
+        $archivedCount = $hasFilters
+            ? Device::where('is_archived', true)->count()
+            : $filteredArchivedCount;
 
         return Inertia::render('devices/archive-devices', [
             'devices' => $devices,

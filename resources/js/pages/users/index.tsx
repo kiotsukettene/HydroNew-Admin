@@ -266,7 +266,7 @@ export default function Users() {
                 },
             );
         }
-    }, [debounceSearch, data.sort, data.direction, data.status, data.verified, data.per_page]);
+    }, [debounceSearch]);
 
     const getSortIcon = (field: string) => {
         if (data.sort !== field) return <ArrowUpDown className="h-4 w-4" />;
