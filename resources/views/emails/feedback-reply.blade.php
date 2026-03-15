@@ -8,15 +8,15 @@
     <div style="max-width: 500px; margin: 40px auto; background-color: #ffffff; border-radius: 12px; padding: 40px 50px; text-align: center; box-shadow: 0 2px 6px rgba(0,0,0,0.1);">
 
         <div style="margin-bottom: 30px;">
-            <img src="{{ asset('hydro-logo.svg') }}" alt="HydroNew Logo" style="width:120px; height:auto;">
+            <img src="{{ asset('hydro-logo.png') }}" alt="HydroNew Logo" style="width:120px; height:auto;">
         </div>
 
         <div style="margin-bottom: 2px;">
-            <img src="{{ asset('email-svg2.svg') }}" alt="Mail Icon" style="width: 100px; height: auto;">
+            <img src="{{ asset('email-svg2.png') }}" alt="Mail Icon" style="width: 100px; height: auto;">
         </div>
- 
+
         <h2 style="color: #2E2E2E; font-size: 26px; margin-bottom: 10px;">Response to Your Feedback</h2>
-        
+
         <p style="color: #555; font-size: 16px; margin-bottom: 25px;">
             Hello{{ $feedback->user ? ' ' . $feedback->user->first_name : '' }}! Thank you for sharing your feedback with us.
         </p>
@@ -30,10 +30,10 @@
 
         <div style="background-color: #f9fafb; border-radius: 8px; padding: 20px; text-align: left;">
             <h3 style="color: #777; font-size: 16px; margin: 0 0 15px 0;">Your Original Message</h3>
-            
+
             <div style="margin-bottom: 10px;">
                 <span style="color: #555; font-size: 14px;">
-                    <strong>Category:</strong> 
+                    <strong>Category:</strong>
                     <span style="background-color: #e8f4f8; color: #445104; padding: 3px 10px; border-radius: 10px; font-size: 12px; font-weight: 600;">
                         @switch($feedback->category)
                             @case('bug_report')
