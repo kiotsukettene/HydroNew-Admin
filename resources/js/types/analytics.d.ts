@@ -90,6 +90,7 @@ export interface WaterTreatmentAnalytics {
         cycle_count: number;
         success_count: number;
     }>;
+    /** Filtration data per period; filtered = sum of water_liter from treatment_reports */
     weekly_filtration: Array<{
         week: string;
         filtered: number;
