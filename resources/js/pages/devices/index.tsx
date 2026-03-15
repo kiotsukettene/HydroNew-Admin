@@ -19,7 +19,7 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table'
-import { ArrowUpDown, ArrowUp, ArrowDown, MoreHorizontal, Pencil, Archive, Airplay, Filter, Loader2, AlertTriangle } from 'lucide-react'
+import { ArrowUpDown, ArrowUp, ArrowDown, MoreHorizontal, Pencil, Archive, Filter, Loader2, AlertTriangle } from 'lucide-react'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Card } from '@/components/ui/card'
@@ -56,6 +56,7 @@ export default function Devices() {
   const [isArchiveConfirmOpen, setIsArchiveConfirmOpen] = useState(false)
   const [deviceToArchive, setDeviceToArchive] = useState<Device | null>(null)
   const { patch: archivePatch, processing: isArchiving } = useForm({})
+  const [isBulkArchiveConfirmOpen, setIsBulkArchiveConfirmOpen] = useState(false)
 
   const { data, setData } = useForm({
     search: filters.search || '',
@@ -132,6 +133,7 @@ export default function Devices() {
         onSuccess: () => {
           setIsArchiveConfirmOpen(false)
           setDeviceToArchive(null)
+          setSelectedDevices([])
           toast.success('Device archived successfully', {
             description: `${deviceToArchive.device_name} has been moved to archives.`,
           })
@@ -145,6 +147,44 @@ export default function Devices() {
       })
     }
   }
+
+  const getEligibleDevicesForArchive = () => {
+    return devices.data.filter(device => 
+      selectedDevices.includes(device.id) && canArchive(device)
+    );
+  };
+
+  const handleBulkArchive = () => {
+    const eligibleDevices = getEligibleDevicesForArchive();
+    if (eligibleDevices.length === 0) {
+      toast.error('No eligible devices selected', {
+        description: 'Only offline devices with no active hydroponic setups can be archived.',
+      });
+      return;
+    }
+    setIsBulkArchiveConfirmOpen(true);
+  };
+
+  const handleBulkArchiveConfirm = () => {
+    const eligibleDeviceIds = getEligibleDevicesForArchive().map(d => d.id);
+    
+    router.patch('/devices/bulk-archive', { ids: eligibleDeviceIds }, {
+      preserveScroll: true,
+      onSuccess: () => {
+        setSelectedDevices([]);
+        setIsBulkArchiveConfirmOpen(false);
+        toast.success('Devices archived successfully', {
+          description: `${eligibleDeviceIds.length} device(s) have been moved to archives.`,
+        });
+      },
+      onError: (errors) => {
+        const message = typeof errors?.error === 'string' ? errors.error : (Array.isArray(errors?.error) ? errors.error[0] : null);
+        toast.error('Failed to archive devices', {
+          description: message || 'Please try again later.',
+        });
+      },
+    });
+  };
 
   const handleCreateDevice = () => {
     post('/devices', {
@@ -287,6 +327,18 @@ export default function Devices() {
             onChange={(value) => setData('search', value)}
           />
           <div className="flex gap-3">
+            {selectedDevices.length > 0 && getEligibleDevicesForArchive().length > 0 && (
+              <Button
+                variant="destructive"
+                size="sm"
+                className="w-auto"
+                onClick={handleBulkArchive}
+              >
+                <Archive className="mr-2 h-4 w-4" />
+                Archive {getEligibleDevicesForArchive().length} selected
+              </Button>
+            )}
+
             <Select value={data.status} onValueChange={handleStatusChange}>
             <SelectTrigger
               className="hidden h-8 w-[150px] border-2 rounded-lg text-xs sm:ml-auto sm:flex"
@@ -701,6 +753,52 @@ export default function Devices() {
                 disabled={isArchiving}
               >
                 {isArchiving ? 'Archiving...' : 'Archive Device'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Bulk Archive Confirmation Modal */}
+        <Dialog open={isBulkArchiveConfirmOpen} onOpenChange={setIsBulkArchiveConfirmOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <AlertTriangle className="h-5 w-5 text-orange-500" />
+                Archive Devices
+              </DialogTitle>
+              <DialogDescription>
+                Are you sure you want to archive {getEligibleDevicesForArchive().length} device(s)? They will be moved to the archived devices list.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="rounded-lg border border-border bg-muted p-4">
+              <p className="text-sm font-medium text-foreground">
+                {getEligibleDevicesForArchive().length} eligible device(s) selected
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Only offline devices with no active hydroponic setups will be archived.
+              </p>
+              {selectedDevices.length > getEligibleDevicesForArchive().length && (
+                <p className="text-xs text-amber-600 mt-2">
+                  Note: {selectedDevices.length - getEligibleDevicesForArchive().length} device(s) do not meet archive requirements and will be skipped.
+                </p>
+              )}
+            </div>
+
+            <DialogFooter>
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  setIsBulkArchiveConfirmOpen(false);
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={handleBulkArchiveConfirm}
+              >
+                Archive {getEligibleDevicesForArchive().length} Device(s)
               </Button>
             </DialogFooter>
           </DialogContent>

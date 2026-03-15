@@ -67,28 +67,36 @@ class DeviceController extends Controller
 
       public function archived(Request $request)
     {
-        $filters = $request->only(['search', 'status']);
+        $filters = $request->only(['search', 'status', 'sort', 'direction']);
 
-        $devices = Device::with('users')
-            ->where('is_archived', true)
-            ->when($filters['search'] ?? null, function ($query, $search) {
-                $query->where(function ($q) use ($search) {
-                    $q->where('device_name', 'like', '%' . $search . '%')
-                      ->orWhere('serial_number', 'like', '%' . $search . '%')
-                      ->orWhereHas('users', function ($userQuery) use ($search) {
-                          $userQuery->where('first_name', 'like', '%' . $search . '%')
-                                    ->orWhere('last_name', 'like', '%' . $search . '%')
-                                    ->orWhere('email', 'like', '%' . $search . '%');
-                      });
-                });
-            })
-            ->when($filters['status'] ?? null, function ($query, $status) {
-                if ($status !== 'all') {
-                    $query->where('status', $status);
-                }
-            })
-            ->orderBy('created_at', 'desc')
-            ->paginate(10);
+        $query = Device::with('users')
+            ->where('is_archived', true);
+
+        // Apply search filter
+        if (!empty($filters['search'])) {
+            $query->where(function ($q) use ($filters) {
+                $q->where('device_name', 'like', '%' . $filters['search'] . '%')
+                  ->orWhere('serial_number', 'like', '%' . $filters['search'] . '%')
+                  ->orWhereHas('users', function ($userQuery) use ($filters) {
+                      $userQuery->where('first_name', 'like', '%' . $filters['search'] . '%')
+                                ->orWhere('last_name', 'like', '%' . $filters['search'] . '%')
+                                ->orWhere('email', 'like', '%' . $filters['search'] . '%');
+                  });
+            });
+        }
+
+        // Apply status filter
+        if (!empty($filters['status']) && $filters['status'] !== 'all') {
+            $query->where('status', $filters['status']);
+        }
+
+        // Apply sorting
+        $sortField = $filters['sort'] ?? 'created_at';
+        $sortDirection = $filters['direction'] ?? 'desc';
+
+        $query->orderBy($sortField, $sortDirection);
+
+        $devices = $query->paginate(10);
 
         $archivedCount = Device::where('is_archived', true)->count();
 
@@ -135,6 +143,46 @@ class DeviceController extends Controller
         } catch (\Exception $e) {
             return redirect()->back()->withErrors(['error' => 'Failed to archive device.']);
         }
+    }
+
+    /**
+     * Bulk archive devices
+     */
+    public function bulkArchive(Request $request)
+    {
+        $validated = $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'integer|exists:devices,id',
+        ]);
+
+        // Find devices that meet archive conditions
+        $eligibleDevices = Device::withCount(['hydroponic_setups as active_setups_count' => function ($q) {
+                $q->where('is_archived', false)->where('status', 'active');
+            }])
+            ->whereIn('id', $validated['ids'])
+            ->where('is_archived', false)
+            ->where('status', 'offline')
+            ->get()
+            ->filter(function ($device) {
+                return $device->active_setups_count == 0;
+            });
+
+        if ($eligibleDevices->isEmpty()) {
+            return redirect()->back()->withErrors(['error' => 'No devices meet the archive requirements (must be offline with no active hydroponic setups).']);
+        }
+
+        $count = $eligibleDevices->count();
+        $ineligibleCount = count($validated['ids']) - $count;
+
+        // Archive eligible devices
+        Device::whereIn('id', $eligibleDevices->pluck('id'))->update(['is_archived' => true]);
+
+        $message = "{$count} device(s) archived successfully.";
+        if ($ineligibleCount > 0) {
+            $message .= " {$ineligibleCount} device(s) did not meet archive requirements and were skipped.";
+        }
+
+        return redirect()->back()->with('success', $message);
     }
 
     /**

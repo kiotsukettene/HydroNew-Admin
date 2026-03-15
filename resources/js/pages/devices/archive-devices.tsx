@@ -1,6 +1,6 @@
 import AppLayout from '@/layouts/app-layout'
 import { Head, router, usePage, useForm } from '@inertiajs/react'
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { cleanFilters } from '@/lib/filter-helpers'
 import {
   Table,
@@ -10,7 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { ArrowUpDown, MoreHorizontal, RotateCcw, ArrowLeft, Loader2 } from 'lucide-react'
+import { ArrowUpDown, ArrowUp, ArrowDown, MoreHorizontal, RotateCcw, ArrowLeft, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import {
@@ -35,21 +35,41 @@ import {
 } from '@/components/ui/dialog'
 import { toast } from 'sonner'
 
+type SortField = 'device_name' | 'serial_number' | 'status' | 'created_at';
+type SortDirection = 'asc' | 'desc';
+
 export default function ArchiveDevices() {
   const { devices, filters } = usePage<{
     devices: Pagination<Device>
-    filters: { search?: string }
+    filters: { search?: string; sort?: string; direction?: string }
   }>().props
-  const [search, setSearch] = React.useState(filters.search || "")
+
+  const { data, setData } = useForm({
+    search: filters.search || '',
+    sort: (filters?.sort as SortField) || 'created_at',
+    direction: (filters?.direction as SortDirection) || 'desc',
+  })
+
   const [selectedDevices, setSelectedDevices] = useState<number[]>([])
   const [isSearching, setIsSearching] = useState(false)
   const [isUnarchiveConfirmOpen, setIsUnarchiveConfirmOpen] = useState(false)
   const [deviceToUnarchive, setDeviceToUnarchive] = useState<Device | null>(null)
   const { patch: unarchivePatch, processing: isRestoring } = useForm({})
+  const hasMounted = useRef(false)
+  const [isBulkRestoreConfirmOpen, setIsBulkRestoreConfirmOpen] = useState(false)
 
   useEffect(() => {
+    if (!hasMounted.current) {
+      hasMounted.current = true;
+      return;
+    }
+
     const timer = setTimeout(() => {
-      router.get("/devices/archived", cleanFilters({ search }), {
+      router.get("/devices/archived", cleanFilters({ 
+        search: data.search,
+        sort: data.sort,
+        direction: data.direction
+      }, { sort: 'created_at', direction: 'desc' }), {
         preserveState: true,
         preserveScroll: true,
         replace: true,
@@ -59,7 +79,35 @@ export default function ArchiveDevices() {
     }, 500)
 
     return () => clearTimeout(timer)
-  }, [search])
+  }, [data.search, data.sort, data.direction])
+
+  const handleSort = (field: SortField) => {
+    const newDirection = data.sort === field && data.direction === 'asc' ? 'desc' : 'asc';
+
+    router.get(
+      '/devices/archived',
+      cleanFilters({
+        search: data.search,
+        sort: field,
+        direction: newDirection
+      }, { sort: 'created_at', direction: 'desc' }),
+      {
+        preserveState: true,
+        preserveScroll: true,
+        replace: true,
+        onSuccess: () => {
+          setData({ ...data, sort: field, direction: newDirection });
+        }
+      }
+    );
+  };
+
+  const getSortIcon = (field: string) => {
+    if (data.sort !== field) return <ArrowUpDown className="h-4 w-4" />;
+    return data.direction === 'asc'
+      ? <ArrowUp className="h-4 w-4" />
+      : <ArrowDown className="h-4 w-4" />;
+  };
 
   const handleUnarchiveClick = (device: Device) => {
     setDeviceToUnarchive(device)
@@ -106,10 +154,15 @@ export default function ArchiveDevices() {
 
   const handleBulkRestore = () => {
     if (selectedDevices.length === 0) return
+    setIsBulkRestoreConfirmOpen(true)
+  }
+
+  const handleBulkRestoreConfirm = () => {
     router.patch('/devices/bulk-unarchive', { ids: selectedDevices }, {
       preserveScroll: true,
       onSuccess: () => {
         setSelectedDevices([])
+        setIsBulkRestoreConfirmOpen(false)
         toast.success('Devices restored successfully', {
           description: `${selectedDevices.length} device(s) have been restored from archives.`,
         })
@@ -151,19 +204,22 @@ export default function ArchiveDevices() {
         <div className="flex flex-wrap gap-3 items-center justify-between">
           <SearchInput
             placeholder="Search archived devices..."
-            value={search}
-            onChange={(value) => setSearch(value)}
+            value={data.search}
+            onChange={(value) => setData('search', value)}
           />
-          {selectedDevices.length > 0 && (
-            <Button
-              variant="default"
-              size="sm"
-              onClick={handleBulkRestore}
-            >
-              <RotateCcw className="mr-2 h-4 w-4" />
-              Restore {selectedDevices.length} selected
-            </Button>
-          )}
+          <div className="flex gap-3">
+            {selectedDevices.length > 0 && (
+              <Button
+                variant="primary"
+                size="sm"
+                className="w-auto"
+                onClick={handleBulkRestore}
+              >
+                <RotateCcw className="mr-2 h-4 w-4" />
+                Restore {selectedDevices.length} selected
+              </Button>
+            )}
+          </div>
         </div>
 
         <Table className="border">
@@ -180,11 +236,29 @@ export default function ArchiveDevices() {
               <TableHead>
                 <div className="flex items-center gap-1">
                   <Label className="text-sm font-medium">Device Name</Label>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    aria-label="Sort Device Name"
+                    onClick={() => handleSort('device_name')}
+                  >
+                    {getSortIcon('device_name')}
+                  </Button>
                 </div>
               </TableHead>
               <TableHead>
                 <div className="flex items-center gap-1">
                   <Label className="text-sm font-medium">Serial Number</Label>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    aria-label="Sort Serial Number"
+                    onClick={() => handleSort('serial_number')}
+                  >
+                    {getSortIcon('serial_number')}
+                  </Button>
                 </div>
               </TableHead>
               <TableHead>
@@ -195,6 +269,15 @@ export default function ArchiveDevices() {
               <TableHead>
                 <div className="flex items-center gap-1">
                   <Label className="text-sm font-medium">Status</Label>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    aria-label="Sort Status"
+                    onClick={() => handleSort('status')}
+                  >
+                    {getSortIcon('status')}
+                  </Button>
                 </div>
               </TableHead>
               <TableHead></TableHead>
@@ -327,6 +410,47 @@ export default function ArchiveDevices() {
                 disabled={isRestoring}
               >
                 {isRestoring ? 'Restoring...' : 'Restore Device'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Bulk Restore Confirmation Modal */}
+        <Dialog open={isBulkRestoreConfirmOpen} onOpenChange={setIsBulkRestoreConfirmOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <RotateCcw className="h-5 w-5 text-green-500" />
+                Restore Devices
+              </DialogTitle>
+              <DialogDescription>
+                Are you sure you want to restore {selectedDevices.length} device(s)? They will be moved to the devices list.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="rounded-lg border border-border bg-muted p-4">
+              <p className="text-sm font-medium text-foreground">
+                {selectedDevices.length} device(s) selected
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                This action will restore all selected devices from the archive.
+              </p>
+            </div>
+
+            <DialogFooter>
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  setIsBulkRestoreConfirmOpen(false);
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="primary"
+                onClick={handleBulkRestoreConfirm}
+              >
+                Restore {selectedDevices.length} Device(s)
               </Button>
             </DialogFooter>
           </DialogContent>
