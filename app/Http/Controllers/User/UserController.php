@@ -74,6 +74,9 @@ class UserController extends Controller
             });
         }
 
+        // Default ordering by created_at
+        $query->orderBy('created_at', 'desc');
+
         $users = $query->paginate(10);
 
         $archivedCount = User::where('role', '=', 'user')

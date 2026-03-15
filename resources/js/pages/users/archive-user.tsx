@@ -10,7 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { ArrowUpDown, MoreHorizontal, RotateCcw, Check, X, ArrowLeft } from 'lucide-react'
+import { MoreHorizontal, RotateCcw, Check, X, ArrowLeft, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -32,13 +32,15 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { toast } from 'sonner';
+import { Label } from '@/components/ui/label'
 
 export default function ArchiveUser() {
   const { users, filters } = usePage<{
     users: Pagination<User>
     filters: { search?: string }
   }>().props
-  const [search, setSearch] = React.useState(filters.search || "")
+  const [search, setSearch] = React.useState(filters?.search || "")
+  const [isSearching, setIsSearching] = useState(false)
 
   // Unarchive confirmation modal state
   const [isUnarchiveConfirmOpen, setIsUnarchiveConfirmOpen] = useState(false);
@@ -51,6 +53,8 @@ export default function ArchiveUser() {
         preserveState: true,
         preserveScroll: true,
         replace: true,
+        onStart: () => setIsSearching(true),
+        onFinish: () => setIsSearching(false),
       })
     }, 500)
 
@@ -81,9 +85,6 @@ export default function ArchiveUser() {
       });
     }
   };
-
-    const columnsHeader = ['Name', 'Email', 'Status', 'Verified'];
-
 
   return (
      <AppLayout title="">
@@ -117,23 +118,47 @@ export default function ArchiveUser() {
 
       <TableHeader>
         <TableRow>
-          {columnsHeader.map((column) => (
-            <TableHead key={column}>
-              <Button variant="ghost" size="sm" className="flex items-center gap-1">
-                {column}
-                <ArrowUpDown className="h-4 w-4" />
-              </Button>
-            </TableHead>
-          ))}
+          <TableHead>
+            <div className="flex items-center gap-1">
+              <Label className="text-sm font-medium">Name</Label>
+            </div>
+          </TableHead>
+          <TableHead>
+            <div className="flex items-center gap-1">
+              <Label className="text-sm font-medium">Email</Label>
+            </div>
+          </TableHead>
+          <TableHead>
+            <div className="flex items-center gap-1">
+              <Label className="text-sm font-medium">Status</Label>
+            </div>
+          </TableHead>
+          <TableHead>
+            <div className="flex items-center gap-1">
+              <Label className="text-sm font-medium">Verified</Label>
+            </div>
+          </TableHead>
           <TableHead></TableHead>
         </TableRow>
       </TableHeader>
 
       <TableBody>
-        {users.data.length === 0 ? (
+        {isSearching ? (
           <TableRow>
-            <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
-              No archived users found
+            <TableCell
+              colSpan={5}
+              className="h-24 text-center"
+            >
+              <div className="flex items-center justify-center gap-2 text-gray-500">
+                <Loader2 className="h-5 w-5 animate-spin" />
+                <span>Loading users...</span>
+              </div>
+            </TableCell>
+          </TableRow>
+        ) : users.data.length === 0 ? (
+          <TableRow>
+            <TableCell colSpan={5} className="h-24 text-center text-gray-500">
+              No archived users found.
             </TableCell>
           </TableRow>
         ) : (
@@ -184,7 +209,11 @@ export default function ArchiveUser() {
     </Table>
 
       {users.data.length > 0 && (
-        <div className="mt-4">
+        <div className="flex w-full items-center justify-between gap-2 bg-card px-2 pt-4">
+          <div className="text-sm text-muted-foreground">
+            Showing {users.from || 0} to {users.to || 0} of{' '}
+            {users.total} results
+          </div>
           <PaginationComp links={users.links} />
         </div>
       )}

@@ -10,7 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { ArrowUpDown, MoreHorizontal, RotateCcw, ArrowLeft } from 'lucide-react'
+import { ArrowUpDown, MoreHorizontal, RotateCcw, ArrowLeft, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import {
@@ -24,6 +24,7 @@ import { Device } from '@/types/device'
 import { Pagination } from '@/types/pagination'
 import PaginationComp from '@/components/pagination'
 import { Badge } from '@/components/ui/badge'
+import { Label } from '@/components/ui/label'
 import {
   Dialog,
   DialogContent,
@@ -41,7 +42,7 @@ export default function ArchiveDevices() {
   }>().props
   const [search, setSearch] = React.useState(filters.search || "")
   const [selectedDevices, setSelectedDevices] = useState<number[]>([])
-
+  const [isSearching, setIsSearching] = useState(false)
   const [isUnarchiveConfirmOpen, setIsUnarchiveConfirmOpen] = useState(false)
   const [deviceToUnarchive, setDeviceToUnarchive] = useState<Device | null>(null)
   const { patch: unarchivePatch, processing: isRestoring } = useForm({})
@@ -52,6 +53,8 @@ export default function ArchiveDevices() {
         preserveState: true,
         preserveScroll: true,
         replace: true,
+        onStart: () => setIsSearching(true),
+        onFinish: () => setIsSearching(false),
       })
     }, 500)
 
@@ -120,13 +123,6 @@ export default function ArchiveDevices() {
     })
   }
 
-  const columnsHeader = [
-    'Device Name',
-    'Serial Number',
-    'Owner',
-    'Status',
-  ]
-
   return (
     <AppLayout title="">
       <Head title="Archived Devices" />
@@ -175,32 +171,53 @@ export default function ArchiveDevices() {
             <TableRow>
               <TableHead className="w-12">
                 <Checkbox
+                  className="border-gray-300"
                   checked={devices.data.length > 0 && selectedDevices.length === devices.data.length}
                   onCheckedChange={(checked) => handleSelectAll(checked === true)}
                   aria-label="Select all"
                 />
               </TableHead>
-              {columnsHeader.map((column) => (
-                <TableHead key={column}>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="flex items-center gap-1"
-                  >
-                    {column}
-                    <ArrowUpDown className="h-4 w-4" />
-                  </Button>
-                </TableHead>
-              ))}
+              <TableHead>
+                <div className="flex items-center gap-1">
+                  <Label className="text-sm font-medium">Device Name</Label>
+                </div>
+              </TableHead>
+              <TableHead>
+                <div className="flex items-center gap-1">
+                  <Label className="text-sm font-medium">Serial Number</Label>
+                </div>
+              </TableHead>
+              <TableHead>
+                <div className="flex items-center gap-1">
+                  <Label className="text-sm font-medium">Owner</Label>
+                </div>
+              </TableHead>
+              <TableHead>
+                <div className="flex items-center gap-1">
+                  <Label className="text-sm font-medium">Status</Label>
+                </div>
+              </TableHead>
               <TableHead></TableHead>
             </TableRow>
           </TableHeader>
 
           <TableBody>
-            {devices.data.length === 0 ? (
+            {isSearching ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
-                  No archived devices found
+                <TableCell
+                  colSpan={6}
+                  className="h-24 text-center"
+                >
+                  <div className="flex items-center justify-center gap-2 text-gray-500">
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                    <span>Loading devices...</span>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ) : devices.data.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={6} className="h-24 text-center text-gray-500">
+                  No archived devices found.
                 </TableCell>
               </TableRow>
             ) : (
@@ -208,6 +225,7 @@ export default function ArchiveDevices() {
                 <TableRow key={device.id}>
                   <TableCell className="w-12">
                     <Checkbox
+                      className="border-gray-300"
                       checked={selectedDevices.includes(device.id)}
                       onCheckedChange={(checked) =>
                         handleSelectDevice(device.id, checked === true)
@@ -259,7 +277,11 @@ export default function ArchiveDevices() {
         </Table>
 
         {devices.data.length > 0 && (
-          <div className="mt-4">
+          <div className="flex w-full items-center justify-between gap-2 bg-card px-2 pt-4">
+            <div className="text-sm text-muted-foreground">
+              Showing {devices.from || 0} to {devices.to || 0} of{' '}
+              {devices.total} results
+            </div>
             <PaginationComp links={devices.links} />
           </div>
         )}

@@ -4,6 +4,7 @@ import SearchInput from '@/components/search-input';
 import { cleanFilters } from '@/lib/filter-helpers';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -33,10 +34,7 @@ import {
     Filter,
     Loader2,
     MoreHorizontal,
-    Users as UsersIcon,
     AlertTriangle,
-    UserIcon,
-    Leaf,
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useDebounce } from 'use-debounce';
@@ -58,21 +56,12 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { toast } from 'sonner';
-import { Card, CardTitle } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 
 type SortField = 'name' | 'email' | 'created_at';
 type SortDirection = 'asc' | 'desc';
 
 export default function Users() {
-    const columnsHeader = [
-        { key: 'name', label: 'Name', sortable: true },
-        { key: 'email', label: 'Email', sortable: true },
-        { key: 'address', label: 'Address', sortable: false },
-        { key: 'status', label: 'Status', sortable: false },
-        { key: 'verified', label: 'Verified', sortable: false },
-        { key: 'last_active', label: 'Last active', sortable: false },
-    ];
-
     const formatLastActive = (lastLoginAt: string | null): string => {
         if (!lastLoginAt) return 'Never';
         const d = new Date(lastLoginAt);
@@ -95,6 +84,8 @@ export default function Users() {
     const [debounceSearch] = useDebounce(data.search, 500);
     const [isSearching, setIsSearching] = useState(false);
     const hasMounted = useRef(false);
+
+    const [selectedUsers, setSelectedUsers] = useState<number[]>([]);
 
     // Archive confirmation modal state
     const [isArchiveConfirmOpen, setIsArchiveConfirmOpen] = useState(false);
@@ -211,6 +202,22 @@ export default function Users() {
         return data.direction === 'asc'
             ? <ArrowUp className="h-4 w-4" />
             : <ArrowDown className="h-4 w-4" />;
+    };
+
+    const handleSelectAll = (checked: boolean) => {
+        if (checked) {
+            setSelectedUsers(users.data.map((user) => user.id));
+        } else {
+            setSelectedUsers([]);
+        }
+    };
+
+    const handleSelectUser = (userId: number, checked: boolean) => {
+        if (checked) {
+            setSelectedUsers([...selectedUsers, userId]);
+        } else {
+            setSelectedUsers(selectedUsers.filter((id) => id !== userId));
+        }
     };
 
     return (
@@ -351,23 +358,62 @@ export default function Users() {
                 <Table className="border">
                     <TableHeader>
                         <TableRow>
-                            {columnsHeader.map((column) => (
-                                <TableHead key={column.key}>
-                                    {column.sortable ? (
-                                        <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            className="flex items-center gap-1"
-                                            onClick={() => handleSort(column.key as SortField)}
-                                        >
-                                            {column.label}
-                                            {getSortIcon(column.key)}
-                                        </Button>
-                                    ) : (
-                                        <span className="px-3">{column.label}</span>
-                                    )}
-                                </TableHead>
-                            ))}
+                            <TableHead className="w-12">
+                                <Checkbox
+                                    className="border-gray-300"
+                                    checked={selectedUsers.length === users.data.length && users.data.length > 0}
+                                    onCheckedChange={handleSelectAll}
+                                    aria-label="Select all"
+                                />
+                            </TableHead>
+                            <TableHead>
+                                <div className="flex items-center gap-1">
+                                    <Label className="text-sm font-medium">Name</Label>
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-8 w-8"
+                                        aria-label="Sort Name"
+                                        onClick={() => handleSort('name')}
+                                    >
+                                        {getSortIcon('name')}
+                                    </Button>
+                                </div>
+                            </TableHead>
+                            <TableHead>
+                                <div className="flex items-center gap-1">
+                                    <Label className="text-sm font-medium">Email</Label>
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-8 w-8"
+                                        aria-label="Sort Email"
+                                        onClick={() => handleSort('email')}
+                                    >
+                                        {getSortIcon('email')}
+                                    </Button>
+                                </div>
+                            </TableHead>
+                            <TableHead>
+                                <div className="flex items-center gap-1">
+                                    <Label className="text-sm font-medium">Address</Label>
+                                </div>
+                            </TableHead>
+                            <TableHead>
+                                <div className="flex items-center gap-1">
+                                    <Label className="text-sm font-medium">Status</Label>
+                                </div>
+                            </TableHead>
+                            <TableHead>
+                                <div className="flex items-center gap-1">
+                                    <Label className="text-sm font-medium">Verified</Label>
+                                </div>
+                            </TableHead>
+                            <TableHead>
+                                <div className="flex items-center gap-1">
+                                    <Label className="text-sm font-medium">Last active</Label>
+                                </div>
+                            </TableHead>
                             <TableHead></TableHead>
                         </TableRow>
                     </TableHeader>
@@ -376,7 +422,7 @@ export default function Users() {
                         {isSearching ? (
                             <TableRow>
                                 <TableCell
-                                    colSpan={columnsHeader.length + 1}
+                                    colSpan={8}
                                     className="h-24 text-center"
                                 >
                                     <div className="flex items-center justify-center gap-2 text-gray-500">
@@ -388,15 +434,25 @@ export default function Users() {
                         ) : users.data.length === 0 ? (
                             <TableRow>
                                 <TableCell
-                                    colSpan={columnsHeader.length + 1}
+                                    colSpan={8}
                                     className="h-24 text-center text-gray-500"
                                 >
-                                    No registered users found.
+                                    No users found.
                                 </TableCell>
                             </TableRow>
                         ) : (
                             users.data.map((user) => (
                                 <TableRow key={user.email}>
+                                    <TableCell className="w-12">
+                                        <Checkbox
+                                            className="border-gray-300"
+                                            checked={selectedUsers.includes(user.id)}
+                                            onCheckedChange={(checked) =>
+                                                handleSelectUser(user.id, checked as boolean)
+                                            }
+                                            aria-label={`Select ${user.first_name} ${user.last_name}`}
+                                        />
+                                    </TableCell>
                                     <TableCell className="font-medium">
                                         {user.first_name} {user.last_name}
                                     </TableCell>
