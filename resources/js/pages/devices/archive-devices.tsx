@@ -34,14 +34,17 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { toast } from 'sonner'
+import { Card } from '@/components/ui/card'
 
 type SortField = 'device_name' | 'serial_number' | 'status' | 'created_at';
 type SortDirection = 'asc' | 'desc';
 
 export default function ArchiveDevices() {
-  const { devices, filters } = usePage<{
+  const { devices, filters, archivedCount, filteredArchivedCount } = usePage<{
     devices: Pagination<Device>
     filters: { search?: string; sort?: string; direction?: string }
+    archivedCount: number
+    filteredArchivedCount: number
   }>().props
 
   const { data, setData } = useForm({
@@ -200,6 +203,21 @@ export default function ArchiveDevices() {
           </div>
          
         </div>
+
+        {/* Archived Devices Count Card */}
+        <Card className="rounded-lg p-4 w-3xs mb-4 border">
+            <div className="flex items-center gap-10">
+                <div className="flex items-center gap-2">
+                    <span className="text-3xl font-bold">{filteredArchivedCount}</span>
+                    <Badge className="bg-gray-500 px-2 py-0.5 text-xs text-white">
+                        {filteredArchivedCount === archivedCount ? 'Total' : `${filteredArchivedCount} of ${archivedCount}`}
+                    </Badge>
+                </div>
+            </div>
+            <p className="text-sm text-gray-600 mt-2">
+                {filteredArchivedCount === archivedCount ? 'Archived devices' : 'Filtered archived devices'}
+            </p>
+        </Card>
 
         <div className="flex flex-wrap gap-3 items-center justify-between">
           <SearchInput

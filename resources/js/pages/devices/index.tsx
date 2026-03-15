@@ -42,10 +42,11 @@ type SortField = 'device_name' | 'serial_number' | 'status' | 'created_at';
 type SortDirection = 'asc' | 'desc';
 
 export default function Devices() {
-  const { devices, filters, deviceCount } = usePage<{
+  const { devices, filters, deviceCount, filteredCount } = usePage<{
     devices: Pagination<Device>;
     filters: { search: string; status?: string; sort?: string; direction?: string };
     deviceCount: number;
+    filteredCount: number;
   }>().props;
 
   const [selectedDevices, setSelectedDevices] = useState<number[]>([])
@@ -310,14 +311,16 @@ export default function Devices() {
                 <Card className="rounded-lg p-4 w-3xs mb-4 border">
                     <div className="flex items-center gap-10">
                         <div className="flex items-center gap-2">
-                            <span className="text-3xl font-bold">{deviceCount}</span>
+                            <span className="text-3xl font-bold">{filteredCount}</span>
                             <Badge className="bg-gray-500 px-2 py-0.5 text-xs text-white">
-                                Total
+                                {filteredCount === deviceCount ? 'Total' : `${filteredCount} of ${deviceCount}`}
                             </Badge>
                         </div>
                         
                     </div>
-                    <p className="text-sm text-gray-600 mt-2">Registered devices</p>
+                    <p className="text-sm text-gray-600 mt-2">
+                        {filteredCount === deviceCount ? 'Registered devices' : 'Filtered devices'}
+                    </p>
                 </Card>
 
         <div className="flex flex-wrap gap-3 items-center justify-between">

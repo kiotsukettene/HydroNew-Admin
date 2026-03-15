@@ -48,6 +48,7 @@ class DeviceController extends Controller
 
         $query->orderBy($sortField, $sortDirection);
 
+        $filteredCount = $query->count();
         $devices = $query->paginate(10);
 
         $deviceCount = Device::where('is_archived', false)->count();
@@ -60,6 +61,7 @@ class DeviceController extends Controller
         return Inertia::render('devices/index', [
             'devices' => $devices,
             'deviceCount' => $deviceCount,
+            'filteredCount' => $filteredCount,
             'users' => $users,
             'filters' => $filters,
         ]);
@@ -96,6 +98,7 @@ class DeviceController extends Controller
 
         $query->orderBy($sortField, $sortDirection);
 
+        $filteredArchivedCount = $query->count();
         $devices = $query->paginate(10);
 
         $archivedCount = Device::where('is_archived', true)->count();
@@ -103,6 +106,7 @@ class DeviceController extends Controller
         return Inertia::render('devices/archive-devices', [
             'devices' => $devices,
             'archivedCount' => $archivedCount,
+            'filteredArchivedCount' => $filteredArchivedCount,
             'filters' => $filters,
         ]);
     }
