@@ -27,7 +27,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('users', UserController::class);
 
     Route::get('analytics/api/users-devices', [AnalyticsController::class, 'getUsersDevices'])->name('analytics.api.users-devices');
-    Route::get('analytics/api/crops-harvest', [AnalyticsController::class, 'getCropsHarvest'])->name('analytics.api.crops-harvest');
+    Route::get('analytics/api/crops-harvest', [AnalyticsController::class, 'getCropsHarvestYield'])->name('analytics.api.crops-harvest');
     Route::get('analytics/api/yields', [AnalyticsController::class, 'getYields'])->name('analytics.api.yields');
     Route::get('analytics/api/water-treatment', [AnalyticsController::class, 'getWaterTreatment'])->name('analytics.api.water-treatment');
     Route::get('analytics/export/pdf', [AnalyticsExportController::class, 'exportPdf'])->name('analytics.export.pdf');
