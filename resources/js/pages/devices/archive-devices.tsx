@@ -130,6 +130,17 @@ export default function ArchiveDevices() {
   return (
     <AppLayout title="">
       <Head title="Archived Devices" />
+
+      <div className='p-4'>
+         <Button
+            size="default"
+            className="w-auto"
+            onClick={() => router.visit("/devices", { preserveState: false })}
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Devices
+          </Button>
+      </div>
       <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
         <div className="mb-6 flex items-center justify-between">
           <div>
@@ -138,15 +149,7 @@ export default function ArchiveDevices() {
               View and manage archived devices
             </p>
           </div>
-          <Button
-            variant="secondary"
-            size="default"
-            className="w-auto"
-            onClick={() => router.visit("/devices", { preserveState: false })}
-          >
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Devices
-          </Button>
+         
         </div>
 
         <div className="flex flex-wrap gap-3 items-center justify-between">

@@ -5,7 +5,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { CheckCircle2, Loader2, Mail, Reply, X } from 'lucide-react'
+import { CheckCircle2, Loader2, Mail, Reply, X} from 'lucide-react'
 import SearchInput from '@/components/search-input'
 import { cleanFilters } from '@/lib/filter-helpers'
 import { Pagination } from '@/types/pagination'
@@ -14,6 +14,7 @@ import PaginationComp from '@/components/pagination'
 import { useDebounce } from 'use-debounce'
 import { toast } from 'sonner'
 import { HighlightText } from '@/components/highlight-text'
+import { Separator } from '@/components/ui/separator'
 
 const CATEGORY_LABELS: Record<FeedbackCategory, string> = {
   bug_report: 'Bug report',
@@ -241,7 +242,7 @@ export default function Feedback() {
                       <span>{formatDate(item.created_at)}</span>
                     </div>
                     {item.replied && (
-                      <Badge variant="default" className="text-xs bg-green-500 hover:bg-green-600 shrink-0">
+                      <Badge variant="default" className="text-xs bg-green-700 shrink-0">
                         Replied
                       </Badge>
                     )}
@@ -274,9 +275,10 @@ export default function Feedback() {
               <div className="flex items-center gap-2 shrink-0">
                 <Badge variant="secondary" className="text-xs">
                   <HighlightText text={CATEGORY_LABELS[selectedFeedback.category]} highlight={data.search} />
-                </Badge>
+                </Badge> 
+            
                 {selectedFeedback.replied && (
-                  <Badge variant="default" className="text-xs bg-green-500 hover:bg-green-600">
+                  <Badge variant="default" className="text-xs bg-green-700">
                     Replied
                   </Badge>
                 )}
