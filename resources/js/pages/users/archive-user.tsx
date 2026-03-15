@@ -3,6 +3,13 @@ import { Head, usePage, router, useForm } from '@inertiajs/react'
 import React, { useEffect, useRef, useState } from 'react'
 import { cleanFilters } from '@/lib/filter-helpers'
 import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
+import {
   Table,
   TableBody,
   TableCell,
@@ -42,7 +49,7 @@ type SortDirection = 'asc' | 'desc';
 export default function ArchiveUser() {
   const { users, filters, archivedCount, filteredArchivedCount } = usePage<{
     users: Pagination<User>
-    filters: { search?: string; sort?: string; direction?: string }
+    filters: { search?: string; sort?: string; direction?: string; per_page?: number }
     archivedCount: number
     filteredArchivedCount: number
   }>().props
@@ -51,6 +58,7 @@ export default function ArchiveUser() {
     search: filters?.search || '',
     sort: (filters?.sort as SortField) || 'created_at',
     direction: (filters?.direction as SortDirection) || 'desc',
+    per_page: filters?.per_page || 10,
   })
 
   const [isSearching, setIsSearching] = useState(false)
@@ -75,8 +83,9 @@ export default function ArchiveUser() {
       router.get("/users/archived", cleanFilters({ 
         search: data.search,
         sort: data.sort,
-        direction: data.direction
-      }, { sort: 'created_at', direction: 'desc' }), {
+        direction: data.direction,
+        per_page: data.per_page
+      }, { sort: 'created_at', direction: 'desc', per_page: 10 }), {
         preserveState: true,
         preserveScroll: true,
         replace: true,
@@ -86,7 +95,7 @@ export default function ArchiveUser() {
     }, 500)
 
     return () => clearTimeout(timer)
-  }, [data.search, data.sort, data.direction])
+  }, [data.search, data.sort, data.direction, data.per_page])
 
   const handleSort = (field: SortField) => {
     const newDirection = data.sort === field && data.direction === 'asc' ? 'desc' : 'asc';
@@ -96,14 +105,36 @@ export default function ArchiveUser() {
       cleanFilters({
         search: data.search,
         sort: field,
-        direction: newDirection
-      }, { sort: 'created_at', direction: 'desc' }),
+        direction: newDirection,
+        per_page: data.per_page
+      }, { sort: 'created_at', direction: 'desc', per_page: 10 }),
       {
         preserveState: true,
         preserveScroll: true,
         replace: true,
         onSuccess: () => {
           setData({ ...data, sort: field, direction: newDirection });
+        }
+      }
+    );
+  };
+
+  const handlePerPageChange = (value: string) => {
+    const perPage = parseInt(value);
+    router.get(
+      '/users/archived',
+      cleanFilters({
+        search: data.search,
+        sort: data.sort,
+        direction: data.direction,
+        per_page: perPage
+      }, { sort: 'created_at', direction: 'desc', per_page: 10 }),
+      {
+        preserveState: true,
+        preserveScroll: true,
+        replace: true,
+        onSuccess: () => {
+          setData('per_page', perPage);
         }
       }
     );
@@ -222,11 +253,27 @@ export default function ArchiveUser() {
                 </Card>
 
                 <div className="flex flex-wrap gap-3 items-center justify-between">
-                  <SearchInput
-                    placeholder="Search archived users..."
-                    value={data.search}
-                    onChange={(value) => setData('search', value)}
-                  />
+                  <div className="flex gap-3 items-center">
+                    <SearchInput
+                      placeholder="Search archived users..."
+                      value={data.search}
+                      onChange={(value) => setData('search', value)}
+                    />
+                    <div className="flex items-center gap-2">
+                      <Label className="text-sm text-muted-foreground whitespace-nowrap">Show</Label>
+                      <Select value={data.per_page.toString()} onValueChange={handlePerPageChange}>
+                        <SelectTrigger className="w-[70px] h-9">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="10">10</SelectItem>
+                          <SelectItem value="25">25</SelectItem>
+                          <SelectItem value="50">50</SelectItem>
+                          <SelectItem value="100">100</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
                   <div className="flex gap-3">
                     {selectedUsers.length > 0 && (
                       <Button

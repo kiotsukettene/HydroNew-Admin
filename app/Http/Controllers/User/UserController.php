@@ -14,7 +14,7 @@ class UserController extends Controller
      */
     public function index(Request $request)
     {
-        $filters = $request->only(['search', 'sort', 'direction', 'status']);
+        $filters = $request->only(['search', 'sort', 'direction', 'status', 'per_page']);
 
         $query = User::where('role', '=', 'user')
                      ->where('is_archived', false);
@@ -45,7 +45,13 @@ class UserController extends Controller
         }
 
         $filteredCount = $query->count();
-        $users = $query->paginate(10);
+        
+        // Get per_page value from request, default to 10, allow only [10, 25, 50, 100]
+        $perPage = in_array($filters['per_page'] ?? 10, [10, 25, 50, 100]) 
+            ? ($filters['per_page'] ?? 10) 
+            : 10;
+        
+        $users = $query->paginate($perPage);
 
         $userCount = User::where('role', '=', 'user')->where('is_archived', false)->count();
 
@@ -62,7 +68,7 @@ class UserController extends Controller
      */
     public function archived(Request $request)
     {
-        $filters = $request->only(['search', 'sort', 'direction']);
+        $filters = $request->only(['search', 'sort', 'direction', 'per_page']);
 
         $query = User::where('role', '=', 'user')
                     ->where('is_archived', true);
@@ -88,7 +94,13 @@ class UserController extends Controller
         }
 
         $filteredArchivedCount = $query->count();
-        $users = $query->paginate(10);
+        
+        // Get per_page value from request, default to 10, allow only [10, 25, 50, 100]
+        $perPage = in_array($filters['per_page'] ?? 10, [10, 25, 50, 100]) 
+            ? ($filters['per_page'] ?? 10) 
+            : 10;
+        
+        $users = $query->paginate($perPage);
 
         $archivedCount = User::where('role', '=', 'user')
                             ->where('is_archived', true)

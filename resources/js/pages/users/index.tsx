@@ -70,7 +70,7 @@ export default function Users() {
 
     const { users, filters, userCount, filteredCount } = usePage<{
         users: Pagination<User>;
-        filters: { search: string; sort?: string; direction?: string; status?: string };
+        filters: { search: string; sort?: string; direction?: string; status?: string; per_page?: number };
         userCount: number;
         filteredCount: number;
     }>().props;
@@ -81,6 +81,7 @@ export default function Users() {
         direction: (filters.direction as SortDirection) || 'desc',
         status: filters.status || 'all',
         verified: 'all',
+        per_page: filters.per_page || 10,
     });
     const [debounceSearch] = useDebounce(data.search, 500);
     const [isSearching, setIsSearching] = useState(false);
@@ -180,8 +181,9 @@ export default function Users() {
                 sort: field,
                 direction: newDirection,
                 status: data.status,
-                verified: data.verified
-            }, { sort: 'created_at', direction: 'desc', status: 'all', verified: 'all' }),
+                verified: data.verified,
+                per_page: data.per_page
+            }, { sort: 'created_at', direction: 'desc', status: 'all', verified: 'all', per_page: 10 }),
             {
                 preserveState: true,
                 preserveScroll: true,
@@ -202,13 +204,37 @@ export default function Users() {
                 direction: data.direction,
                 status: filterType === 'status' ? value : data.status,
                 verified: filterType === 'verified' ? value : data.verified,
-            }, { sort: 'created_at', direction: 'desc', status: 'all', verified: 'all' }),
+                per_page: data.per_page
+            }, { sort: 'created_at', direction: 'desc', status: 'all', verified: 'all', per_page: 10 }),
             {
                 preserveState: true,
                 preserveScroll: true,
                 replace: true,
                 onSuccess: () => {
                     setData(filterType, value);
+                }
+            }
+        );
+    };
+
+    const handlePerPageChange = (value: string) => {
+        const perPage = parseInt(value);
+        router.get(
+            '/users',
+            cleanFilters({
+                search: data.search,
+                sort: data.sort,
+                direction: data.direction,
+                status: data.status,
+                verified: data.verified,
+                per_page: perPage
+            }, { sort: 'created_at', direction: 'desc', status: 'all', verified: 'all', per_page: 10 }),
+            {
+                preserveState: true,
+                preserveScroll: true,
+                replace: true,
+                onSuccess: () => {
+                    setData('per_page', perPage);
                 }
             }
         );
@@ -228,8 +254,9 @@ export default function Users() {
                     sort: data.sort,
                     direction: data.direction,
                     status: data.status,
-                    verified: data.verified
-                }, { sort: 'created_at', direction: 'desc', status: 'all', verified: 'all' }),
+                    verified: data.verified,
+                    per_page: data.per_page
+                }, { sort: 'created_at', direction: 'desc', status: 'all', verified: 'all', per_page: 10 }),
                 {
                     preserveState: true,
                     preserveScroll: true,
@@ -239,7 +266,7 @@ export default function Users() {
                 },
             );
         }
-    }, [debounceSearch, data.sort, data.direction, data.status, data.verified]);
+    }, [debounceSearch, data.sort, data.direction, data.status, data.verified, data.per_page]);
 
     const getSortIcon = (field: string) => {
         if (data.sort !== field) return <ArrowUpDown className="h-4 w-4" />;
@@ -293,11 +320,27 @@ export default function Users() {
                         </Card>
 
                 <div className="flex flex-wrap gap-3 items-center justify-between">
-                    <SearchInput
-                        value={data.search}
-                        onChange={(value) => setData('search', value)}
-                        placeholder="Search users..."
-                    />
+                    <div className="flex gap-3 items-center">
+                        <SearchInput
+                            value={data.search}
+                            onChange={(value) => setData('search', value)}
+                            placeholder="Search users..."
+                        />
+                        <div className="flex items-center gap-2">
+                            <Label className="text-sm text-muted-foreground whitespace-nowrap">Show</Label>
+                            <Select value={data.per_page.toString()} onValueChange={handlePerPageChange}>
+                                <SelectTrigger className="w-[70px] h-9">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="10">10</SelectItem>
+                                    <SelectItem value="25">25</SelectItem>
+                                    <SelectItem value="50">50</SelectItem>
+                                    <SelectItem value="100">100</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </div>
 
                     <div className="flex gap-3">
                         {selectedUsers.length > 0 && getEligibleUsersForArchive().length > 0 && (
@@ -374,7 +417,7 @@ export default function Users() {
                                             size="sm"
                                             className="w-full"
                                             onClick={() => {
-                                                router.get(
+                                                        router.get(
                                                     '/users',
                                                     cleanFilters({
                                                         search: data.search,
@@ -382,7 +425,8 @@ export default function Users() {
                                                         direction: data.direction,
                                                         status: 'all',
                                                         verified: 'all',
-                                                    }, { sort: 'created_at', direction: 'desc', status: 'all', verified: 'all' }),
+                                                        per_page: data.per_page
+                                                    }, { sort: 'created_at', direction: 'desc', status: 'all', verified: 'all', per_page: 10 }),
                                                     {
                                                         preserveState: true,
                                                         preserveScroll: true,
