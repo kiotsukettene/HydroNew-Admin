@@ -14,6 +14,13 @@ import { ArrowUpDown, ArrowUp, ArrowDown, MoreHorizontal, RotateCcw, ArrowLeft, 
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -42,7 +49,7 @@ type SortDirection = 'asc' | 'desc';
 export default function ArchiveDevices() {
   const { devices, filters, archivedCount, filteredArchivedCount } = usePage<{
     devices: Pagination<Device>
-    filters: { search?: string; sort?: string; direction?: string }
+    filters: { search?: string; sort?: string; direction?: string; per_page?: number }
     archivedCount: number
     filteredArchivedCount: number
   }>().props
@@ -51,6 +58,7 @@ export default function ArchiveDevices() {
     search: filters.search || '',
     sort: (filters?.sort as SortField) || 'created_at',
     direction: (filters?.direction as SortDirection) || 'desc',
+    per_page: filters?.per_page || 10,
   })
 
   const [selectedDevices, setSelectedDevices] = useState<number[]>([])
@@ -71,8 +79,9 @@ export default function ArchiveDevices() {
       router.get("/devices/archived", cleanFilters({ 
         search: data.search,
         sort: data.sort,
-        direction: data.direction
-      }, { sort: 'created_at', direction: 'desc' }), {
+        direction: data.direction,
+        per_page: data.per_page
+      }, { sort: 'created_at', direction: 'desc', per_page: 10 }), {
         preserveState: true,
         preserveScroll: true,
         replace: true,
@@ -82,7 +91,7 @@ export default function ArchiveDevices() {
     }, 500)
 
     return () => clearTimeout(timer)
-  }, [data.search, data.sort, data.direction])
+  }, [data.search, data.sort, data.direction, data.per_page])
 
   const handleSort = (field: SortField) => {
     const newDirection = data.sort === field && data.direction === 'asc' ? 'desc' : 'asc';
@@ -92,14 +101,36 @@ export default function ArchiveDevices() {
       cleanFilters({
         search: data.search,
         sort: field,
-        direction: newDirection
-      }, { sort: 'created_at', direction: 'desc' }),
+        direction: newDirection,
+        per_page: data.per_page
+      }, { sort: 'created_at', direction: 'desc', per_page: 10 }),
       {
         preserveState: true,
         preserveScroll: true,
         replace: true,
         onSuccess: () => {
           setData({ ...data, sort: field, direction: newDirection });
+        }
+      }
+    );
+  };
+
+  const handlePerPageChange = (value: string) => {
+    const perPage = parseInt(value);
+    router.get(
+      '/devices/archived',
+      cleanFilters({
+        search: data.search,
+        sort: data.sort,
+        direction: data.direction,
+        per_page: perPage
+      }, { sort: 'created_at', direction: 'desc', per_page: 10 }),
+      {
+        preserveState: true,
+        preserveScroll: true,
+        replace: true,
+        onSuccess: () => {
+          setData('per_page', perPage);
         }
       }
     );
@@ -220,11 +251,27 @@ export default function ArchiveDevices() {
         </Card>
 
         <div className="flex flex-wrap gap-3 items-center justify-between">
-          <SearchInput
-            placeholder="Search archived devices..."
-            value={data.search}
-            onChange={(value) => setData('search', value)}
-          />
+          <div className="flex gap-3 items-center">
+            <SearchInput
+              placeholder="Search archived devices..."
+              value={data.search}
+              onChange={(value) => setData('search', value)}
+            />
+            <div className="flex items-center gap-2">
+              <Label className="text-sm text-muted-foreground whitespace-nowrap">Show</Label>
+              <Select value={data.per_page.toString()} onValueChange={handlePerPageChange}>
+                <SelectTrigger className="w-[70px] h-9">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="10">10</SelectItem>
+                  <SelectItem value="25">25</SelectItem>
+                  <SelectItem value="50">50</SelectItem>
+                  <SelectItem value="100">100</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
           <div className="flex gap-3">
             {selectedDevices.length > 0 && (
               <Button

@@ -16,7 +16,7 @@ class DeviceController extends Controller
      */
     public function index(Request $request)
     {
-        $filters = $request->only(['search', 'status', 'sort', 'direction']);
+        $filters = $request->only(['search', 'status', 'sort', 'direction', 'per_page']);
 
         $query = Device::with('users')
             ->withCount(['hydroponic_setups as active_setups_count' => function ($q) {
@@ -49,7 +49,13 @@ class DeviceController extends Controller
         $query->orderBy($sortField, $sortDirection);
 
         $filteredCount = $query->count();
-        $devices = $query->paginate(10);
+        
+        // Get per_page value from request, default to 10, allow only [10, 25, 50, 100]
+        $perPage = in_array($filters['per_page'] ?? 10, [10, 25, 50, 100]) 
+            ? ($filters['per_page'] ?? 10) 
+            : 10;
+        
+        $devices = $query->paginate($perPage);
 
         $deviceCount = Device::where('is_archived', false)->count();
 
@@ -69,7 +75,7 @@ class DeviceController extends Controller
 
       public function archived(Request $request)
     {
-        $filters = $request->only(['search', 'status', 'sort', 'direction']);
+        $filters = $request->only(['search', 'status', 'sort', 'direction', 'per_page']);
 
         $query = Device::with('users')
             ->where('is_archived', true);
@@ -99,7 +105,13 @@ class DeviceController extends Controller
         $query->orderBy($sortField, $sortDirection);
 
         $filteredArchivedCount = $query->count();
-        $devices = $query->paginate(10);
+        
+        // Get per_page value from request, default to 10, allow only [10, 25, 50, 100]
+        $perPage = in_array($filters['per_page'] ?? 10, [10, 25, 50, 100]) 
+            ? ($filters['per_page'] ?? 10) 
+            : 10;
+        
+        $devices = $query->paginate($perPage);
 
         $archivedCount = Device::where('is_archived', true)->count();
 

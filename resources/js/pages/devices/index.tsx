@@ -44,7 +44,7 @@ type SortDirection = 'asc' | 'desc';
 export default function Devices() {
   const { devices, filters, deviceCount, filteredCount } = usePage<{
     devices: Pagination<Device>;
-    filters: { search: string; status?: string; sort?: string; direction?: string };
+    filters: { search: string; status?: string; sort?: string; direction?: string; per_page?: number };
     deviceCount: number;
     filteredCount: number;
   }>().props;
@@ -64,6 +64,7 @@ export default function Devices() {
     status: filters.status || 'all',
     sort: (filters.sort as SortField) || 'created_at',
     direction: (filters.direction as SortDirection) || 'desc',
+    per_page: filters.per_page || 10,
   })
 
   const [debounceSearch] = useDebounce(data.search, 500)
@@ -214,8 +215,9 @@ export default function Devices() {
         search: data.search,
         status: data.status,
         sort: field,
-        direction: newDirection
-      }, { sort: 'created_at', direction: 'desc', status: 'all' }),
+        direction: newDirection,
+        per_page: data.per_page
+      }, { sort: 'created_at', direction: 'desc', status: 'all', per_page: 10 }),
       {
         preserveState: true,
         preserveScroll: true,
@@ -247,8 +249,9 @@ export default function Devices() {
           search: debounceSearch,
           status: data.status,
           sort: data.sort,
-          direction: data.direction
-        }, { sort: 'created_at', direction: 'desc', status: 'all' }),
+          direction: data.direction,
+          per_page: data.per_page
+        }, { sort: 'created_at', direction: 'desc', status: 'all', per_page: 10 }),
         {
           preserveState: true,
           preserveScroll: true,
@@ -258,7 +261,7 @@ export default function Devices() {
         }
       )
     }
-  }, [debounceSearch, data.status, data.sort, data.direction])
+  }, [debounceSearch, data.status, data.sort, data.direction, data.per_page])
 
   const handleStatusChange = (status: string) => {
     router.get(
@@ -267,8 +270,9 @@ export default function Devices() {
         search: data.search,
         status: status,
         sort: data.sort,
-        direction: data.direction
-      }, { sort: 'created_at', direction: 'desc', status: 'all' }),
+        direction: data.direction,
+        per_page: data.per_page
+      }, { sort: 'created_at', direction: 'desc', status: 'all', per_page: 10 }),
       {
         preserveState: true,
         preserveScroll: true,
@@ -279,6 +283,28 @@ export default function Devices() {
       }
     )
   }
+
+  const handlePerPageChange = (value: string) => {
+    const perPage = parseInt(value);
+    router.get(
+      '/devices',
+      cleanFilters({
+        search: data.search,
+        status: data.status,
+        sort: data.sort,
+        direction: data.direction,
+        per_page: perPage
+      }, { sort: 'created_at', direction: 'desc', status: 'all', per_page: 10 }),
+      {
+        preserveState: true,
+        preserveScroll: true,
+        replace: true,
+        onSuccess: () => {
+          setData('per_page', perPage);
+        }
+      }
+    );
+  };
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
@@ -324,11 +350,27 @@ export default function Devices() {
                 </Card>
 
         <div className="flex flex-wrap gap-3 items-center justify-between">
-          <SearchInput
-            placeholder="Search by device name, serial number, or paired user..."
-            value={data.search}
-            onChange={(value) => setData('search', value)}
-          />
+          <div className="flex gap-3 items-center">
+            <SearchInput
+              placeholder="Search by device name, serial number, or paired user..."
+              value={data.search}
+              onChange={(value) => setData('search', value)}
+            />
+            <div className="flex items-center gap-2">
+              <Label className="text-sm text-muted-foreground whitespace-nowrap">Show</Label>
+              <Select value={data.per_page.toString()} onValueChange={handlePerPageChange}>
+                <SelectTrigger className="w-[70px] h-9">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="10">10</SelectItem>
+                  <SelectItem value="25">25</SelectItem>
+                  <SelectItem value="50">50</SelectItem>
+                  <SelectItem value="100">100</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
           <div className="flex gap-3">
             {selectedDevices.length > 0 && getEligibleDevicesForArchive().length > 0 && (
               <Button
