@@ -20,18 +20,21 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard/ph-tds-readings', [DashboardController::class, 'getPhTdsReadings'])->name('dashboard.ph-tds-readings');
 
     Route::get('users/archived', [UserController::class, 'archived'])->name('users.archived');
+    Route::patch('users/bulk-archive', [UserController::class, 'bulkArchive'])->name('users.bulk-archive');
+    Route::patch('users/bulk-unarchive', [UserController::class, 'bulkUnarchive'])->name('users.bulk-unarchive');
     Route::patch('users/{id}/archive', [UserController::class, 'archive'])->name('users.archive');
     Route::patch('users/{id}/unarchive', [UserController::class, 'unarchive'])->name('users.unarchive');
     Route::resource('users', UserController::class);
 
     Route::get('analytics/api/users-devices', [AnalyticsController::class, 'getUsersDevices'])->name('analytics.api.users-devices');
-    Route::get('analytics/api/crops-harvest', [AnalyticsController::class, 'getCropsHarvest'])->name('analytics.api.crops-harvest');
+    Route::get('analytics/api/crops-harvest', [AnalyticsController::class, 'getCropsHarvestYield'])->name('analytics.api.crops-harvest');
     Route::get('analytics/api/yields', [AnalyticsController::class, 'getYields'])->name('analytics.api.yields');
     Route::get('analytics/api/water-treatment', [AnalyticsController::class, 'getWaterTreatment'])->name('analytics.api.water-treatment');
     Route::get('analytics/export/pdf', [AnalyticsExportController::class, 'exportPdf'])->name('analytics.export.pdf');
     Route::resource('analytics', \App\Http\Controllers\Analytics\AnalyticsController::class);
 
     Route::get('devices/archived', [DeviceController::class, 'archived'])->name('devices.archived');
+    Route::patch('devices/bulk-archive', [DeviceController::class, 'bulkArchive'])->name('devices.bulk-archive');
     Route::patch('devices/bulk-unarchive', [DeviceController::class, 'bulkUnarchive'])->name('devices.bulk-unarchive');
     Route::patch('devices/{id}/archive', [DeviceController::class, 'archive'])->name('devices.archive');
     Route::patch('devices/{id}/unarchive', [DeviceController::class, 'unarchive'])->name('devices.unarchive');

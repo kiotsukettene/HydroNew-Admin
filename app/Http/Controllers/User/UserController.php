@@ -14,7 +14,7 @@ class UserController extends Controller
      */
     public function index(Request $request)
     {
-        $filters = $request->only(['search', 'sort', 'direction', 'status']);
+        $filters = $request->only(['search', 'sort', 'direction', 'status', 'per_page']);
 
         $query = User::where('role', '=', 'user')
                      ->where('is_archived', false);
@@ -44,13 +44,24 @@ class UserController extends Controller
             $query->orderBy($sortField, $sortDirection);
         }
 
-        $users = $query->paginate(10);
+        // Get per_page value from request, default to 10, allow only [10, 25, 50, 100]
+        $perPage = in_array($filters['per_page'] ?? 10, [10, 25, 50, 100])
+            ? ($filters['per_page'] ?? 10)
+            : 10;
 
-        $userCount = User::where('role', '=', 'user')->where('is_archived', false)->count();
+        $users = $query->paginate($perPage);
+        $filteredCount = $users->total();
+
+        // Only query total count if filters are applied, otherwise use filtered count
+        $hasFilters = !empty($filters['search']) || (!empty($filters['status']) && $filters['status'] !== 'all');
+        $userCount = $hasFilters
+            ? User::where('role', '=', 'user')->where('is_archived', false)->count()
+            : $filteredCount;
 
         return Inertia::render('users/index',[
             'users' => $users,
             'userCount' => $userCount,
+            'filteredCount' => $filteredCount,
             'filters' => $filters,
         ]);
     }
@@ -60,7 +71,7 @@ class UserController extends Controller
      */
     public function archived(Request $request)
     {
-        $filters = $request->only(['search']);
+        $filters = $request->only(['search', 'sort', 'direction', 'per_page']);
 
         $query = User::where('role', '=', 'user')
                     ->where('is_archived', true);
@@ -74,15 +85,35 @@ class UserController extends Controller
             });
         }
 
-        $users = $query->paginate(10);
+        // Apply sorting
+        $sortField = $filters['sort'] ?? 'created_at';
+        $sortDirection = $filters['direction'] ?? 'desc';
 
-        $archivedCount = User::where('role', '=', 'user')
-                            ->where('is_archived', true)
-                            ->count();
+        // Handle name sorting (concat first_name and last_name)
+        if ($sortField === 'name') {
+            $query->orderByRaw("CONCAT(first_name, ' ', last_name) {$sortDirection}");
+        } else {
+            $query->orderBy($sortField, $sortDirection);
+        }
+
+        // Get per_page value from request, default to 10, allow only [10, 25, 50, 100]
+        $perPage = in_array($filters['per_page'] ?? 10, [10, 25, 50, 100])
+            ? ($filters['per_page'] ?? 10)
+            : 10;
+
+        $users = $query->paginate($perPage);
+        $filteredArchivedCount = $users->total();
+
+        // Only query total count if filters are applied, otherwise use filtered count
+        $hasFilters = !empty($filters['search']);
+        $archivedCount = $hasFilters
+            ? User::where('role', '=', 'user')->where('is_archived', true)->count()
+            : $filteredArchivedCount;
 
         return Inertia::render('users/archive-user', [
             'users' => $users,
             'archivedCount' => $archivedCount,
+            'filteredArchivedCount' => $filteredArchivedCount,
             'filters' => $filters,
         ]);
     }
@@ -94,11 +125,24 @@ class UserController extends Controller
     {
         try {
             $user = User::findOrFail($id);
-            
+
             if ($user->is_archived) {
                 return redirect()->back()->withErrors(['error' => 'User is already archived.']);
             }
-            
+
+            // Validate archive conditions: user must be inactive
+            if ($user->status !== 'inactive') {
+                return redirect()->back()->withErrors(['error' => 'Only inactive users can be archived.']);
+            }
+
+            // Validate archive conditions: user must be inactive for at least 1 month
+            if ($user->last_login_at) {
+                $oneMonthAgo = now()->subMonth();
+                if ($user->last_login_at > $oneMonthAgo) {
+                    return redirect()->back()->withErrors(['error' => 'User must be inactive for at least 1 month before archiving.']);
+                }
+            }
+
             $user->is_archived = true;
             $user->save();
 
@@ -109,17 +153,57 @@ class UserController extends Controller
     }
 
     /**
+     * Bulk archive users
+     */
+    public function bulkArchive(Request $request)
+    {
+        $validated = $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'integer|exists:users,id',
+        ]);
+
+        $oneMonthAgo = now()->subMonth();
+
+        // Find users that meet archive conditions
+        $eligibleUsers = User::whereIn('id', $validated['ids'])
+            ->where('is_archived', false)
+            ->where('status', 'inactive')
+            ->where(function ($q) use ($oneMonthAgo) {
+                $q->whereNull('last_login_at')
+                  ->orWhere('last_login_at', '<=', $oneMonthAgo);
+            })
+            ->get();
+
+        if ($eligibleUsers->isEmpty()) {
+            return redirect()->back()->withErrors(['error' => 'No users meet the archive requirements (inactive for at least 1 month).']);
+        }
+
+        $count = $eligibleUsers->count();
+        $ineligibleCount = count($validated['ids']) - $count;
+
+        // Archive eligible users
+        User::whereIn('id', $eligibleUsers->pluck('id'))->update(['is_archived' => true]);
+
+        $message = "{$count} user(s) archived successfully.";
+        if ($ineligibleCount > 0) {
+            $message .= " {$ineligibleCount} user(s) did not meet archive requirements and were skipped.";
+        }
+
+        return redirect()->back()->with('success', $message);
+    }
+
+    /**
      * Unarchive a user
      */
     public function unarchive(string $id)
     {
         try {
             $user = User::findOrFail($id);
-            
+
             if (!$user->is_archived) {
                 return redirect()->back()->withErrors(['error' => 'User is not archived.']);
             }
-            
+
             $user->is_archived = false;
             $user->save();
 
@@ -127,6 +211,23 @@ class UserController extends Controller
         } catch (\Exception $e) {
             return redirect()->back()->withErrors(['error' => 'Failed to restore user.']);
         }
+    }
+
+    /**
+     * Bulk unarchive users
+     */
+    public function bulkUnarchive(Request $request)
+    {
+        $validated = $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'integer|exists:users,id',
+        ]);
+
+        $count = User::whereIn('id', $validated['ids'])
+            ->where('is_archived', true)
+            ->update(['is_archived' => false]);
+
+        return redirect()->back()->with('success', "{$count} user(s) restored successfully.");
     }
 
     /**

@@ -42,7 +42,13 @@ class FeedbackController extends Controller
         if (!empty($filters['search'])) {
             $query->where(function ($q) use ($filters) {
                 $q->where('message', 'like', '%' . $filters['search'] . '%')
-                    ->orWhere('subject', 'like', '%' . $filters['search'] . '%');
+                    ->orWhere('subject', 'like', '%' . $filters['search'] . '%')
+                    ->orWhere('category', 'like', '%' . $filters['search'] . '%')
+                    ->orWhereHas('user', function ($userQuery) use ($filters) {
+                        $userQuery->where('first_name', 'like', '%' . $filters['search'] . '%')
+                            ->orWhere('last_name', 'like', '%' . $filters['search'] . '%')
+                            ->orWhere('email', 'like', '%' . $filters['search'] . '%');
+                    });
             });
         }
 

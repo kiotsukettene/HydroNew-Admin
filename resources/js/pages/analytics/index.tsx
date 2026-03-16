@@ -777,7 +777,7 @@ export default function Analytics() {
               {/* Row 1: Filtration Cycle History */}
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Filtration Stats Cards */}
-                <FiltrationCyclesCard />
+                <FiltrationCyclesCard weeklyFiltration={waterTreatment.weekly_filtration} />
 
                 {/* Weekly Filtration Chart */}
                 <Card className="lg:col-span-2 rounded-2xl">

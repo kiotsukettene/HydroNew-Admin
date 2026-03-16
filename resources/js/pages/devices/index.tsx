@@ -19,7 +19,7 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table'
-import { ArrowUpDown, ArrowUp, ArrowDown, MoreHorizontal, Pencil, Archive, Airplay, Filter, Loader2, AlertTriangle } from 'lucide-react'
+import { ArrowUpDown, ArrowUp, ArrowDown, MoreHorizontal, Pencil, Archive, Filter, Loader2, AlertTriangle } from 'lucide-react'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Card } from '@/components/ui/card'
@@ -38,14 +38,15 @@ import {
 } from '@/components/ui/dialog'
 import { toast } from 'sonner';
 
-type SortField = 'name' | 'serial_number' | 'status' | 'created_at';
+type SortField = 'device_name' | 'serial_number' | 'status' | 'created_at';
 type SortDirection = 'asc' | 'desc';
 
 export default function Devices() {
-  const { devices, filters, deviceCount } = usePage<{
+  const { devices, filters, deviceCount, filteredCount } = usePage<{
     devices: Pagination<Device>;
-    filters: { search: string; status?: string; sort?: string; direction?: string };
+    filters: { search: string; status?: string; sort?: string; direction?: string; per_page?: number };
     deviceCount: number;
+    filteredCount: number;
   }>().props;
 
   const [selectedDevices, setSelectedDevices] = useState<number[]>([])
@@ -56,12 +57,14 @@ export default function Devices() {
   const [isArchiveConfirmOpen, setIsArchiveConfirmOpen] = useState(false)
   const [deviceToArchive, setDeviceToArchive] = useState<Device | null>(null)
   const { patch: archivePatch, processing: isArchiving } = useForm({})
+  const [isBulkArchiveConfirmOpen, setIsBulkArchiveConfirmOpen] = useState(false)
 
   const { data, setData } = useForm({
     search: filters.search || '',
     status: filters.status || 'all',
     sort: (filters.sort as SortField) || 'created_at',
     direction: (filters.direction as SortDirection) || 'desc',
+    per_page: filters.per_page || 10,
   })
 
   const [debounceSearch] = useDebounce(data.search, 500)
@@ -132,6 +135,7 @@ export default function Devices() {
         onSuccess: () => {
           setIsArchiveConfirmOpen(false)
           setDeviceToArchive(null)
+          setSelectedDevices([])
           toast.success('Device archived successfully', {
             description: `${deviceToArchive.device_name} has been moved to archives.`,
           })
@@ -145,6 +149,44 @@ export default function Devices() {
       })
     }
   }
+
+  const getEligibleDevicesForArchive = () => {
+    return devices.data.filter(device => 
+      selectedDevices.includes(device.id) && canArchive(device)
+    );
+  };
+
+  const handleBulkArchive = () => {
+    const eligibleDevices = getEligibleDevicesForArchive();
+    if (eligibleDevices.length === 0) {
+      toast.error('No eligible devices selected', {
+        description: 'Only offline devices with no active hydroponic setups can be archived.',
+      });
+      return;
+    }
+    setIsBulkArchiveConfirmOpen(true);
+  };
+
+  const handleBulkArchiveConfirm = () => {
+    const eligibleDeviceIds = getEligibleDevicesForArchive().map(d => d.id);
+    
+    router.patch('/devices/bulk-archive', { ids: eligibleDeviceIds }, {
+      preserveScroll: true,
+      onSuccess: () => {
+        setSelectedDevices([]);
+        setIsBulkArchiveConfirmOpen(false);
+        toast.success('Devices archived successfully', {
+          description: `${eligibleDeviceIds.length} device(s) have been moved to archives.`,
+        });
+      },
+      onError: (errors) => {
+        const message = typeof errors?.error === 'string' ? errors.error : (Array.isArray(errors?.error) ? errors.error[0] : null);
+        toast.error('Failed to archive devices', {
+          description: message || 'Please try again later.',
+        });
+      },
+    });
+  };
 
   const handleCreateDevice = () => {
     post('/devices', {
@@ -173,8 +215,9 @@ export default function Devices() {
         search: data.search,
         status: data.status,
         sort: field,
-        direction: newDirection
-      }, { sort: 'created_at', direction: 'desc', status: 'all' }),
+        direction: newDirection,
+        per_page: data.per_page
+      }, { sort: 'created_at', direction: 'desc', status: 'all', per_page: 10 }),
       {
         preserveState: true,
         preserveScroll: true,
@@ -206,8 +249,9 @@ export default function Devices() {
           search: debounceSearch,
           status: data.status,
           sort: data.sort,
-          direction: data.direction
-        }, { sort: 'created_at', direction: 'desc', status: 'all' }),
+          direction: data.direction,
+          per_page: data.per_page
+        }, { sort: 'created_at', direction: 'desc', status: 'all', per_page: 10 }),
         {
           preserveState: true,
           preserveScroll: true,
@@ -217,7 +261,7 @@ export default function Devices() {
         }
       )
     }
-  }, [debounceSearch, data.status, data.sort, data.direction])
+  }, [debounceSearch])
 
   const handleStatusChange = (status: string) => {
     router.get(
@@ -226,8 +270,9 @@ export default function Devices() {
         search: data.search,
         status: status,
         sort: data.sort,
-        direction: data.direction
-      }, { sort: 'created_at', direction: 'desc', status: 'all' }),
+        direction: data.direction,
+        per_page: data.per_page
+      }, { sort: 'created_at', direction: 'desc', status: 'all', per_page: 10 }),
       {
         preserveState: true,
         preserveScroll: true,
@@ -238,6 +283,28 @@ export default function Devices() {
       }
     )
   }
+
+  const handlePerPageChange = (value: string) => {
+    const perPage = parseInt(value);
+    router.get(
+      '/devices',
+      cleanFilters({
+        search: data.search,
+        status: data.status,
+        sort: data.sort,
+        direction: data.direction,
+        per_page: perPage
+      }, { sort: 'created_at', direction: 'desc', status: 'all', per_page: 10 }),
+      {
+        preserveState: true,
+        preserveScroll: true,
+        replace: true,
+        onSuccess: () => {
+          setData('per_page', perPage);
+        }
+      }
+    );
+  };
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
@@ -267,28 +334,56 @@ export default function Devices() {
         </div>
 
           {/* Total Devices Card */}
-                <Card className="bg-orange-100/60  rounded-lg p-4 w-3xs mb-4 border-none">
+                <Card className="rounded-lg p-4 w-3xs mb-4 border">
                     <div className="flex items-center gap-10">
                         <div className="flex items-center gap-2">
-                            <span className="text-3xl font-bold">{deviceCount}</span>
-                            <Badge className="bg-green-600 px-2 py-0.5 text-xs text-white hover:bg-green-700">
-                                Total
+                            <span className="text-3xl font-bold">{filteredCount}</span>
+                            <Badge className="bg-gray-500 px-2 py-0.5 text-xs text-white">
+                                {filteredCount === deviceCount ? 'Total' : `${filteredCount} of ${deviceCount}`}
                             </Badge>
                         </div>
-                        <div className="rounded-md bg-white p-2">
-                            <Airplay className="size-8 text-orange-500" />
-                        </div>
+                        
                     </div>
-                    <p className="text-sm text-gray-600 mt-2">Registered devices</p>
+                    <p className="text-sm text-gray-600 mt-2">
+                        {filteredCount === deviceCount ? 'Registered devices' : 'Filtered devices'}
+                    </p>
                 </Card>
 
         <div className="flex flex-wrap gap-3 items-center justify-between">
-          <SearchInput
-            placeholder="Search by device name, serial number, or paired user..."
-            value={data.search}
-            onChange={(value) => setData('search', value)}
-          />
+          <div className="flex gap-3 items-center">
+            <SearchInput
+              placeholder="Search by device name, serial number, or paired user..."
+              value={data.search}
+              onChange={(value) => setData('search', value)}
+            />
+            <div className="flex items-center gap-2">
+              <Label className="text-sm text-muted-foreground whitespace-nowrap">Show</Label>
+              <Select value={data.per_page.toString()} onValueChange={handlePerPageChange}>
+                <SelectTrigger className="w-[70px] h-9">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="10">10</SelectItem>
+                  <SelectItem value="25">25</SelectItem>
+                  <SelectItem value="50">50</SelectItem>
+                  <SelectItem value="100">100</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
           <div className="flex gap-3">
+            {selectedDevices.length > 0 && getEligibleDevicesForArchive().length > 0 && (
+              <Button
+                variant="destructive"
+                size="sm"
+                className="w-auto"
+                onClick={handleBulkArchive}
+              >
+                <Archive className="mr-2 h-4 w-4" />
+                Archive {getEligibleDevicesForArchive().length} selected
+              </Button>
+            )}
+
             <Select value={data.status} onValueChange={handleStatusChange}>
             <SelectTrigger
               className="hidden h-8 w-[150px] border-2 rounded-lg text-xs sm:ml-auto sm:flex"
@@ -347,9 +442,9 @@ export default function Devices() {
                     size="icon"
                     className="h-8 w-8"
                     aria-label="Sort Device Name"
-                    onClick={() => handleSort('name')}
+                    onClick={() => handleSort('device_name')}
                   >
-                    {getSortIcon('name')}
+                    {getSortIcon('device_name')}
                   </Button>
                 </div>
               </TableHead>
@@ -703,6 +798,52 @@ export default function Devices() {
                 disabled={isArchiving}
               >
                 {isArchiving ? 'Archiving...' : 'Archive Device'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Bulk Archive Confirmation Modal */}
+        <Dialog open={isBulkArchiveConfirmOpen} onOpenChange={setIsBulkArchiveConfirmOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <AlertTriangle className="h-5 w-5 text-orange-500" />
+                Archive Devices
+              </DialogTitle>
+              <DialogDescription>
+                Are you sure you want to archive {getEligibleDevicesForArchive().length} device(s)? They will be moved to the archived devices list.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="rounded-lg border border-border bg-muted p-4">
+              <p className="text-sm font-medium text-foreground">
+                {getEligibleDevicesForArchive().length} eligible device(s) selected
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Only offline devices with no active hydroponic setups will be archived.
+              </p>
+              {selectedDevices.length > getEligibleDevicesForArchive().length && (
+                <p className="text-xs text-amber-600 mt-2">
+                  Note: {selectedDevices.length - getEligibleDevicesForArchive().length} device(s) do not meet archive requirements and will be skipped.
+                </p>
+              )}
+            </div>
+
+            <DialogFooter>
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  setIsBulkArchiveConfirmOpen(false);
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={handleBulkArchiveConfirm}
+              >
+                Archive {getEligibleDevicesForArchive().length} Device(s)
               </Button>
             </DialogFooter>
           </DialogContent>

@@ -22,7 +22,7 @@ class AdminAnalyticsService
     {
         $periods = [];
         $current = $dateFrom->copy();
-        
+
         if ($frequency === 'weekly') {
             while ($current->lte($dateTo)) {
                 $periods[] = $current->format('Y-W');
@@ -34,8 +34,42 @@ class AdminAnalyticsService
                 $current->addMonth();
             }
         }
-        
+
         return $periods;
+    }
+
+    /**
+     * Get database-agnostic SQL expression for grouping by date period.
+     * Works with both MySQL (production) and SQLite (testing).
+     */
+    private function getDatePeriodExpression(string $column, string $frequency): string
+    {
+        $driver = DB::connection()->getDriverName();
+
+        if ($driver === 'sqlite') {
+            if ($frequency === 'weekly') {
+                return "strftime('%Y', {$column}) || '-' || substr('0' || strftime('%W', {$column}), -2)";
+            }
+            return "strftime('%Y-%m', {$column})";
+        }
+
+        // MySQL
+        $format = $frequency === 'weekly' ? '%Y-%u' : '%Y-%m';
+        return "DATE_FORMAT({$column}, '{$format}')";
+    }
+
+    /**
+     * Get database-agnostic SQL for average duration in minutes between two datetime columns.
+     */
+    private function getAvgDurationExpression(string $startColumn, string $endColumn): string
+    {
+        $driver = DB::connection()->getDriverName();
+
+        if ($driver === 'sqlite') {
+            return "(julianday({$endColumn}) - julianday({$startColumn})) * 24 * 60";
+        }
+
+        return "TIMESTAMPDIFF(MINUTE, {$startColumn}, {$endColumn})";
     }
 
     /**
@@ -77,13 +111,13 @@ class AdminAnalyticsService
             ->count();
 
         // User registration trend based on frequency
-        $dateFormat = $frequency === 'weekly' ? '%Y-%u' : '%Y-%m';
         $labelFormat = $frequency === 'weekly' ? 'W%W %Y' : 'M Y';
-        
+        $periodExpr = $this->getDatePeriodExpression('created_at', $frequency);
+
         $registrationData = User::regularUsers()
             ->whereBetween('created_at', [$dateFrom, $dateTo])
             ->select(
-                DB::raw("DATE_FORMAT(created_at, '{$dateFormat}') as period"),
+                DB::raw("{$periodExpr} as period"),
                 DB::raw('COUNT(*) as count')
             )
             ->groupBy('period')
@@ -102,7 +136,7 @@ class AdminAnalyticsService
             } else {
                 $label = Carbon::parse($period . '-01')->format($labelFormat);
             }
-            
+
             return [
                 'month' => $label,
                 'count' => $registrationData->get($period)->count ?? 0,
@@ -110,12 +144,12 @@ class AdminAnalyticsService
         });
 
         // Login activity trend based on frequency and date range
-        $loginDateFormat = $frequency === 'weekly' ? '%Y-%u' : '%Y-%m-%d';
         $loginLabelFormat = $frequency === 'weekly' ? 'W%W' : 'M d';
-        
+        $loginPeriodExpr = $this->getDatePeriodExpression('created_at', $frequency);
+
         $loginData = LoginHistory::whereBetween('created_at', [$dateFrom, $dateTo])
             ->select(
-                DB::raw("DATE_FORMAT(created_at, '{$loginDateFormat}') as period"),
+                DB::raw("{$loginPeriodExpr} as period"),
                 DB::raw('COUNT(DISTINCT user_id) as unique_users'),
                 DB::raw('COUNT(*) as total_logins')
             )
@@ -134,7 +168,7 @@ class AdminAnalyticsService
             } else {
                 $label = Carbon::parse($period . '-01')->format($loginLabelFormat);
             }
-            
+
             return [
                 'date' => $label,
                 'unique_users' => $loginData->get($period)->unique_users ?? 0,
@@ -180,7 +214,7 @@ class AdminAnalyticsService
         }
 
         // === HARVEST METRICS ===
-        
+
         // Setup status distribution
         $setupsByStatus = HydroponicSetup::where('is_archived', false)
             ->when($deviceId, fn($query) => $query->where('device_id', $deviceId))
@@ -231,7 +265,7 @@ class AdminAnalyticsService
             ->count();
 
         // === YIELD METRICS ===
-        
+
         // Total yield weight
         $totalYieldWeight = HydroponicYield::where('is_archived', false)
             ->when($deviceId, function($query) use ($deviceId) {
@@ -271,7 +305,7 @@ class AdminAnalyticsService
         }
 
         // === COMBINED CROP INSIGHTS ===
-        
+
         // Popular crops (top 5)
         $popularCrops = HydroponicSetup::where('is_archived', false)
             ->when($deviceId, fn($query) => $query->where('device_id', $deviceId))
@@ -308,17 +342,18 @@ class AdminAnalyticsService
             ->get();
 
         // === COMBINED TRENDS ===
-        
+
         // Combined harvest and yield trends based on frequency
-        $dateFormat = $frequency === 'weekly' ? '%Y-%u' : '%Y-%m';
         $labelFormat = $frequency === 'weekly' ? 'W%W' : 'M';
-        
+        $harvestPeriodExpr = $this->getDatePeriodExpression('harvest_date', $frequency);
+        $yieldPeriodExpr = $this->getDatePeriodExpression('created_at', $frequency);
+
         $monthlyHarvestData = HydroponicSetup::where('harvest_status', 'harvested')
             ->when($deviceId, fn($query) => $query->where('device_id', $deviceId))
             ->whereNotNull('harvest_date')
             ->whereBetween('harvest_date', [$dateFrom, $dateTo])
             ->select(
-                DB::raw("DATE_FORMAT(harvest_date, '{$dateFormat}') as period"),
+                DB::raw("{$harvestPeriodExpr} as period"),
                 DB::raw('COUNT(*) as harvested')
             )
             ->groupBy('period')
@@ -332,7 +367,7 @@ class AdminAnalyticsService
             })
             ->whereBetween('created_at', [$dateFrom, $dateTo])
             ->select(
-                DB::raw("DATE_FORMAT(created_at, '{$dateFormat}') as period"),
+                DB::raw("{$yieldPeriodExpr} as period"),
                 DB::raw('SUM(total_weight) as total_weight')
             )
             ->groupBy('period')
@@ -350,12 +385,12 @@ class AdminAnalyticsService
             } else {
                 $label = Carbon::parse($period . '-01')->format($labelFormat);
             }
-            
+
             return [
                 'month' => $label,
                 'harvested' => $monthlyHarvestData->get($period)->harvested ?? 0,
-                'total_weight' => isset($monthlyYieldData->get($period)->total_weight) 
-                    ? round((float) $monthlyYieldData->get($period)->total_weight, 2) 
+                'total_weight' => isset($monthlyYieldData->get($period)->total_weight)
+                    ? round((float) $monthlyYieldData->get($period)->total_weight, 2)
                     : 0,
             ];
         })->values();
@@ -368,19 +403,19 @@ class AdminAnalyticsService
             'harvest_rate' => $harvestRate,
             'harvest_this_month' => $harvestThisMonth,
             'harvest_this_year' => $harvestThisYear,
-            
+
             // Yield metrics
             'total_yield_weight' => round((float) $totalYieldWeight, 2),
             'total_yield_count' => $totalYieldCount,
             'average_yield_per_setup' => $averageYieldPerSetup,
             'grade_distribution' => $gradeStats,
-            
+
             // Combined crop insights
             'popular_crops' => $popularCrops,
             'most_grown_crop' => $mostGrownCrop ? $mostGrownCrop->crop_name : null,
             'crop_type_distribution' => $cropTypeDistribution,
             'top_yielding_crops' => $topYieldingCrops,
-            
+
             // Combined trends
             'monthly_harvest_trend' => $monthlyHarvestTrend,
         ];
@@ -421,9 +456,10 @@ class AdminAnalyticsService
         $failureRate = $totalCycles > 0 ? round(($failedCycles / $totalCycles) * 100, 2) : 0;
 
         // Average treatment duration (in minutes)
+        $durationExpr = $this->getAvgDurationExpression('start_time', 'end_time');
         $averageDuration = TreatmentReport::when($deviceId, fn($query) => $query->where('device_id', $deviceId))
             ->whereNotNull('end_time')
-            ->selectRaw('AVG(TIMESTAMPDIFF(MINUTE, start_time, end_time)) as avg_duration')
+            ->selectRaw("AVG({$durationExpr}) as avg_duration")
             ->value('avg_duration');
         $averageDuration = $averageDuration ? round((float) $averageDuration, 2) : 0;
 
@@ -457,13 +493,13 @@ class AdminAnalyticsService
             });
 
         // Treatment trends over time based on frequency
-        $dateFormat = $frequency === 'weekly' ? '%Y-%u' : '%Y-%m';
         $labelFormat = $frequency === 'weekly' ? 'W%W' : 'M';
-        
+        $treatmentPeriodExpr = $this->getDatePeriodExpression('start_time', $frequency);
+
         $treatmentData = TreatmentReport::when($deviceId, fn($query) => $query->where('device_id', $deviceId))
             ->whereBetween('start_time', [$dateFrom, $dateTo])
             ->select(
-                DB::raw("DATE_FORMAT(start_time, '{$dateFormat}') as period"),
+                DB::raw("{$treatmentPeriodExpr} as period"),
                 DB::raw('COUNT(*) as cycle_count'),
                 DB::raw('SUM(CASE WHEN final_status = "success" THEN 1 ELSE 0 END) as success_count')
             )
@@ -482,7 +518,7 @@ class AdminAnalyticsService
             } else {
                 $label = Carbon::parse($period . '-01')->format($labelFormat);
             }
-            
+
             return [
                 'date' => $label,
                 'cycle_count' => $treatmentData->get($period)->cycle_count ?? 0,
@@ -495,8 +531,9 @@ class AdminAnalyticsService
             ->whereBetween('start_time', [$dateFrom, $dateTo])
             ->where('final_status', 'success')
             ->select(
-                DB::raw("DATE_FORMAT(start_time, '{$dateFormat}') as period"),
-                DB::raw('COUNT(*) as cycles')
+                DB::raw("{$treatmentPeriodExpr} as period"),
+                DB::raw('COUNT(*) as cycles'),
+                DB::raw('SUM(water_liter) as total_water')
             )
             ->groupBy('period')
             ->orderBy('period', 'asc')
@@ -512,12 +549,13 @@ class AdminAnalyticsService
             } else {
                 $label = Carbon::parse($period . '-01')->format($labelFormat);
             }
-            
+
             $cycles = $filtrationData->get($period)->cycles ?? 0;
-            
+            $totalWater = $filtrationData->get($period)->total_water ?? 0;
+
             return [
                 'week' => $label,
-                'filtered' => $cycles * 50, // Assuming ~50L per cycle
+                'filtered' => (int) $totalWater,
                 'cycles' => $cycles,
             ];
         });
