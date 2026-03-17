@@ -62,7 +62,7 @@ export default function ArchiveUser() {
   })
 
   const [isSearching, setIsSearching] = useState(false)
-  const hasMounted = useRef(false)
+  const previousSearchRef = useRef(data.search)
   const [selectedUsers, setSelectedUsers] = useState<number[]>([])
 
   // Unarchive confirmation modal state
@@ -74,10 +74,11 @@ export default function ArchiveUser() {
   const [isBulkRestoreConfirmOpen, setIsBulkRestoreConfirmOpen] = useState(false);
 
   useEffect(() => {
-    if (!hasMounted.current) {
-      hasMounted.current = true;
+    // Only trigger search when search has actually changed (avoids double load from React Strict Mode)
+    if (data.search === previousSearchRef.current) {
       return;
     }
+    previousSearchRef.current = data.search;
 
     const timer = setTimeout(() => {
       router.get("/users/archived", cleanFilters({ 
@@ -121,6 +122,7 @@ export default function ArchiveUser() {
 
   const handlePerPageChange = (value: string) => {
     const perPage = parseInt(value);
+    if (perPage === data.per_page) return;
     router.get(
       '/users/archived',
       cleanFilters({

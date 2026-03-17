@@ -66,14 +66,15 @@ export default function ArchiveDevices() {
   const [isUnarchiveConfirmOpen, setIsUnarchiveConfirmOpen] = useState(false)
   const [deviceToUnarchive, setDeviceToUnarchive] = useState<Device | null>(null)
   const { patch: unarchivePatch, processing: isRestoring } = useForm({})
-  const hasMounted = useRef(false)
+  const previousSearchRef = useRef(data.search)
   const [isBulkRestoreConfirmOpen, setIsBulkRestoreConfirmOpen] = useState(false)
 
   useEffect(() => {
-    if (!hasMounted.current) {
-      hasMounted.current = true;
+    // Only trigger search when search has actually changed (avoids double load from React Strict Mode)
+    if (data.search === previousSearchRef.current) {
       return;
     }
+    previousSearchRef.current = data.search;
 
     const timer = setTimeout(() => {
       router.get("/devices/archived", cleanFilters({ 
@@ -117,6 +118,7 @@ export default function ArchiveDevices() {
 
   const handlePerPageChange = (value: string) => {
     const perPage = parseInt(value);
+    if (perPage === data.per_page) return;
     router.get(
       '/devices/archived',
       cleanFilters({
