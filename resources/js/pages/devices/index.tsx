@@ -264,6 +264,7 @@ export default function Devices() {
         }
       )
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only refetch on search change; filters have their own handlers
   }, [debounceSearch])
 
   const handleStatusChange = (status: string) => {

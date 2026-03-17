@@ -145,7 +145,7 @@ export default function Users() {
     };
 
     const getEligibleUsersForArchive = () => {
-        return users.data.filter(user => 
+        return users.data.filter(user =>
             selectedUsers.includes(user.id) && canArchive(user)
         );
     };
@@ -277,6 +277,7 @@ export default function Users() {
                 },
             );
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps -- only refetch on search change; filters have their own handlers
     }, [debounceSearch]);
 
     const getSortIcon = (field: string) => {
@@ -323,7 +324,7 @@ export default function Users() {
                                         {filteredCount === userCount ? 'Total' : `${filteredCount} of ${userCount}`}
                                     </Badge>
                                 </div>
-                                
+
                             </div>
                             <p className="text-sm text-gray-600 mt-2">
                                 {filteredCount === userCount ? 'Registered users' : 'Filtered users'}
