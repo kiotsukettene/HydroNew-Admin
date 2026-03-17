@@ -13,12 +13,14 @@ interface PaginationCompProps {
   links: PaginationLinks;
   onPageChange?: (url: string, scrollTargetId?: string) => void;
   scrollTargetId?: string;
+  processing?: boolean;
 }
 
 export default function PaginationComp({
   links,
-    onPageChange,
-    scrollTargetId
+  onPageChange,
+  scrollTargetId,
+  processing = false,
 }: PaginationCompProps) {
   const getPaginationContent = (label: string) => {
     const cleanLabel = label.replace(/&laquo;|&raquo;|&lt;|&gt;/g, "").trim();
@@ -39,24 +41,24 @@ export default function PaginationComp({
         const isIcon = typeof content !== "string";
 
         // Case 1: Use custom page change handler
-       if (onPageChange && link.url) {
-  return (
-    <button
-      key={index}
-      onClick={() => onPageChange(link.url!, scrollTargetId)}
-      disabled={!link.url}
-      className={`px-3 py-2 text-sm font-medium rounded-md border transition-colors
+        if (onPageChange && link.url) {
+          return (
+            <button
+              key={index}
+              onClick={() => onPageChange(link.url!, scrollTargetId)}
+              disabled={!link.url || processing}
+              className={`px-3 py-2 text-sm font-medium rounded-md border transition-colors
         ${link.active
           ? "bg-primary text-primary-foreground border-primary shadow-sm"
           : "bg-background text-foreground border-border hover:bg-muted hover:text-muted-foreground"
         }
-        ${!link.url ? "opacity-50 pointer-events-none cursor-default" : "cursor-pointer"}
+        ${!link.url || processing ? "opacity-50 pointer-events-none cursor-default" : "cursor-pointer"}
         ${isIcon ? "min-w-10" : "min-w-10"} flex items-center justify-center`}
-    >
-      {content}
-    </button>
-  );
-}
+            >
+              {content}
+            </button>
+          );
+        }
         // Case 2: Default to Inertia Link
         return (
           <Link

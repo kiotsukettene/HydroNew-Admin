@@ -58,6 +58,22 @@ export default function Devices() {
   const [deviceToArchive, setDeviceToArchive] = useState<Device | null>(null)
   const { patch: archivePatch, processing: isArchiving } = useForm({})
   const [isBulkArchiveConfirmOpen, setIsBulkArchiveConfirmOpen] = useState(false)
+  const [isBulkArchiving, setIsBulkArchiving] = useState(false)
+  const [isViewArchivedProcessing, setIsViewArchivedProcessing] = useState(false)
+  const [isSorting, setIsSorting] = useState(false)
+  const [isPaginationProcessing, setIsPaginationProcessing] = useState(false)
+
+  const handlePagination = (url: string) => {
+    if (url && !isPaginationProcessing) {
+      router.get(url, {}, {
+        preserveState: true,
+        preserveScroll: true,
+        replace: true,
+        onStart: () => setIsPaginationProcessing(true),
+        onFinish: () => setIsPaginationProcessing(false),
+      })
+    }
+  }
 
   const { data, setData } = useForm({
     search: filters.search || '',
@@ -71,7 +87,7 @@ export default function Devices() {
   const hasMounted = useRef(false)
 
   // Edit form
-  const { data: editData, setData: setEditData, put, processing, reset } = useForm({
+  const { data: editData, setData: setEditData, put, processing, reset, errors: editErrors } = useForm({
     device_name: '',
     serial_number: '',
     status: '',
@@ -95,6 +111,10 @@ export default function Devices() {
     setIsEditOpen(true)
   }
 
+  const hasEditChanges =
+    editingDevice !== null &&
+    editData.device_name !== (editingDevice?.device_name ?? '')
+
   const handleSaveEdit = () => {
     if (editingDevice) {
       put(`/devices/${editingDevice.id}`, {
@@ -105,11 +125,6 @@ export default function Devices() {
           setEditingDevice(null)
           toast.success('Device updated successfully', {
             description: `${editData.device_name} has been updated.`,
-          })
-        },
-        onError: () => {
-          toast.error('Failed to update device', {
-            description: 'Please check the form and try again.',
           })
         },
       })
@@ -129,25 +144,18 @@ export default function Devices() {
   }
 
   const handleArchiveConfirm = () => {
-    if (deviceToArchive) {
-      archivePatch(`/devices/${deviceToArchive.id}/archive`, {
-        preserveScroll: true,
-        onSuccess: () => {
-          setIsArchiveConfirmOpen(false)
-          setDeviceToArchive(null)
-          setSelectedDevices([])
-          toast.success('Device archived successfully', {
-            description: `${deviceToArchive.device_name} has been moved to archives.`,
-          })
-        },
-        onError: (errors) => {
-          const message = typeof errors?.error === 'string' ? errors.error : (Array.isArray(errors?.error) ? errors.error[0] : null)
-          toast.error('Failed to archive device', {
-            description: message || 'Please try again later.',
-          })
-        },
-      })
-    }
+    if (isArchiving || !deviceToArchive) return;
+    archivePatch(`/devices/${deviceToArchive.id}/archive`, {
+      preserveScroll: true,
+      onSuccess: () => {
+        setIsArchiveConfirmOpen(false)
+        setDeviceToArchive(null)
+        setSelectedDevices([])
+        toast.success('Device archived successfully', {
+          description: `${deviceToArchive.device_name} has been moved to archives.`,
+        })
+      },
+    })
   }
 
   const getEligibleDevicesForArchive = () => {
@@ -168,21 +176,18 @@ export default function Devices() {
   };
 
   const handleBulkArchiveConfirm = () => {
+    if (isBulkArchiving) return;
     const eligibleDeviceIds = getEligibleDevicesForArchive().map(d => d.id);
-    
+
     router.patch('/devices/bulk-archive', { ids: eligibleDeviceIds }, {
       preserveScroll: true,
+      onStart: () => setIsBulkArchiving(true),
+      onFinish: () => setIsBulkArchiving(false),
       onSuccess: () => {
         setSelectedDevices([]);
         setIsBulkArchiveConfirmOpen(false);
         toast.success('Devices archived successfully', {
           description: `${eligibleDeviceIds.length} device(s) have been moved to archives.`,
-        });
-      },
-      onError: (errors) => {
-        const message = typeof errors?.error === 'string' ? errors.error : (Array.isArray(errors?.error) ? errors.error[0] : null);
-        toast.error('Failed to archive devices', {
-          description: message || 'Please try again later.',
         });
       },
     });
@@ -198,15 +203,11 @@ export default function Devices() {
           description: `${createData.device_name} has been added to your system.`,
         })
       },
-      onError: () => {
-        toast.error('Failed to create device', {
-          description: 'Please check the form and try again.',
-        })
-      },
     })
   }
 
   const handleSort = (field: SortField) => {
+    if (isSorting) return;
     const newDirection = data.sort === field && data.direction === 'asc' ? 'desc' : 'asc';
 
     router.get(
@@ -222,6 +223,8 @@ export default function Devices() {
         preserveState: true,
         preserveScroll: true,
         replace: true,
+        onStart: () => setIsSorting(true),
+        onFinish: () => setIsSorting(false),
         onSuccess: () => {
           setData({ ...data, sort: field, direction: newDirection });
         }
@@ -261,6 +264,7 @@ export default function Devices() {
         }
       )
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only refetch on search change; filters have their own handlers
   }, [debounceSearch])
 
   const handleStatusChange = (status: string) => {
@@ -377,6 +381,7 @@ export default function Devices() {
                 variant="destructive"
                 size="sm"
                 className="w-auto"
+                disabled={isBulkArchiving}
                 onClick={handleBulkArchive}
               >
                 <Archive className="mr-2 h-4 w-4" />
@@ -415,8 +420,16 @@ export default function Devices() {
           variant="secondary"
           size="sm"
           className="w-auto"
-          onClick={() => router.visit("/devices/archived", { preserveState: false })}
+          disabled={isViewArchivedProcessing}
+          onClick={() => {
+            router.visit('/devices/archived', {
+              preserveState: false,
+              onStart: () => setIsViewArchivedProcessing(true),
+              onFinish: () => setIsViewArchivedProcessing(false),
+            });
+          }}
         >
+          {isViewArchivedProcessing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           <Archive className="mr-2 h-4 w-4" />
           View Archived
         </Button>
@@ -442,6 +455,7 @@ export default function Devices() {
                     size="icon"
                     className="h-8 w-8"
                     aria-label="Sort Device Name"
+                    disabled={isSorting}
                     onClick={() => handleSort('device_name')}
                   >
                     {getSortIcon('device_name')}
@@ -462,6 +476,7 @@ export default function Devices() {
                     size="icon"
                     className="h-8 w-8"
                     aria-label="Sort Serial Number"
+                    disabled={isSorting}
                     onClick={() => handleSort('serial_number')}
                   >
                     {getSortIcon('serial_number')}
@@ -476,6 +491,7 @@ export default function Devices() {
                     size="icon"
                     className="h-8 w-8"
                     aria-label="Sort Status"
+                    disabled={isSorting}
                     onClick={() => handleSort('status')}
                   >
                     {getSortIcon('status')}
@@ -490,6 +506,7 @@ export default function Devices() {
                     size="icon"
                     className="h-8 w-8"
                     aria-label="Sort Date Registered"
+                    disabled={isSorting}
                     onClick={() => handleSort('created_at')}
                   >
                     {getSortIcon('created_at')}
@@ -614,7 +631,11 @@ export default function Devices() {
               Showing {devices.from || 0} to {devices.to || 0} of{' '}
               {devices.total} results
             </div>
-            <PaginationComp links={devices.links} />
+            <PaginationComp
+              links={devices.links}
+              onPageChange={handlePagination}
+              processing={isPaginationProcessing}
+            />
           </div>
         )}
 
@@ -631,12 +652,15 @@ export default function Devices() {
             {editingDevice && (
               <div className="space-y-3">
                 <div className="grid gap-1">
-                  <Label className="text-sm font-medium">Device Name</Label>
+                  <Label className="text-sm font-medium">Device Name <span className="text-red-500">*</span></Label>
                   <input
                     className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
                     value={editData.device_name}
                     onChange={(e) => setEditData('device_name', e.target.value)}
                   />
+                  {editErrors.device_name && (
+                    <p className="text-xs text-red-500">{editErrors.device_name}</p>
+                  )}
                 </div>
                 <div className="grid gap-1">
                   <Label className="text-sm font-medium">Serial Number</Label>
@@ -672,7 +696,7 @@ export default function Devices() {
               </Button>
               <Button
                 onClick={handleSaveEdit}
-                disabled={processing}
+                disabled={processing || !hasEditChanges}
               >
                 {processing ? 'Saving...' : 'Save changes'}
               </Button>
@@ -692,7 +716,7 @@ export default function Devices() {
 
             <div className="space-y-3">
               <div className="grid gap-1">
-                <Label className="text-sm font-medium">Device Name *</Label>
+                <Label className="text-sm font-medium">Device Name <span className="text-red-500">*</span></Label>
                 <input
                   className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
                   placeholder="Enter device name"
@@ -705,7 +729,7 @@ export default function Devices() {
               </div>
 
               <div className="grid gap-1">
-                <Label className="text-sm font-medium">Serial Number *</Label>
+                <Label className="text-sm font-medium">Serial Number <span className="text-red-500">*</span></Label>
                 <input
                   className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm font-mono"
                   placeholder="Enter serial number"
@@ -836,14 +860,23 @@ export default function Devices() {
                 onClick={() => {
                   setIsBulkArchiveConfirmOpen(false);
                 }}
+                disabled={isBulkArchiving}
               >
                 Cancel
               </Button>
               <Button
                 variant="destructive"
                 onClick={handleBulkArchiveConfirm}
+                disabled={isBulkArchiving}
               >
-                Archive {getEligibleDevicesForArchive().length} Device(s)
+                {isBulkArchiving ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Archiving...
+                  </>
+                ) : (
+                  `Archive ${getEligibleDevicesForArchive().length} Device(s)`
+                )}
               </Button>
             </DialogFooter>
           </DialogContent>

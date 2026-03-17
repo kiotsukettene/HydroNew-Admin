@@ -47,7 +47,9 @@ class HandleInertiaRequests extends Middleware
                 'user' => $request->user(),
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
-            'unrepliedFeedbackCount' => Feedback::where('replied', false)->count(),
+            'unrepliedFeedbackCount' => $request->routeIs('feedback.index')
+                ? null
+                : Feedback::where('replied', false)->count(),
         ];
     }
 }
