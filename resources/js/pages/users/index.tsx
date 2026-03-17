@@ -101,6 +101,19 @@ export default function Users() {
     const [isViewArchivedProcessing, setIsViewArchivedProcessing] = useState(false);
     const [isSorting, setIsSorting] = useState(false);
     const [isClearFiltersProcessing, setIsClearFiltersProcessing] = useState(false);
+    const [isPaginationProcessing, setIsPaginationProcessing] = useState(false);
+
+    const handlePagination = (url: string) => {
+        if (url && !isPaginationProcessing) {
+            router.get(url, {}, {
+                preserveState: true,
+                preserveScroll: true,
+                replace: true,
+                onStart: () => setIsPaginationProcessing(true),
+                onFinish: () => setIsPaginationProcessing(false),
+            });
+        }
+    };
 
     /** Archive is only allowed when user is inactive for at least 6 months */
     const canArchive = (user: User): boolean => {
@@ -626,7 +639,11 @@ export default function Users() {
                             Showing {users.from || 0} to {users.to || 0} of{' '}
                             {users.total} results
                         </div>
-                        <PaginationComp links={users.links} />
+                        <PaginationComp
+                            links={users.links}
+                            onPageChange={handlePagination}
+                            processing={isPaginationProcessing}
+                        />
                     </div>
                 )}
 

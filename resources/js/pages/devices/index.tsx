@@ -61,6 +61,19 @@ export default function Devices() {
   const [isBulkArchiving, setIsBulkArchiving] = useState(false)
   const [isViewArchivedProcessing, setIsViewArchivedProcessing] = useState(false)
   const [isSorting, setIsSorting] = useState(false)
+  const [isPaginationProcessing, setIsPaginationProcessing] = useState(false)
+
+  const handlePagination = (url: string) => {
+    if (url && !isPaginationProcessing) {
+      router.get(url, {}, {
+        preserveState: true,
+        preserveScroll: true,
+        replace: true,
+        onStart: () => setIsPaginationProcessing(true),
+        onFinish: () => setIsPaginationProcessing(false),
+      })
+    }
+  }
 
   const { data, setData } = useForm({
     search: filters.search || '',
@@ -617,7 +630,11 @@ export default function Devices() {
               Showing {devices.from || 0} to {devices.to || 0} of{' '}
               {devices.total} results
             </div>
-            <PaginationComp links={devices.links} />
+            <PaginationComp
+              links={devices.links}
+              onPageChange={handlePagination}
+              processing={isPaginationProcessing}
+            />
           </div>
         )}
 

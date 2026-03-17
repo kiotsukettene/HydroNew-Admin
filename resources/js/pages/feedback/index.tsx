@@ -14,7 +14,6 @@ import PaginationComp from '@/components/pagination'
 import { useDebounce } from 'use-debounce'
 import { toast } from 'sonner'
 import { HighlightText } from '@/components/highlight-text'
-import { Separator } from '@/components/ui/separator'
 
 const CATEGORY_LABELS: Record<FeedbackCategory, string> = {
   bug_report: 'Bug report',
@@ -62,6 +61,7 @@ export default function Feedback() {
 
   const [debounceSearch] = useDebounce(data.search, 500)
   const [isSearching, setIsSearching] = useState(false)
+  const [isPaginationProcessing, setIsPaginationProcessing] = useState(false)
   const hasMounted = useRef(false)
 
   const [selectedFeedback, setSelectedFeedback] = useState<FeedbackType | null>(null)
@@ -134,7 +134,7 @@ export default function Feedback() {
         },
         onError: (errors) => {
           console.error('Failed to send reply:', errors)
-          
+
           // Set error message for display below the field
           if (errors.reply_message) {
             setReplyError(errors.reply_message)
@@ -152,7 +152,15 @@ export default function Feedback() {
   }
 
   const handlePagination = (url: string) => {
-    if (url) router.get(url, {}, { preserveState: true, preserveScroll: true })
+    if (url && !isPaginationProcessing) {
+      router.get(url, {}, {
+        preserveState: true,
+        preserveScroll: true,
+        replace: true,
+        onStart: () => setIsPaginationProcessing(true),
+        onFinish: () => setIsPaginationProcessing(false),
+      })
+    }
   }
 
   return (
@@ -254,6 +262,7 @@ export default function Feedback() {
               <PaginationComp
                 links={feedback.links}
                 onPageChange={handlePagination}
+                processing={isPaginationProcessing}
               />
             )}
           </>
@@ -275,8 +284,8 @@ export default function Feedback() {
               <div className="flex items-center gap-2 shrink-0">
                 <Badge variant="secondary" className="text-xs">
                   <HighlightText text={CATEGORY_LABELS[selectedFeedback.category]} highlight={data.search} />
-                </Badge> 
-            
+                </Badge>
+
                 {selectedFeedback.replied && (
                   <Badge variant="default" className="text-xs bg-green-700">
                     Replied
@@ -337,8 +346,8 @@ export default function Feedback() {
                   }}
                   rows={4}
                   className={`w-full resize-none rounded-xl border bg-background px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-foreground shadow-sm outline-none transition focus:ring-2 ${
-                    replyError 
-                      ? 'border-red-500 focus:ring-red-500/30' 
+                    replyError
+                      ? 'border-red-500 focus:ring-red-500/30'
                       : 'border-border focus:ring-primary/30'
                   }`}
                   placeholder="Type your response..."
