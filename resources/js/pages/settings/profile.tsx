@@ -3,8 +3,8 @@ import { send } from '@/routes/verification';
 import { type BreadcrumbItem, type SharedData } from '@/types';
 import { Transition } from '@headlessui/react';
 import { Form, Head, Link, usePage } from '@inertiajs/react';
+import { useState } from 'react';
 
-import DeleteUser from '@/components/delete-user';
 import HeadingSmall from '@/components/heading-small';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
@@ -29,6 +29,13 @@ export default function Profile({
     status?: string;
 }) {
     const { auth } = usePage<SharedData>().props;
+
+    const [firstName, setFirstName] = useState(auth.user.first_name);
+    const [lastName, setLastName] = useState(auth.user.last_name);
+
+    const hasChanges =
+        firstName !== auth.user.first_name ||
+        lastName !== auth.user.last_name;
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -56,7 +63,10 @@ export default function Profile({
                                     <Input
                                         id="first_name"
                                         className="mt-1 block w-full"
-                                        defaultValue={auth.user.first_name}
+                                        value={firstName}
+                                        onChange={(e) =>
+                                            setFirstName(e.target.value)
+                                        }
                                         name="first_name"
                                         required
                                         autoComplete="given-name"
@@ -75,7 +85,10 @@ export default function Profile({
                                     <Input
                                         id="last_name"
                                         className="mt-1 block w-full"
-                                        defaultValue={auth.user.last_name}
+                                        value={lastName}
+                                        onChange={(e) =>
+                                            setLastName(e.target.value)
+                                        }
                                         name="last_name"
                                         required
                                         autoComplete="family-name"
@@ -100,6 +113,7 @@ export default function Profile({
                                         required
                                         autoComplete="username"
                                         placeholder="Email address"
+                                        disabled
                                     />
 
                                     <InputError
@@ -137,7 +151,9 @@ export default function Profile({
 
                                 <div className="flex items-center gap-4">
                                     <Button
-                                        disabled={processing}
+                                        disabled={
+                                            processing || !hasChanges
+                                        }
                                         data-test="update-profile-button"
                                     >
                                         Save
@@ -159,8 +175,6 @@ export default function Profile({
                         )}
                     </Form>
                 </div>
-
-                <DeleteUser />
             </SettingsLayout>
         </AppLayout>
     );
