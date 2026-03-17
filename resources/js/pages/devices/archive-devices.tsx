@@ -63,6 +63,7 @@ export default function ArchiveDevices() {
 
   const [selectedDevices, setSelectedDevices] = useState<number[]>([])
   const [isSearching, setIsSearching] = useState(false)
+  const [isBackProcessing, setIsBackProcessing] = useState(false)
   const [isUnarchiveConfirmOpen, setIsUnarchiveConfirmOpen] = useState(false)
   const [deviceToUnarchive, setDeviceToUnarchive] = useState<Device | null>(null)
   const { patch: unarchivePatch, processing: isRestoring } = useForm({})
@@ -220,9 +221,21 @@ export default function ArchiveDevices() {
          <Button
             size="default"
             className="w-auto"
-            onClick={() => router.visit("/devices", { preserveState: false })}
+            disabled={isBackProcessing}
+            onClick={() => {
+              if (isBackProcessing) return
+              setIsBackProcessing(true)
+              router.visit("/devices", {
+                preserveState: false,
+                onFinish: () => setIsBackProcessing(false),
+              })
+            }}
           >
-            <ArrowLeft className="mr-2 h-4 w-4" />
+            {isBackProcessing ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <ArrowLeft className="mr-2 h-4 w-4" />
+            )}
             Back to Devices
           </Button>
       </div>

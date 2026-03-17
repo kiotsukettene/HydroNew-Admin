@@ -62,6 +62,7 @@ export default function ArchiveUser() {
   })
 
   const [isSearching, setIsSearching] = useState(false)
+  const [isBackProcessing, setIsBackProcessing] = useState(false)
   const previousSearchRef = useRef(data.search)
   const [selectedUsers, setSelectedUsers] = useState<number[]>([])
 
@@ -223,9 +224,21 @@ export default function ArchiveUser() {
                   <Button
                     size="default"
                     className="w-auto"
-                    onClick={() => router.visit("/users", { preserveState: false })}
+                    disabled={isBackProcessing}
+                    onClick={() => {
+                      if (isBackProcessing) return
+                      setIsBackProcessing(true)
+                      router.visit("/users", {
+                        preserveState: false,
+                        onFinish: () => setIsBackProcessing(false),
+                      })
+                    }}
                   >
-                    <ArrowLeft className="mr-2 h-4 w-4" />
+                    {isBackProcessing ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <ArrowLeft className="mr-2 h-4 w-4" />
+                    )}
                     Back to Users
                   </Button>
             </div>
