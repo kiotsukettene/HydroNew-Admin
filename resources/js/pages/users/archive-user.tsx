@@ -343,7 +343,7 @@ export default function ArchiveUser() {
       </TableHeader>
 
       <TableBody>
-        {isSearching ? (
+        {isSearching && users.data.length === 0 ? (
           <TableRow>
             <TableCell
               colSpan={6}

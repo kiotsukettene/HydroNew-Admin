@@ -97,13 +97,13 @@ export default function Users() {
     // Bulk archive confirmation modal state
     const [isBulkArchiveConfirmOpen, setIsBulkArchiveConfirmOpen] = useState(false);
 
-    /** Archive is only allowed when user is inactive for at least 1 month */
+    /** Archive is only allowed when user is inactive for at least 6 months */
     const canArchive = (user: User): boolean => {
         if (user.status !== 'inactive') return false;
         if (!user.last_login_at) return true; // never logged in = treat as inactive long enough
-        const oneMonthAgo = new Date();
-        oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
-        return new Date(user.last_login_at) <= oneMonthAgo;
+        const sixMonthsAgo = new Date();
+        sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+        return new Date(user.last_login_at) <= sixMonthsAgo;
     };
 
     const handleArchiveClick = (user: User) => {
@@ -143,7 +143,7 @@ export default function Users() {
         const eligibleUsers = getEligibleUsersForArchive();
         if (eligibleUsers.length === 0) {
             toast.error('No eligible users selected', {
-                description: 'Only inactive users (inactive for at least 1 month) can be archived.',
+                description: 'Only inactive users (inactive for at least 6 months) can be archived.',
             });
             return;
         }
@@ -679,7 +679,7 @@ export default function Users() {
             {getEligibleUsersForArchive().length} eligible user(s) selected
           </p>
           <p className="text-xs text-muted-foreground mt-1">
-            Only inactive users (inactive for at least 1 month) will be archived.
+            Only inactive users (inactive for at least 6 months) will be archived.
           </p>
           {selectedUsers.length > getEligibleUsersForArchive().length && (
             <p className="text-xs text-amber-600 mt-2">

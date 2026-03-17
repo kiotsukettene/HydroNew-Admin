@@ -282,7 +282,7 @@ export function PhTdsChart({ className, devices = [] }: PhTdsChartProps) {
             disabled={!selectedDevice || sensorSystems.length === 0}
           >
             <SelectTrigger
-              className="h-8 w-[180px] rounded-lg text-xs"
+              className="h-8 min-w-0 w-[180px] rounded-lg text-xs overflow-hidden [&>span]:truncate"
               aria-label="Select sensor system"
             >
               <SelectValue placeholder="Select Sensor System" />
