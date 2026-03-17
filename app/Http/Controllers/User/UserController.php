@@ -5,6 +5,7 @@ namespace App\Http\Controllers\User;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Inertia\Inertia;
 
 class UserController extends Controller
@@ -15,55 +16,61 @@ class UserController extends Controller
     public function index(Request $request)
     {
         $filters = $request->only(['search', 'sort', 'direction', 'status', 'per_page']);
+        $page = $request->get('page', 1);
+        $cacheKey = 'users:index:' . md5(serialize($filters + ['page' => $page]));
 
-        $query = User::where('role', '=', 'user')
-                     ->where('is_archived', false);
+        $data = Cache::tags(['users'])->remember($cacheKey, 600, function () use ($filters) {
+            $query = User::where('role', '=', 'user')
+                         ->where('is_archived', false);
 
-        // Apply search filter
-        if (!empty($filters['search'])) {
-            $query->where(function ($q) use ($filters) {
-                $q->where('first_name', 'like', '%' . $filters['search'] . '%')
-                  ->orWhere('last_name', 'like', '%' . $filters['search'] . '%')
-                  ->orWhere('email', 'like', '%' . $filters['search'] . '%');
-            });
-        }
+            // Apply search filter
+            if (!empty($filters['search'])) {
+                $query->where(function ($q) use ($filters) {
+                    $q->where('first_name', 'like', '%' . $filters['search'] . '%')
+                      ->orWhere('last_name', 'like', '%' . $filters['search'] . '%')
+                      ->orWhere('email', 'like', '%' . $filters['search'] . '%');
+                });
+            }
 
-        // Apply status filter
-        if (!empty($filters['status']) && $filters['status'] !== 'all') {
-            $query->where('status', $filters['status']);
-        }
+            // Apply status filter
+            if (!empty($filters['status']) && $filters['status'] !== 'all') {
+                $query->where('status', $filters['status']);
+            }
 
-        // Apply sorting
-        $sortField = $filters['sort'] ?? 'created_at';
-        $sortDirection = $filters['direction'] ?? 'desc';
+            // Apply sorting
+            $sortField = $filters['sort'] ?? 'created_at';
+            $sortDirection = $filters['direction'] ?? 'desc';
 
-        // Handle name sorting (concat first_name and last_name)
-        if ($sortField === 'name') {
-            $query->orderByRaw("CONCAT(first_name, ' ', last_name) {$sortDirection}");
-        } else {
-            $query->orderBy($sortField, $sortDirection);
-        }
+            // Handle name sorting (concat first_name and last_name)
+            if ($sortField === 'name') {
+                $query->orderByRaw("CONCAT(first_name, ' ', last_name) {$sortDirection}");
+            } else {
+                $query->orderBy($sortField, $sortDirection);
+            }
 
-        // Get per_page value from request, default to 10, allow only [10, 25, 50, 100]
-        $perPage = in_array($filters['per_page'] ?? 10, [10, 25, 50, 100])
-            ? ($filters['per_page'] ?? 10)
-            : 10;
+            // Get per_page value from request, default to 10, allow only [10, 25, 50, 100]
+            $perPage = in_array($filters['per_page'] ?? 10, [10, 25, 50, 100])
+                ? ($filters['per_page'] ?? 10)
+                : 10;
 
-        $users = $query->paginate($perPage);
-        $filteredCount = $users->total();
+            $users = $query->paginate($perPage);
+            $filteredCount = $users->total();
 
-        // Only query total count if filters are applied, otherwise use filtered count
-        $hasFilters = !empty($filters['search']) || (!empty($filters['status']) && $filters['status'] !== 'all');
-        $userCount = $hasFilters
-            ? User::where('role', '=', 'user')->where('is_archived', false)->count()
-            : $filteredCount;
+            // Only query total count if filters are applied, otherwise use filtered count
+            $hasFilters = !empty($filters['search']) || (!empty($filters['status']) && $filters['status'] !== 'all');
+            $userCount = $hasFilters
+                ? User::where('role', '=', 'user')->where('is_archived', false)->count()
+                : $filteredCount;
 
-        return Inertia::render('users/index',[
-            'users' => $users,
-            'userCount' => $userCount,
-            'filteredCount' => $filteredCount,
-            'filters' => $filters,
-        ]);
+            return [
+                'users' => $users,
+                'userCount' => $userCount,
+                'filteredCount' => $filteredCount,
+                'filters' => $filters,
+            ];
+        });
+
+        return Inertia::render('users/index', $data);
     }
 
     /**
@@ -72,50 +79,49 @@ class UserController extends Controller
     public function archived(Request $request)
     {
         $filters = $request->only(['search', 'sort', 'direction', 'per_page']);
+        $page = $request->get('page', 1);
+        $cacheKey = 'users:archived:' . md5(serialize($filters + ['page' => $page]));
 
-        $query = User::where('role', '=', 'user')
-                    ->where('is_archived', true);
+        $data = Cache::tags(['users'])->remember($cacheKey, 600, function () use ($filters) {
+            $query = User::where('role', '=', 'user')
+                        ->where('is_archived', true);
 
-        // Apply search filter
-        if (!empty($filters['search'])) {
-            $query->where(function ($q) use ($filters) {
-                $q->where('first_name', 'like', '%' . $filters['search'] . '%')
-                  ->orWhere('last_name', 'like', '%' . $filters['search'] . '%')
-                  ->orWhere('email', 'like', '%' . $filters['search'] . '%');
-            });
-        }
+            if (!empty($filters['search'])) {
+                $query->where(function ($q) use ($filters) {
+                    $q->where('first_name', 'like', '%' . $filters['search'] . '%')
+                      ->orWhere('last_name', 'like', '%' . $filters['search'] . '%')
+                      ->orWhere('email', 'like', '%' . $filters['search'] . '%');
+                });
+            }
 
-        // Apply sorting
-        $sortField = $filters['sort'] ?? 'created_at';
-        $sortDirection = $filters['direction'] ?? 'desc';
+            $sortField = $filters['sort'] ?? 'created_at';
+            $sortDirection = $filters['direction'] ?? 'desc';
+            if ($sortField === 'name') {
+                $query->orderByRaw("CONCAT(first_name, ' ', last_name) {$sortDirection}");
+            } else {
+                $query->orderBy($sortField, $sortDirection);
+            }
 
-        // Handle name sorting (concat first_name and last_name)
-        if ($sortField === 'name') {
-            $query->orderByRaw("CONCAT(first_name, ' ', last_name) {$sortDirection}");
-        } else {
-            $query->orderBy($sortField, $sortDirection);
-        }
+            $perPage = in_array($filters['per_page'] ?? 10, [10, 25, 50, 100])
+                ? ($filters['per_page'] ?? 10)
+                : 10;
 
-        // Get per_page value from request, default to 10, allow only [10, 25, 50, 100]
-        $perPage = in_array($filters['per_page'] ?? 10, [10, 25, 50, 100])
-            ? ($filters['per_page'] ?? 10)
-            : 10;
+            $users = $query->paginate($perPage);
+            $filteredArchivedCount = $users->total();
+            $hasFilters = !empty($filters['search']);
+            $archivedCount = $hasFilters
+                ? User::where('role', '=', 'user')->where('is_archived', true)->count()
+                : $filteredArchivedCount;
 
-        $users = $query->paginate($perPage);
-        $filteredArchivedCount = $users->total();
+            return [
+                'users' => $users,
+                'archivedCount' => $archivedCount,
+                'filteredArchivedCount' => $filteredArchivedCount,
+                'filters' => $filters,
+            ];
+        });
 
-        // Only query total count if filters are applied, otherwise use filtered count
-        $hasFilters = !empty($filters['search']);
-        $archivedCount = $hasFilters
-            ? User::where('role', '=', 'user')->where('is_archived', true)->count()
-            : $filteredArchivedCount;
-
-        return Inertia::render('users/archive-user', [
-            'users' => $users,
-            'archivedCount' => $archivedCount,
-            'filteredArchivedCount' => $filteredArchivedCount,
-            'filters' => $filters,
-        ]);
+        return Inertia::render('users/archive-user', $data);
     }
 
     /**
@@ -145,6 +151,10 @@ class UserController extends Controller
 
             $user->is_archived = true;
             $user->save();
+
+            Cache::tags(['users'])->flush();
+            Cache::tags(['analytics'])->flush();
+            Cache::tags(['dashboard'])->flush();
 
             return redirect()->back()->with('success', 'User archived successfully.');
         } catch (\Exception $e) {
@@ -184,6 +194,10 @@ class UserController extends Controller
         // Archive eligible users
         User::whereIn('id', $eligibleUsers->pluck('id'))->update(['is_archived' => true]);
 
+        Cache::tags(['users'])->flush();
+        Cache::tags(['analytics'])->flush();
+        Cache::tags(['dashboard'])->flush();
+
         $message = "{$count} user(s) archived successfully.";
         if ($ineligibleCount > 0) {
             $message .= " {$ineligibleCount} user(s) did not meet archive requirements and were skipped.";
@@ -207,6 +221,10 @@ class UserController extends Controller
             $user->is_archived = false;
             $user->save();
 
+            Cache::tags(['users'])->flush();
+            Cache::tags(['analytics'])->flush();
+            Cache::tags(['dashboard'])->flush();
+
             return redirect()->back()->with('success', 'User unarchived successfully.');
         } catch (\Exception $e) {
             return redirect()->back()->withErrors(['error' => 'Failed to restore user.']);
@@ -226,6 +244,10 @@ class UserController extends Controller
         $count = User::whereIn('id', $validated['ids'])
             ->where('is_archived', true)
             ->update(['is_archived' => false]);
+
+        Cache::tags(['users'])->flush();
+        Cache::tags(['analytics'])->flush();
+        Cache::tags(['dashboard'])->flush();
 
         return redirect()->back()->with('success', "{$count} user(s) restored successfully.");
     }
@@ -277,6 +299,10 @@ class UserController extends Controller
 
             $user = User::findOrFail($id);
             $user->update($validated);
+
+            Cache::tags(['users'])->flush();
+            Cache::tags(['analytics'])->flush();
+            Cache::tags(['dashboard'])->flush();
 
             return redirect()->back()->with('success', 'User updated successfully.');
         } catch (\Illuminate\Validation\ValidationException $e) {

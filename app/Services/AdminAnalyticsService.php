@@ -11,6 +11,7 @@ use App\Models\TreatmentReport;
 use App\Models\TreatmentStage;
 use App\Models\LoginHistory;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class AdminAnalyticsService
@@ -77,6 +78,9 @@ class AdminAnalyticsService
      */
     public function getUsersDevicesAnalytics(array $filters = []): array
     {
+        $cacheKey = 'analytics:users-devices:' . md5(serialize($filters));
+
+        return Cache::tags(['analytics'])->remember($cacheKey, 1800, function () use ($filters) {
         // Set default date range if not provided
         $dateFrom = $filters['date_from'] ?? Carbon::now()->subMonths(12)->startOfDay();
         $dateTo = $filters['date_to'] ?? Carbon::now()->endOfDay();
@@ -192,6 +196,7 @@ class AdminAnalyticsService
             'registration_trend' => $registrationTrend,
             'login_activity_trend' => $loginActivityTrend,
         ];
+        });
     }
 
     /**
@@ -199,6 +204,9 @@ class AdminAnalyticsService
      */
     public function getCropsHarvestYieldAnalytics(array $filters = []): array
     {
+        $cacheKey = 'analytics:crops-harvest-yield:' . md5(serialize($filters));
+
+        return Cache::tags(['analytics'])->remember($cacheKey, 1800, function () use ($filters) {
         // Set default date range if not provided
         $dateFrom = $filters['date_from'] ?? Carbon::now()->subMonths(12)->startOfDay();
         $dateTo = $filters['date_to'] ?? Carbon::now()->endOfDay();
@@ -419,6 +427,7 @@ class AdminAnalyticsService
             // Combined trends
             'monthly_harvest_trend' => $monthlyHarvestTrend,
         ];
+        });
     }
 
     /**
@@ -426,6 +435,9 @@ class AdminAnalyticsService
      */
     public function getWaterTreatmentAnalytics(array $filters = []): array
     {
+        $cacheKey = 'analytics:water-treatment:' . md5(serialize($filters));
+
+        return Cache::tags(['analytics'])->remember($cacheKey, 1800, function () use ($filters) {
         // Set default date range if not provided
         $dateFrom = $filters['date_from'] ?? Carbon::now()->subMonths(12)->startOfDay();
         $dateTo = $filters['date_to'] ?? Carbon::now()->endOfDay();
@@ -572,6 +584,7 @@ class AdminAnalyticsService
             'treatment_trends' => $treatmentTrends,
             'weekly_filtration' => $weeklyFiltration,
         ];
+        });
     }
 }
 

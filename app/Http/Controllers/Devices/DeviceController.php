@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Device;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 
@@ -17,8 +18,11 @@ class DeviceController extends Controller
     public function index(Request $request)
     {
         $filters = $request->only(['search', 'status', 'sort', 'direction', 'per_page']);
+        $page = $request->get('page', 1);
+        $cacheKey = 'devices:index:' . md5(serialize($filters + ['page' => $page]));
 
-        $query = Device::with('users')
+        $data = Cache::tags(['devices'])->remember($cacheKey, 600, function () use ($filters) {
+            $query = Device::with('users')
             ->withCount(['hydroponic_setups as active_setups_count' => function ($q) {
                 $q->where('is_archived', false)->where('status', 'active');
             }])
@@ -62,71 +66,80 @@ class DeviceController extends Controller
             ? Device::where('is_archived', false)->count()
             : $filteredCount;
 
-        $users = User::where('role', 'user')
-            ->where('is_archived', false)
-            ->select('id', 'first_name', 'last_name', 'email')
-            ->get();
+            $users = User::where('role', 'user')
+                ->where('is_archived', false)
+                ->select('id', 'first_name', 'last_name', 'email')
+                ->get();
 
-        return Inertia::render('devices/index', [
-            'devices' => $devices,
-            'deviceCount' => $deviceCount,
-            'filteredCount' => $filteredCount,
-            'users' => $users,
-            'filters' => $filters,
-        ]);
+            return [
+                'devices' => $devices,
+                'deviceCount' => $deviceCount,
+                'filteredCount' => $filteredCount,
+                'users' => $users,
+                'filters' => $filters,
+            ];
+        });
+
+        return Inertia::render('devices/index', $data);
     }
 
-      public function archived(Request $request)
+    public function archived(Request $request)
     {
         $filters = $request->only(['search', 'status', 'sort', 'direction', 'per_page']);
+        $page = $request->get('page', 1);
+        $cacheKey = 'devices:archived:' . md5(serialize($filters + ['page' => $page]));
 
-        $query = Device::with('users')
-            ->where('is_archived', true);
+        $data = Cache::tags(['devices'])->remember($cacheKey, 600, function () use ($filters) {
+            $query = Device::with('users')
+                ->where('is_archived', true);
 
-        // Apply search filter
-        if (!empty($filters['search'])) {
-            $query->where(function ($q) use ($filters) {
-                $q->where('device_name', 'like', '%' . $filters['search'] . '%')
-                  ->orWhere('serial_number', 'like', '%' . $filters['search'] . '%')
-                  ->orWhereHas('users', function ($userQuery) use ($filters) {
-                      $userQuery->where('first_name', 'like', '%' . $filters['search'] . '%')
-                                ->orWhere('last_name', 'like', '%' . $filters['search'] . '%')
-                                ->orWhere('email', 'like', '%' . $filters['search'] . '%');
-                  });
-            });
-        }
+            // Apply search filter
+            if (!empty($filters['search'])) {
+                $query->where(function ($q) use ($filters) {
+                    $q->where('device_name', 'like', '%' . $filters['search'] . '%')
+                      ->orWhere('serial_number', 'like', '%' . $filters['search'] . '%')
+                      ->orWhereHas('users', function ($userQuery) use ($filters) {
+                          $userQuery->where('first_name', 'like', '%' . $filters['search'] . '%')
+                                    ->orWhere('last_name', 'like', '%' . $filters['search'] . '%')
+                                    ->orWhere('email', 'like', '%' . $filters['search'] . '%');
+                      });
+                });
+            }
 
-        // Apply status filter
-        if (!empty($filters['status']) && $filters['status'] !== 'all') {
-            $query->where('status', $filters['status']);
-        }
+            // Apply status filter
+            if (!empty($filters['status']) && $filters['status'] !== 'all') {
+                $query->where('status', $filters['status']);
+            }
 
-        // Apply sorting
-        $sortField = $filters['sort'] ?? 'created_at';
-        $sortDirection = $filters['direction'] ?? 'desc';
+            // Apply sorting
+            $sortField = $filters['sort'] ?? 'created_at';
+            $sortDirection = $filters['direction'] ?? 'desc';
 
-        $query->orderBy($sortField, $sortDirection);
+            $query->orderBy($sortField, $sortDirection);
 
-        // Get per_page value from request, default to 10, allow only [10, 25, 50, 100]
-        $perPage = in_array($filters['per_page'] ?? 10, [10, 25, 50, 100]) 
-            ? ($filters['per_page'] ?? 10) 
-            : 10;
-        
-        $devices = $query->paginate($perPage);
-        $filteredArchivedCount = $devices->total();
+            // Get per_page value from request, default to 10, allow only [10, 25, 50, 100]
+            $perPage = in_array($filters['per_page'] ?? 10, [10, 25, 50, 100])
+                ? ($filters['per_page'] ?? 10)
+                : 10;
 
-        // Only query total count if filters are applied, otherwise use filtered count
-        $hasFilters = !empty($filters['search']);
-        $archivedCount = $hasFilters
-            ? Device::where('is_archived', true)->count()
-            : $filteredArchivedCount;
+            $devices = $query->paginate($perPage);
+            $filteredArchivedCount = $devices->total();
 
-        return Inertia::render('devices/archive-devices', [
-            'devices' => $devices,
-            'archivedCount' => $archivedCount,
-            'filteredArchivedCount' => $filteredArchivedCount,
-            'filters' => $filters,
-        ]);
+            // Only query total count if filters are applied, otherwise use filtered count
+            $hasFilters = !empty($filters['search']) || (!empty($filters['status']) && $filters['status'] !== 'all');
+            $archivedCount = $hasFilters
+                ? Device::where('is_archived', true)->count()
+                : $filteredArchivedCount;
+
+            return [
+                'devices' => $devices,
+                'archivedCount' => $archivedCount,
+                'filteredArchivedCount' => $filteredArchivedCount,
+                'filters' => $filters,
+            ];
+        });
+
+        return Inertia::render('devices/archive-devices', $data);
     }
 
     /**
@@ -160,6 +173,10 @@ class DeviceController extends Controller
             }
 
             $device->update(['is_archived' => true]);
+
+            Cache::tags(['devices'])->flush();
+            Cache::tags(['analytics'])->flush();
+            Cache::tags(['dashboard'])->flush();
 
             return redirect()->back()->with('success', 'Device archived successfully.');
         } catch (ValidationException $e) {
@@ -201,6 +218,10 @@ class DeviceController extends Controller
         // Archive eligible devices
         Device::whereIn('id', $eligibleDevices->pluck('id'))->update(['is_archived' => true]);
 
+        Cache::tags(['devices'])->flush();
+        Cache::tags(['analytics'])->flush();
+        Cache::tags(['dashboard'])->flush();
+
         $message = "{$count} device(s) archived successfully.";
         if ($ineligibleCount > 0) {
             $message .= " {$ineligibleCount} device(s) did not meet archive requirements and were skipped.";
@@ -223,6 +244,10 @@ class DeviceController extends Controller
             ->where('is_archived', true)
             ->update(['is_archived' => false]);
 
+        Cache::tags(['devices'])->flush();
+        Cache::tags(['analytics'])->flush();
+        Cache::tags(['dashboard'])->flush();
+
         return redirect()->back()->with('success', "{$count} device(s) restored successfully.");
     }
 
@@ -239,6 +264,10 @@ class DeviceController extends Controller
             }
 
             $device->update(['is_archived' => false]);
+
+            Cache::tags(['devices'])->flush();
+            Cache::tags(['analytics'])->flush();
+            Cache::tags(['dashboard'])->flush();
 
             return redirect()->back()->with('success', 'Device restored successfully.');
         } catch (\Exception $e) {
@@ -265,6 +294,10 @@ class DeviceController extends Controller
             'firmware_version' => $validated['firmware_version'] ?? null,
             'status' => 'offline',
         ]);
+
+        Cache::tags(['devices'])->flush();
+        Cache::tags(['analytics'])->flush();
+        Cache::tags(['dashboard'])->flush();
 
         return redirect()->back()->with('success', 'Device created successfully.');
     }
@@ -302,6 +335,10 @@ class DeviceController extends Controller
             unset($validated['serial_number']);
 
             $device->update($validated);
+
+            Cache::tags(['devices'])->flush();
+            Cache::tags(['analytics'])->flush();
+            Cache::tags(['dashboard'])->flush();
 
             return redirect()->back()->with('success', 'Device updated successfully.');
         } catch (\Illuminate\Validation\ValidationException $e) {

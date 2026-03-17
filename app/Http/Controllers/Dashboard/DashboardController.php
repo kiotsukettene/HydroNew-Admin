@@ -3,18 +3,17 @@
 namespace App\Http\Controllers\Dashboard;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
 use App\Models\Device;
 use App\Models\HydroponicYield;
-use App\Models\HydroponicSetup;
-use App\Models\SensorSystem;
 use App\Models\SensorReading;
+use App\Models\SensorSystem;
+use App\Models\User;
 use App\Services\AdminAnalyticsService;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Cache;
 use Inertia\Inertia;
-use Carbon\Carbon;
-
 class DashboardController extends Controller
 {
     protected $analyticsService;
@@ -29,37 +28,34 @@ class DashboardController extends Controller
      */
     public function index()
     {
-        // Get total counts
-        $totalUsers = User::where('role', 'user')->count();
-        $totalDevices = Device::where('is_archived', false)->count();
-        $totalHarvestedCrops = HydroponicYield::count();
+        $data = Cache::tags(['dashboard'])->remember('dashboard:index', 600, function () {
+            $totalUsers = User::where('role', 'user')->count();
+            $totalDevices = Device::where('is_archived', false)->count();
+            $totalHarvestedCrops = HydroponicYield::count();
+            $waterTreatmentData = $this->analyticsService->getWaterTreatmentAnalytics();
+            $waterTreatmentStats = [
+                'totalCycles' => $waterTreatmentData['total_cycles'],
+                'successRate' => $waterTreatmentData['success_rate'],
+                'averageDuration' => $waterTreatmentData['average_duration'],
+                'successfulCycles' => $waterTreatmentData['successful_cycles'],
+                'failedCycles' => $waterTreatmentData['failed_cycles'],
+            ];
+            $devices = Device::where('is_archived', false)
+                ->select('id', 'device_name', 'status')
+                ->get();
 
-        // Get water treatment analytics
-        $waterTreatmentData = $this->analyticsService->getWaterTreatmentAnalytics();
+            return [
+                'stats' => [
+                    'totalUsers' => $totalUsers,
+                    'totalDevices' => $totalDevices,
+                    'totalHarvestedCrops' => $totalHarvestedCrops,
+                ],
+                'waterTreatmentStats' => $waterTreatmentStats,
+                'devices' => $devices,
+            ];
+        });
 
-        // Format water treatment data for dashboard
-        $waterTreatmentStats = [
-            'totalCycles' => $waterTreatmentData['total_cycles'],
-            'successRate' => $waterTreatmentData['success_rate'],
-            'averageDuration' => $waterTreatmentData['average_duration'],
-            'successfulCycles' => $waterTreatmentData['successful_cycles'],
-            'failedCycles' => $waterTreatmentData['failed_cycles'],
-        ];
-
-        // Get all devices for the filter dropdown
-        $devices = Device::where('is_archived', false)
-            ->select('id', 'device_name', 'status')
-            ->get();
-
-        return Inertia::render('dashboard', [
-            'stats' => [
-                'totalUsers' => $totalUsers,
-                'totalDevices' => $totalDevices,
-                'totalHarvestedCrops' => $totalHarvestedCrops,
-            ],
-            'waterTreatmentStats' => $waterTreatmentStats,
-            'devices' => $devices,
-        ]);
+        return Inertia::render('dashboard', $data);
     }
 
     /**
@@ -68,7 +64,7 @@ class DashboardController extends Controller
     public function getSensorSystems(Request $request): JsonResponse
     {
         $deviceId = $request->query('device_id');
-        
+
         if (!$deviceId) {
             return response()->json([
                 'status' => 'error',
