@@ -54,9 +54,17 @@ class FeedbackController extends Controller
 
         $feedback = $query->paginate($request->input('per_page', 20));
 
+        // Reuse paginate's count when on "All" tab with no filters to avoid duplicate query
+        $unrepliedCount = (empty($filters['category']) || $filters['category'] === 'all')
+            && empty($filters['device_id'])
+            && empty($filters['search'])
+            ? $feedback->total()
+            : Feedback::where('replied', false)->count();
+
         return Inertia::render('feedback/index', [
             'feedback' => $feedback,
             'filters' => $filters,
+            'unrepliedFeedbackCount' => $unrepliedCount,
         ]);
     }
 

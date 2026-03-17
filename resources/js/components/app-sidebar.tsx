@@ -8,6 +8,8 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
+import { useNavigationLock } from '@/hooks/use-navigation-lock';
+import { resolveUrl } from '@/lib/utils';
 import { dashboard } from '@/routes';
 import users from '@/routes/users';
 import { type NavItem, type SharedData } from '@/types';
@@ -19,7 +21,16 @@ import devices from '@/routes/devices';
 import feedback from '@/routes/feedback';
 
 export function AppSidebar() {
-    const { unrepliedFeedbackCount } = usePage<SharedData>().props;
+    const page = usePage<SharedData>();
+    const { unrepliedFeedbackCount } = page.props;
+    const { isNavigating } = useNavigationLock();
+
+    const handleClick = (e: React.MouseEvent, href: string) => {
+        const resolved = resolveUrl(href);
+        if (page.url.startsWith(resolved) || isNavigating()) {
+            e.preventDefault();
+        }
+    };
 
     const mainNavItems: NavItem[] = [
         {
@@ -56,7 +67,11 @@ export function AppSidebar() {
                 <SidebarMenu>
                     <SidebarMenuItem>
                         <SidebarMenuButton size="lg" asChild>
-                            <Link href={dashboard().url} prefetch>
+                            <Link
+                                href={dashboard().url}
+                                prefetch
+                                onClick={(e) => handleClick(e, dashboard().url)}
+                            >
                                 <AppLogo />
                             </Link>
                         </SidebarMenuButton>

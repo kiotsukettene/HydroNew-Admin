@@ -135,11 +135,11 @@ class UserController extends Controller
                 return redirect()->back()->withErrors(['error' => 'Only inactive users can be archived.']);
             }
 
-            // Validate archive conditions: user must be inactive for at least 1 month
+            // Validate archive conditions: user must be inactive for at least 6 months
             if ($user->last_login_at) {
-                $oneMonthAgo = now()->subMonth();
-                if ($user->last_login_at > $oneMonthAgo) {
-                    return redirect()->back()->withErrors(['error' => 'User must be inactive for at least 1 month before archiving.']);
+                $sixMonthsAgo = now()->subMonths(6);
+                if ($user->last_login_at > $sixMonthsAgo) {
+                    return redirect()->back()->withErrors(['error' => 'User must be inactive for at least 6 months before archiving.']);
                 }
             }
 
@@ -162,20 +162,20 @@ class UserController extends Controller
             'ids.*' => 'integer|exists:users,id',
         ]);
 
-        $oneMonthAgo = now()->subMonth();
+        $sixMonthsAgo = now()->subMonths(6);
 
         // Find users that meet archive conditions
         $eligibleUsers = User::whereIn('id', $validated['ids'])
             ->where('is_archived', false)
             ->where('status', 'inactive')
-            ->where(function ($q) use ($oneMonthAgo) {
+            ->where(function ($q) use ($sixMonthsAgo) {
                 $q->whereNull('last_login_at')
-                  ->orWhere('last_login_at', '<=', $oneMonthAgo);
+                  ->orWhere('last_login_at', '<=', $sixMonthsAgo);
             })
             ->get();
 
         if ($eligibleUsers->isEmpty()) {
-            return redirect()->back()->withErrors(['error' => 'No users meet the archive requirements (inactive for at least 1 month).']);
+            return redirect()->back()->withErrors(['error' => 'No users meet the archive requirements (inactive for at least 6 months).']);
         }
 
         $count = $eligibleUsers->count();

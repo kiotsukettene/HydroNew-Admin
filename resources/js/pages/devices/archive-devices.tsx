@@ -63,17 +63,21 @@ export default function ArchiveDevices() {
 
   const [selectedDevices, setSelectedDevices] = useState<number[]>([])
   const [isSearching, setIsSearching] = useState(false)
+  const [isBackProcessing, setIsBackProcessing] = useState(false)
   const [isUnarchiveConfirmOpen, setIsUnarchiveConfirmOpen] = useState(false)
   const [deviceToUnarchive, setDeviceToUnarchive] = useState<Device | null>(null)
   const { patch: unarchivePatch, processing: isRestoring } = useForm({})
-  const hasMounted = useRef(false)
+  const previousSearchRef = useRef(data.search)
   const [isBulkRestoreConfirmOpen, setIsBulkRestoreConfirmOpen] = useState(false)
+  const [isBulkRestoring, setIsBulkRestoring] = useState(false)
+  const [isSorting, setIsSorting] = useState(false)
 
   useEffect(() => {
-    if (!hasMounted.current) {
-      hasMounted.current = true;
+    // Only trigger search when search has actually changed (avoids double load from React Strict Mode)
+    if (data.search === previousSearchRef.current) {
       return;
     }
+    previousSearchRef.current = data.search;
 
     const timer = setTimeout(() => {
       router.get("/devices/archived", cleanFilters({ 
@@ -94,6 +98,7 @@ export default function ArchiveDevices() {
   }, [data.search])
 
   const handleSort = (field: SortField) => {
+    if (isSorting) return;
     const newDirection = data.sort === field && data.direction === 'asc' ? 'desc' : 'asc';
 
     router.get(
@@ -108,6 +113,8 @@ export default function ArchiveDevices() {
         preserveState: true,
         preserveScroll: true,
         replace: true,
+        onStart: () => setIsSorting(true),
+        onFinish: () => setIsSorting(false),
         onSuccess: () => {
           setData({ ...data, sort: field, direction: newDirection });
         }
@@ -117,6 +124,7 @@ export default function ArchiveDevices() {
 
   const handlePerPageChange = (value: string) => {
     const perPage = parseInt(value);
+    if (perPage === data.per_page) return;
     router.get(
       '/devices/archived',
       cleanFilters({
@@ -149,6 +157,7 @@ export default function ArchiveDevices() {
   }
 
   const handleUnarchiveConfirm = () => {
+    if (isRestoring) return;
     if (deviceToUnarchive) {
       unarchivePatch(`/devices/${deviceToUnarchive.id}/unarchive`, {
         preserveScroll: true,
@@ -158,12 +167,6 @@ export default function ArchiveDevices() {
           setSelectedDevices([])
           toast.success('Device restored successfully', {
             description: `${deviceToUnarchive.device_name} has been restored from archives.`,
-          })
-        },
-        onError: (errors) => {
-          const message = typeof errors?.error === 'string' ? errors.error : (Array.isArray(errors?.error) ? errors.error[0] : null)
-          toast.error('Failed to restore device', {
-            description: message || 'Please try again later.',
           })
         },
       })
@@ -192,19 +195,16 @@ export default function ArchiveDevices() {
   }
 
   const handleBulkRestoreConfirm = () => {
+    if (isBulkRestoring) return;
     router.patch('/devices/bulk-unarchive', { ids: selectedDevices }, {
       preserveScroll: true,
+      onStart: () => setIsBulkRestoring(true),
+      onFinish: () => setIsBulkRestoring(false),
       onSuccess: () => {
         setSelectedDevices([])
         setIsBulkRestoreConfirmOpen(false)
         toast.success('Devices restored successfully', {
           description: `${selectedDevices.length} device(s) have been restored from archives.`,
-        })
-      },
-      onError: (errors) => {
-        const message = typeof errors?.error === 'string' ? errors.error : (Array.isArray(errors?.error) ? errors.error[0] : null)
-        toast.error('Failed to restore devices', {
-          description: message || 'Please try again later.',
         })
       },
     })
@@ -218,9 +218,21 @@ export default function ArchiveDevices() {
          <Button
             size="default"
             className="w-auto"
-            onClick={() => router.visit("/devices", { preserveState: false })}
+            disabled={isBackProcessing}
+            onClick={() => {
+              if (isBackProcessing) return
+              setIsBackProcessing(true)
+              router.visit("/devices", {
+                preserveState: false,
+                onFinish: () => setIsBackProcessing(false),
+              })
+            }}
           >
-            <ArrowLeft className="mr-2 h-4 w-4" />
+            {isBackProcessing ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <ArrowLeft className="mr-2 h-4 w-4" />
+            )}
             Back to Devices
           </Button>
       </div>
@@ -306,6 +318,7 @@ export default function ArchiveDevices() {
                     size="icon"
                     className="h-8 w-8"
                     aria-label="Sort Device Name"
+                    disabled={isSorting}
                     onClick={() => handleSort('device_name')}
                   >
                     {getSortIcon('device_name')}
@@ -320,6 +333,7 @@ export default function ArchiveDevices() {
                     size="icon"
                     className="h-8 w-8"
                     aria-label="Sort Serial Number"
+                    disabled={isSorting}
                     onClick={() => handleSort('serial_number')}
                   >
                     {getSortIcon('serial_number')}
@@ -339,6 +353,7 @@ export default function ArchiveDevices() {
                     size="icon"
                     className="h-8 w-8"
                     aria-label="Sort Status"
+                    disabled={isSorting}
                     onClick={() => handleSort('status')}
                   >
                     {getSortIcon('status')}
@@ -508,14 +523,23 @@ export default function ArchiveDevices() {
                 onClick={() => {
                   setIsBulkRestoreConfirmOpen(false);
                 }}
+                disabled={isBulkRestoring}
               >
                 Cancel
               </Button>
               <Button
                 variant="primary"
                 onClick={handleBulkRestoreConfirm}
+                disabled={isBulkRestoring}
               >
-                Restore {selectedDevices.length} Device(s)
+                {isBulkRestoring ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Restoring...
+                  </>
+                ) : (
+                  `Restore ${selectedDevices.length} Device(s)`
+                )}
               </Button>
             </DialogFooter>
           </DialogContent>

@@ -113,7 +113,7 @@ class UsersTest extends TestCase
             'role' => 'user',
             'is_archived' => false,
             'status' => 'inactive',
-            'last_login_at' => now()->subMonths(2),
+            'last_login_at' => now()->subMonths(7),
         ]);
 
         $response = $this->actingAs($admin)->patch(route('users.archive', $user->id));
@@ -220,7 +220,7 @@ class UsersTest extends TestCase
             'role' => 'user',
             'is_archived' => false,
             'status' => 'inactive',
-            'last_login_at' => now()->subMonths(2),
+            'last_login_at' => now()->subMonths(7),
         ]);
 
         $userIds = $users->pluck('id')->toArray();

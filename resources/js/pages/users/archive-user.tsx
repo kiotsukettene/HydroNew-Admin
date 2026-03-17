@@ -62,7 +62,8 @@ export default function ArchiveUser() {
   })
 
   const [isSearching, setIsSearching] = useState(false)
-  const hasMounted = useRef(false)
+  const [isBackProcessing, setIsBackProcessing] = useState(false)
+  const previousSearchRef = useRef(data.search)
   const [selectedUsers, setSelectedUsers] = useState<number[]>([])
 
   // Unarchive confirmation modal state
@@ -72,12 +73,15 @@ export default function ArchiveUser() {
 
   // Bulk unarchive confirmation modal state
   const [isBulkRestoreConfirmOpen, setIsBulkRestoreConfirmOpen] = useState(false);
+  const [isBulkRestoring, setIsBulkRestoring] = useState(false);
+  const [isSorting, setIsSorting] = useState(false);
 
   useEffect(() => {
-    if (!hasMounted.current) {
-      hasMounted.current = true;
+    // Only trigger search when search has actually changed (avoids double load from React Strict Mode)
+    if (data.search === previousSearchRef.current) {
       return;
     }
+    previousSearchRef.current = data.search;
 
     const timer = setTimeout(() => {
       router.get("/users/archived", cleanFilters({ 
@@ -98,6 +102,7 @@ export default function ArchiveUser() {
   }, [data.search])
 
   const handleSort = (field: SortField) => {
+    if (isSorting) return;
     const newDirection = data.sort === field && data.direction === 'asc' ? 'desc' : 'asc';
 
     router.get(
@@ -112,6 +117,8 @@ export default function ArchiveUser() {
         preserveState: true,
         preserveScroll: true,
         replace: true,
+        onStart: () => setIsSorting(true),
+        onFinish: () => setIsSorting(false),
         onSuccess: () => {
           setData({ ...data, sort: field, direction: newDirection });
         }
@@ -121,6 +128,7 @@ export default function ArchiveUser() {
 
   const handlePerPageChange = (value: string) => {
     const perPage = parseInt(value);
+    if (perPage === data.per_page) return;
     router.get(
       '/users/archived',
       cleanFilters({
@@ -153,6 +161,7 @@ export default function ArchiveUser() {
   };
 
   const handleUnarchiveConfirm = () => {
+    if (isRestoring) return;
     if (userToUnarchive) {
       unarchivePatch(`/users/${userToUnarchive.id}/unarchive`, {
         preserveScroll: true,
@@ -162,11 +171,6 @@ export default function ArchiveUser() {
           setSelectedUsers([]);
           toast.success('User restored successfully', {
             description: `${userToUnarchive.first_name} ${userToUnarchive.last_name} has been restored from archives.`,
-          });
-        },
-        onError: () => {
-          toast.error('Failed to restore user', {
-            description: 'Please try again later.',
           });
         },
       });
@@ -195,19 +199,16 @@ export default function ArchiveUser() {
   }
 
   const handleBulkRestoreConfirm = () => {
+    if (isBulkRestoring) return;
     router.patch('/users/bulk-unarchive', { ids: selectedUsers }, {
       preserveScroll: true,
+      onStart: () => setIsBulkRestoring(true),
+      onFinish: () => setIsBulkRestoring(false),
       onSuccess: () => {
         setSelectedUsers([])
         setIsBulkRestoreConfirmOpen(false)
         toast.success('Users restored successfully', {
           description: `${selectedUsers.length} user(s) have been restored from archives.`,
-        })
-      },
-      onError: (errors) => {
-        const message = typeof errors?.error === 'string' ? errors.error : (Array.isArray(errors?.error) ? errors.error[0] : null)
-        toast.error('Failed to restore users', {
-          description: message || 'Please try again later.',
         })
       },
     })
@@ -221,9 +222,21 @@ export default function ArchiveUser() {
                   <Button
                     size="default"
                     className="w-auto"
-                    onClick={() => router.visit("/users", { preserveState: false })}
+                    disabled={isBackProcessing}
+                    onClick={() => {
+                      if (isBackProcessing) return
+                      setIsBackProcessing(true)
+                      router.visit("/users", {
+                        preserveState: false,
+                        onFinish: () => setIsBackProcessing(false),
+                      })
+                    }}
                   >
-                    <ArrowLeft className="mr-2 h-4 w-4" />
+                    {isBackProcessing ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <ArrowLeft className="mr-2 h-4 w-4" />
+                    )}
                     Back to Users
                   </Button>
             </div>
@@ -280,8 +293,10 @@ export default function ArchiveUser() {
                         variant="primary"
                         size="sm"
                         className="w-auto"
+                        disabled={isBulkRestoring}
                         onClick={handleBulkRestore}
                       >
+                        {isBulkRestoring && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                         <RotateCcw className="mr-2 h-4 w-4" />
                         Restore {selectedUsers.length} selected
                       </Button>
@@ -308,6 +323,7 @@ export default function ArchiveUser() {
                 size="icon"
                 className="h-8 w-8"
                 aria-label="Sort Name"
+                disabled={isSorting}
                 onClick={() => handleSort('name')}
               >
                 {getSortIcon('name')}
@@ -322,6 +338,7 @@ export default function ArchiveUser() {
                 size="icon"
                 className="h-8 w-8"
                 aria-label="Sort Email"
+                disabled={isSorting}
                 onClick={() => handleSort('email')}
               >
                 {getSortIcon('email')}
@@ -343,7 +360,7 @@ export default function ArchiveUser() {
       </TableHeader>
 
       <TableBody>
-        {isSearching ? (
+        {isSearching && users.data.length === 0 ? (
           <TableRow>
             <TableCell
               colSpan={6}
@@ -500,14 +517,23 @@ export default function ArchiveUser() {
               onClick={() => {
                 setIsBulkRestoreConfirmOpen(false);
               }}
+              disabled={isBulkRestoring}
             >
               Cancel
             </Button>
             <Button
               variant="primary"
               onClick={handleBulkRestoreConfirm}
+              disabled={isBulkRestoring}
             >
-              Restore {selectedUsers.length} User(s)
+              {isBulkRestoring ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Restoring...
+                </>
+              ) : (
+                `Restore ${selectedUsers.length} User(s)`
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
