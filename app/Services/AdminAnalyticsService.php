@@ -80,7 +80,7 @@ class AdminAnalyticsService
     {
         $cacheKey = 'analytics:users-devices:' . md5(serialize($filters));
 
-        return Cache::tags(['analytics'])->remember($cacheKey, 1800, function () use ($filters) {
+        return Cache::remember($cacheKey, 1800, function () use ($filters) {
         // Set default date range if not provided
         $dateFrom = $filters['date_from'] ?? Carbon::now()->subMonths(12)->startOfDay();
         $dateTo = $filters['date_to'] ?? Carbon::now()->endOfDay();
@@ -206,7 +206,7 @@ class AdminAnalyticsService
     {
         $cacheKey = 'analytics:crops-harvest-yield:' . md5(serialize($filters));
 
-        return Cache::tags(['analytics'])->remember($cacheKey, 1800, function () use ($filters) {
+        return Cache::remember($cacheKey, 1800, function () use ($filters) {
         // Set default date range if not provided
         $dateFrom = $filters['date_from'] ?? Carbon::now()->subMonths(12)->startOfDay();
         $dateTo = $filters['date_to'] ?? Carbon::now()->endOfDay();
@@ -437,7 +437,7 @@ class AdminAnalyticsService
     {
         $cacheKey = 'analytics:water-treatment:' . md5(serialize($filters));
 
-        return Cache::tags(['analytics'])->remember($cacheKey, 1800, function () use ($filters) {
+        return Cache::remember($cacheKey, 1800, function () use ($filters) {
         // Set default date range if not provided
         $dateFrom = $filters['date_from'] ?? Carbon::now()->subMonths(12)->startOfDay();
         $dateTo = $filters['date_to'] ?? Carbon::now()->endOfDay();

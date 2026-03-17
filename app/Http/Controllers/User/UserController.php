@@ -19,7 +19,7 @@ class UserController extends Controller
         $page = $request->get('page', 1);
         $cacheKey = 'users:index:' . md5(serialize($filters + ['page' => $page]));
 
-        $data = Cache::tags(['users'])->remember($cacheKey, 600, function () use ($filters) {
+        $data = Cache::remember($cacheKey, 600, function () use ($filters) {
             $query = User::where('role', '=', 'user')
                          ->where('is_archived', false);
 
@@ -82,7 +82,7 @@ class UserController extends Controller
         $page = $request->get('page', 1);
         $cacheKey = 'users:archived:' . md5(serialize($filters + ['page' => $page]));
 
-        $data = Cache::tags(['users'])->remember($cacheKey, 600, function () use ($filters) {
+        $data = Cache::remember($cacheKey, 600, function () use ($filters) {
             $query = User::where('role', '=', 'user')
                         ->where('is_archived', true);
 
@@ -152,9 +152,7 @@ class UserController extends Controller
             $user->is_archived = true;
             $user->save();
 
-            Cache::tags(['users'])->flush();
-            Cache::tags(['analytics'])->flush();
-            Cache::tags(['dashboard'])->flush();
+            Cache::flush();
 
             return redirect()->back()->with('success', 'User archived successfully.');
         } catch (\Exception $e) {
@@ -194,9 +192,7 @@ class UserController extends Controller
         // Archive eligible users
         User::whereIn('id', $eligibleUsers->pluck('id'))->update(['is_archived' => true]);
 
-        Cache::tags(['users'])->flush();
-        Cache::tags(['analytics'])->flush();
-        Cache::tags(['dashboard'])->flush();
+        Cache::flush();
 
         $message = "{$count} user(s) archived successfully.";
         if ($ineligibleCount > 0) {
@@ -221,9 +217,7 @@ class UserController extends Controller
             $user->is_archived = false;
             $user->save();
 
-            Cache::tags(['users'])->flush();
-            Cache::tags(['analytics'])->flush();
-            Cache::tags(['dashboard'])->flush();
+            Cache::flush();
 
             return redirect()->back()->with('success', 'User unarchived successfully.');
         } catch (\Exception $e) {
@@ -245,9 +239,7 @@ class UserController extends Controller
             ->where('is_archived', true)
             ->update(['is_archived' => false]);
 
-        Cache::tags(['users'])->flush();
-        Cache::tags(['analytics'])->flush();
-        Cache::tags(['dashboard'])->flush();
+        Cache::flush();
 
         return redirect()->back()->with('success', "{$count} user(s) restored successfully.");
     }
@@ -300,9 +292,7 @@ class UserController extends Controller
             $user = User::findOrFail($id);
             $user->update($validated);
 
-            Cache::tags(['users'])->flush();
-            Cache::tags(['analytics'])->flush();
-            Cache::tags(['dashboard'])->flush();
+            Cache::flush();
 
             return redirect()->back()->with('success', 'User updated successfully.');
         } catch (\Illuminate\Validation\ValidationException $e) {

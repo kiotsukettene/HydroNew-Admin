@@ -21,7 +21,7 @@ class DeviceController extends Controller
         $page = $request->get('page', 1);
         $cacheKey = 'devices:index:' . md5(serialize($filters + ['page' => $page]));
 
-        $data = Cache::tags(['devices'])->remember($cacheKey, 600, function () use ($filters) {
+        $data = Cache::remember($cacheKey, 600, function () use ($filters) {
             $query = Device::with('users')
             ->withCount(['hydroponic_setups as active_setups_count' => function ($q) {
                 $q->where('is_archived', false)->where('status', 'active');
@@ -89,7 +89,7 @@ class DeviceController extends Controller
         $page = $request->get('page', 1);
         $cacheKey = 'devices:archived:' . md5(serialize($filters + ['page' => $page]));
 
-        $data = Cache::tags(['devices'])->remember($cacheKey, 600, function () use ($filters) {
+        $data = Cache::remember($cacheKey, 600, function () use ($filters) {
             $query = Device::with('users')
                 ->where('is_archived', true);
 
@@ -174,9 +174,7 @@ class DeviceController extends Controller
 
             $device->update(['is_archived' => true]);
 
-            Cache::tags(['devices'])->flush();
-            Cache::tags(['analytics'])->flush();
-            Cache::tags(['dashboard'])->flush();
+            Cache::flush();
 
             return redirect()->back()->with('success', 'Device archived successfully.');
         } catch (ValidationException $e) {
@@ -218,9 +216,7 @@ class DeviceController extends Controller
         // Archive eligible devices
         Device::whereIn('id', $eligibleDevices->pluck('id'))->update(['is_archived' => true]);
 
-        Cache::tags(['devices'])->flush();
-        Cache::tags(['analytics'])->flush();
-        Cache::tags(['dashboard'])->flush();
+        Cache::flush();
 
         $message = "{$count} device(s) archived successfully.";
         if ($ineligibleCount > 0) {
@@ -244,9 +240,7 @@ class DeviceController extends Controller
             ->where('is_archived', true)
             ->update(['is_archived' => false]);
 
-        Cache::tags(['devices'])->flush();
-        Cache::tags(['analytics'])->flush();
-        Cache::tags(['dashboard'])->flush();
+        Cache::flush();
 
         return redirect()->back()->with('success', "{$count} device(s) restored successfully.");
     }
@@ -265,9 +259,7 @@ class DeviceController extends Controller
 
             $device->update(['is_archived' => false]);
 
-            Cache::tags(['devices'])->flush();
-            Cache::tags(['analytics'])->flush();
-            Cache::tags(['dashboard'])->flush();
+            Cache::flush();
 
             return redirect()->back()->with('success', 'Device restored successfully.');
         } catch (\Exception $e) {
@@ -295,9 +287,7 @@ class DeviceController extends Controller
             'status' => 'offline',
         ]);
 
-        Cache::tags(['devices'])->flush();
-        Cache::tags(['analytics'])->flush();
-        Cache::tags(['dashboard'])->flush();
+        Cache::flush();
 
         return redirect()->back()->with('success', 'Device created successfully.');
     }
@@ -336,9 +326,7 @@ class DeviceController extends Controller
 
             $device->update($validated);
 
-            Cache::tags(['devices'])->flush();
-            Cache::tags(['analytics'])->flush();
-            Cache::tags(['dashboard'])->flush();
+            Cache::flush();
 
             return redirect()->back()->with('success', 'Device updated successfully.');
         } catch (\Illuminate\Validation\ValidationException $e) {

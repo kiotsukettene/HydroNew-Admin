@@ -23,7 +23,7 @@ class FeedbackController extends Controller
         $page = $request->get('page', 1);
         $cacheKey = 'feedback:index:' . md5(serialize($filters + ['per_page' => $perPage, 'page' => $page]));
 
-        $data = Cache::tags(['feedback'])->remember($cacheKey, 600, function () use ($filters, $perPage) {
+        $data = Cache::remember($cacheKey, 600, function () use ($filters, $perPage) {
             $query = Feedback::with(['user', 'device'])
                 ->orderBy('created_at', 'desc');
 
@@ -141,7 +141,7 @@ class FeedbackController extends Controller
         // Mark as replied
         $feedback->update(['replied' => true]);
 
-        Cache::tags(['feedback'])->flush();
+        Cache::flush();
 
         return back()->with('success', 'Reply sent successfully!');
     }
