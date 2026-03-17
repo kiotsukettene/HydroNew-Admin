@@ -73,6 +73,8 @@ export default function ArchiveUser() {
 
   // Bulk unarchive confirmation modal state
   const [isBulkRestoreConfirmOpen, setIsBulkRestoreConfirmOpen] = useState(false);
+  const [isBulkRestoring, setIsBulkRestoring] = useState(false);
+  const [isSorting, setIsSorting] = useState(false);
 
   useEffect(() => {
     // Only trigger search when search has actually changed (avoids double load from React Strict Mode)
@@ -100,6 +102,7 @@ export default function ArchiveUser() {
   }, [data.search])
 
   const handleSort = (field: SortField) => {
+    if (isSorting) return;
     const newDirection = data.sort === field && data.direction === 'asc' ? 'desc' : 'asc';
 
     router.get(
@@ -114,6 +117,8 @@ export default function ArchiveUser() {
         preserveState: true,
         preserveScroll: true,
         replace: true,
+        onStart: () => setIsSorting(true),
+        onFinish: () => setIsSorting(false),
         onSuccess: () => {
           setData({ ...data, sort: field, direction: newDirection });
         }
@@ -156,6 +161,7 @@ export default function ArchiveUser() {
   };
 
   const handleUnarchiveConfirm = () => {
+    if (isRestoring) return;
     if (userToUnarchive) {
       unarchivePatch(`/users/${userToUnarchive.id}/unarchive`, {
         preserveScroll: true,
@@ -165,11 +171,6 @@ export default function ArchiveUser() {
           setSelectedUsers([]);
           toast.success('User restored successfully', {
             description: `${userToUnarchive.first_name} ${userToUnarchive.last_name} has been restored from archives.`,
-          });
-        },
-        onError: () => {
-          toast.error('Failed to restore user', {
-            description: 'Please try again later.',
           });
         },
       });
@@ -198,19 +199,16 @@ export default function ArchiveUser() {
   }
 
   const handleBulkRestoreConfirm = () => {
+    if (isBulkRestoring) return;
     router.patch('/users/bulk-unarchive', { ids: selectedUsers }, {
       preserveScroll: true,
+      onStart: () => setIsBulkRestoring(true),
+      onFinish: () => setIsBulkRestoring(false),
       onSuccess: () => {
         setSelectedUsers([])
         setIsBulkRestoreConfirmOpen(false)
         toast.success('Users restored successfully', {
           description: `${selectedUsers.length} user(s) have been restored from archives.`,
-        })
-      },
-      onError: (errors) => {
-        const message = typeof errors?.error === 'string' ? errors.error : (Array.isArray(errors?.error) ? errors.error[0] : null)
-        toast.error('Failed to restore users', {
-          description: message || 'Please try again later.',
         })
       },
     })
@@ -295,8 +293,10 @@ export default function ArchiveUser() {
                         variant="primary"
                         size="sm"
                         className="w-auto"
+                        disabled={isBulkRestoring}
                         onClick={handleBulkRestore}
                       >
+                        {isBulkRestoring && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                         <RotateCcw className="mr-2 h-4 w-4" />
                         Restore {selectedUsers.length} selected
                       </Button>
@@ -323,6 +323,7 @@ export default function ArchiveUser() {
                 size="icon"
                 className="h-8 w-8"
                 aria-label="Sort Name"
+                disabled={isSorting}
                 onClick={() => handleSort('name')}
               >
                 {getSortIcon('name')}
@@ -337,6 +338,7 @@ export default function ArchiveUser() {
                 size="icon"
                 className="h-8 w-8"
                 aria-label="Sort Email"
+                disabled={isSorting}
                 onClick={() => handleSort('email')}
               >
                 {getSortIcon('email')}
@@ -515,14 +517,23 @@ export default function ArchiveUser() {
               onClick={() => {
                 setIsBulkRestoreConfirmOpen(false);
               }}
+              disabled={isBulkRestoring}
             >
               Cancel
             </Button>
             <Button
               variant="primary"
               onClick={handleBulkRestoreConfirm}
+              disabled={isBulkRestoring}
             >
-              Restore {selectedUsers.length} User(s)
+              {isBulkRestoring ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Restoring...
+                </>
+              ) : (
+                `Restore ${selectedUsers.length} User(s)`
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>

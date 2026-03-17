@@ -96,6 +96,11 @@ export default function Users() {
 
     // Bulk archive confirmation modal state
     const [isBulkArchiveConfirmOpen, setIsBulkArchiveConfirmOpen] = useState(false);
+    const [isBulkArchiving, setIsBulkArchiving] = useState(false);
+
+    const [isViewArchivedProcessing, setIsViewArchivedProcessing] = useState(false);
+    const [isSorting, setIsSorting] = useState(false);
+    const [isClearFiltersProcessing, setIsClearFiltersProcessing] = useState(false);
 
     /** Archive is only allowed when user is inactive for at least 6 months */
     const canArchive = (user: User): boolean => {
@@ -112,25 +117,18 @@ export default function Users() {
     };
 
     const handleArchiveConfirm = () => {
-        if (userToArchive) {
-            archivePatch(`/users/${userToArchive.id}/archive`, {
-                preserveScroll: true,
-                onSuccess: () => {
-                    setIsArchiveConfirmOpen(false);
-                    setUserToArchive(null);
-                    setSelectedUsers([]);
-                    toast.success('User archived successfully', {
-                        description: `${userToArchive.first_name} ${userToArchive.last_name} has been moved to archives.`,
-                    });
-                },
-                onError: (errors) => {
-                    const message = typeof errors?.error === 'string' ? errors.error : (Array.isArray(errors?.error) ? errors.error[0] : null);
-                    toast.error('Failed to archive user', {
-                        description: message || 'Please try again later.',
-                    });
-                },
-            });
-        }
+        if (isArchiving || !userToArchive) return;
+        archivePatch(`/users/${userToArchive.id}/archive`, {
+            preserveScroll: true,
+            onSuccess: () => {
+                setIsArchiveConfirmOpen(false);
+                setUserToArchive(null);
+                setSelectedUsers([]);
+                toast.success('User archived successfully', {
+                    description: `${userToArchive.first_name} ${userToArchive.last_name} has been moved to archives.`,
+                });
+            },
+        });
     };
 
     const getEligibleUsersForArchive = () => {
@@ -151,10 +149,13 @@ export default function Users() {
     };
 
     const handleBulkArchiveConfirm = () => {
+        if (isBulkArchiving) return;
         const eligibleUserIds = getEligibleUsersForArchive().map(u => u.id);
-        
+
         router.patch('/users/bulk-archive', { ids: eligibleUserIds }, {
             preserveScroll: true,
+            onStart: () => setIsBulkArchiving(true),
+            onFinish: () => setIsBulkArchiving(false),
             onSuccess: () => {
                 setSelectedUsers([]);
                 setIsBulkArchiveConfirmOpen(false);
@@ -162,16 +163,11 @@ export default function Users() {
                     description: `${eligibleUserIds.length} user(s) have been moved to archives.`,
                 });
             },
-            onError: (errors) => {
-                const message = typeof errors?.error === 'string' ? errors.error : (Array.isArray(errors?.error) ? errors.error[0] : null);
-                toast.error('Failed to archive users', {
-                    description: message || 'Please try again later.',
-                });
-            },
         });
     };
 
     const handleSort = (field: SortField) => {
+        if (isSorting) return;
         const newDirection = data.sort === field && data.direction === 'asc' ? 'desc' : 'asc';
 
         router.get(
@@ -188,6 +184,8 @@ export default function Users() {
                 preserveState: true,
                 preserveScroll: true,
                 replace: true,
+                onStart: () => setIsSorting(true),
+                onFinish: () => setIsSorting(false),
                 onSuccess: () => {
                     setData({ ...data, sort: field, direction: newDirection });
                 }
@@ -348,6 +346,7 @@ export default function Users() {
                                 variant="destructive"
                                 size="sm"
                                 className="w-auto"
+                                disabled={isBulkArchiving}
                                 onClick={handleBulkArchive}
                             >
                                 <Archive className="mr-2 h-4 w-4" />
@@ -416,8 +415,9 @@ export default function Users() {
                                             variant="ghost"
                                             size="sm"
                                             className="w-full"
+                                            disabled={isClearFiltersProcessing}
                                             onClick={() => {
-                                                        router.get(
+                                                router.get(
                                                     '/users',
                                                     cleanFilters({
                                                         search: data.search,
@@ -431,6 +431,8 @@ export default function Users() {
                                                         preserveState: true,
                                                         preserveScroll: true,
                                                         replace: true,
+                                                        onStart: () => setIsClearFiltersProcessing(true),
+                                                        onFinish: () => setIsClearFiltersProcessing(false),
                                                         onSuccess: () => {
                                                             setData({ ...data, status: 'all', verified: 'all' });
                                                         }
@@ -438,6 +440,7 @@ export default function Users() {
                                                 );
                                             }}
                                         >
+                                            {isClearFiltersProcessing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                                             Clear Filters
                                         </Button>
                                     )}
@@ -450,8 +453,16 @@ export default function Users() {
                         variant="secondary"
                         size="sm"
                         className="w-auto"
-                        onClick={() => router.visit('/users/archived', { preserveState: false })}
+                        disabled={isViewArchivedProcessing}
+                        onClick={() => {
+                            router.visit('/users/archived', {
+                                preserveState: false,
+                                onStart: () => setIsViewArchivedProcessing(true),
+                                onFinish: () => setIsViewArchivedProcessing(false),
+                            });
+                        }}
                     >
+                        {isViewArchivedProcessing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                         <Archive className="mr-2 h-4 w-4" />
                         View Archived
                     </Button>
@@ -476,6 +487,7 @@ export default function Users() {
                                         size="icon"
                                         className="h-8 w-8"
                                         aria-label="Sort Name"
+                                        disabled={isSorting}
                                         onClick={() => handleSort('name')}
                                     >
                                         {getSortIcon('name')}
@@ -490,6 +502,7 @@ export default function Users() {
                                         size="icon"
                                         className="h-8 w-8"
                                         aria-label="Sort Email"
+                                        disabled={isSorting}
                                         onClick={() => handleSort('email')}
                                     >
                                         {getSortIcon('email')}
@@ -694,14 +707,23 @@ export default function Users() {
             onClick={() => {
               setIsBulkArchiveConfirmOpen(false);
             }}
+            disabled={isBulkArchiving}
           >
             Cancel
           </Button>
           <Button
             variant="destructive"
             onClick={handleBulkArchiveConfirm}
+            disabled={isBulkArchiving}
           >
-            Archive {getEligibleUsersForArchive().length} User(s)
+            {isBulkArchiving ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Archiving...
+              </>
+            ) : (
+              `Archive ${getEligibleUsersForArchive().length} User(s)`
+            )}
           </Button>
         </DialogFooter>
       </DialogContent>
