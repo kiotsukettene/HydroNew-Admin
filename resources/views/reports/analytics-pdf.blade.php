@@ -313,7 +313,7 @@
                 <div class="metric-card">
                     <div class="label">Total Yield Weight</div>
                     <div class="value">{{ number_format($cropsHarvestYield['total_yield_weight'] ?? 0, 2) }}</div>
-                    <div class="unit">kg</div>
+                    <div class="unit">g</div>
                 </div>
                 <div class="metric-card">
                     <div class="label">Harvest Rate</div>
@@ -350,7 +350,7 @@
                 <tr>
                     <th>Period</th>
                     <th>Harvested</th>
-                    <th>Total Weight (kg)</th>
+                    <th>Total Weight (g)</th>
                 </tr>
             </thead>
             <tbody>

@@ -356,14 +356,17 @@ class AdminAnalyticsService
             ->orderBy('period', 'asc')
             ->get();
 
-        $monthlyYieldData = HydroponicYield::where('is_archived', false)
+        $monthlyYieldData = HydroponicYield::where('hydroponic_yields.is_archived', false)
+            ->join('hydroponic_setup', 'hydroponic_yields.hydroponic_setup_id', '=', 'hydroponic_setup.id')
+            ->where('hydroponic_setup.harvest_status', 'harvested')
+            ->whereNotNull('hydroponic_setup.harvest_date')
             ->when($deviceId, function($query) use ($deviceId) {
-                $query->whereHas('hydroponic_setup', fn($q) => $q->where('device_id', $deviceId));
+                $query->where('hydroponic_setup.device_id', $deviceId);
             })
-            ->whereBetween('created_at', [$dateFrom, $dateTo])
+            ->whereBetween('hydroponic_setup.harvest_date', [$dateFrom, $dateTo])
             ->select(
-                DB::raw("{$yieldPeriodExpr} as period"),
-                DB::raw('SUM(total_weight) as total_weight')
+                DB::raw(str_replace('created_at', 'hydroponic_setup.harvest_date', $yieldPeriodExpr) . " as period"),
+                DB::raw('SUM(hydroponic_yields.total_weight) as total_weight')
             )
             ->groupBy('period')
             ->orderBy('period', 'asc')
