@@ -1,7 +1,7 @@
 import AppLayout from '@/layouts/app-layout'
 import { Head, usePage, router } from '@inertiajs/react'
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart'
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, RadarChart, PolarAngleAxis, PolarGrid, Radar, LineChart, Line, Legend, AreaChart, Area } from 'recharts'
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, RadarChart, PolarAngleAxis, PolarGrid, Radar, Legend, AreaChart, Area } from 'recharts'
 import { Users, Cast, Leaf, Waves, TrendingDown, Activity, Filter, FileDown } from 'lucide-react'
 import {
   TextureCardContent,
@@ -504,7 +504,7 @@ export default function Analytics() {
                   <TextureCardContent className="flex items-center gap-4">
                     <div>
                       <p className="text-sm text-muted-foreground">Total Yield Weight</p>
-                      <p className="text-2xl font-bold text-foreground">{cropsHarvestYield.total_yield_weight} <span className="text-sm font-normal text-muted-foreground">kg</span></p>
+                      <p className="text-2xl font-bold text-foreground">{cropsHarvestYield.total_yield_weight} <span className="text-sm font-normal text-muted-foreground">g</span></p>
                     </div>
                   </TextureCardContent>
                 </TextureCardStyled>
@@ -513,7 +513,7 @@ export default function Analytics() {
                   <TextureCardContent className="flex items-center gap-4">
                     <div>
                       <p className="text-sm text-muted-foreground">Avg Yield/Setup</p>
-                      <p className="text-2xl font-bold text-foreground">{cropsHarvestYield.average_yield_per_setup} <span className="text-sm font-normal text-muted-foreground">kg</span></p>
+                      <p className="text-2xl font-bold text-foreground">{cropsHarvestYield.average_yield_per_setup} <span className="text-sm font-normal text-muted-foreground">g</span></p>
                     </div>
                   </TextureCardContent>
                 </TextureCardStyled>
@@ -545,9 +545,9 @@ export default function Analytics() {
                     <ChartContainer
                       config={{
                         harvested: { label: 'Crops Harvested', color: '#cadbb7' },
-                        total_weight: { label: 'Yield Weight (kg)', color: 'hsl(var(--primary))' }
+                        total_weight: { label: 'Yield Weight (g)', color: 'hsl(var(--primary))' }
                       }}
-                      className="h-[220px] w-full"
+                      className="h-[250px] sm:h-[300px] w-full"
                     >
                       <BarChart data={cropsHarvestYield.monthly_harvest_trend} barCategoryGap="8%" maxBarSize={60}>
                         <CartesianGrid vertical={false} />
@@ -566,7 +566,7 @@ export default function Analytics() {
                         <Legend
                           formatter={(value) => {
                             if (value === 'harvested') return 'Crops Harvested';
-                            if (value === 'total_weight') return 'Yield Weight (kg)';
+                            if (value === 'total_weight') return 'Yield Weight (g)';
                             return value;
                           }}
                         />
@@ -640,7 +640,7 @@ export default function Analytics() {
                       <TableHeader>
                         <TableRow>
                           <TableHead>Crop Name</TableHead>
-                          <TableHead>Total Weight (kg)</TableHead>
+                          <TableHead>Total Weight (g)</TableHead>
                           <TableHead>Setup Count</TableHead>
                           <TableHead>Avg per Setup</TableHead>
                         </TableRow>
@@ -650,9 +650,9 @@ export default function Analytics() {
                         cropsHarvestYield.top_yielding_crops.map((crop, index) => (
                           <TableRow key={index}>
                             <TableCell className="font-medium">{crop.crop_name}</TableCell>
-                            <TableCell>{crop.total_weight} kg</TableCell>
+                            <TableCell>{crop.total_weight} g</TableCell>
                             <TableCell>{crop.setup_count}</TableCell>
-                            <TableCell>{(crop.total_weight / crop.setup_count).toFixed(2)} kg</TableCell>
+                            <TableCell>{(crop.total_weight / crop.setup_count).toFixed(2)} g</TableCell>
                           </TableRow>
                         ))
                       ) : (
@@ -680,7 +680,7 @@ export default function Analytics() {
                       Object.entries(cropsHarvestYield.grade_distribution).map(([grade, data]) => (
                         <div key={grade} className="p-4 border rounded-lg">
                           <p className="text-sm text-muted-foreground capitalize">{grade}</p>
-                          <p className="text-2xl font-bold text-foreground">{data.weight} kg</p>
+                          <p className="text-2xl font-bold text-foreground">{data.weight} g</p>
                           <p className="text-xs text-muted-foreground mt-1">
                             {data.count} pcs • {data.percentage}% of total
                           </p>
