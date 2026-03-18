@@ -111,7 +111,7 @@ class AdminAnalyticsService
             ->count();
 
         // User registration trend based on frequency
-        $labelFormat = $frequency === 'weekly' ? 'W%W %Y' : 'M Y';
+        $labelFormat = $frequency === 'weekly' ? 'F d Y' : 'M Y';
         $periodExpr = $this->getDatePeriodExpression('created_at', $frequency);
 
         $registrationData = User::regularUsers()
@@ -122,29 +122,27 @@ class AdminAnalyticsService
             )
             ->groupBy('period')
             ->orderBy('period', 'asc')
-            ->get()
-            ->keyBy('period');
+            ->get();
 
-        // Generate all periods and fill with data
-        $allPeriods = $this->generatePeriods($dateFrom, $dateTo, $frequency);
-        $registrationTrend = collect($allPeriods)->map(function ($period) use ($registrationData, $frequency, $labelFormat) {
+        // Map data with proper labels (only show periods with data)
+        $registrationTrend = $registrationData->map(function ($item) use ($frequency, $labelFormat) {
             if ($frequency === 'weekly') {
                 // Parse week format (YYYY-WW)
-                list($year, $week) = explode('-', $period);
+                list($year, $week) = explode('-', $item->period);
                 $date = Carbon::now()->setISODate($year, $week);
                 $label = $date->format($labelFormat);
             } else {
-                $label = Carbon::parse($period . '-01')->format($labelFormat);
+                $label = Carbon::parse($item->period . '-01')->format($labelFormat);
             }
 
             return [
                 'month' => $label,
-                'count' => $registrationData->get($period)->count ?? 0,
+                'count' => $item->count,
             ];
         });
 
         // Login activity trend based on frequency and date range
-        $loginLabelFormat = $frequency === 'weekly' ? 'W%W' : 'M d';
+        $loginLabelFormat = $frequency === 'weekly' ? 'F d Y' : 'M d';
         $loginPeriodExpr = $this->getDatePeriodExpression('created_at', $frequency);
 
         $loginData = LoginHistory::whereBetween('created_at', [$dateFrom, $dateTo])
@@ -155,24 +153,22 @@ class AdminAnalyticsService
             )
             ->groupBy('period')
             ->orderBy('period', 'asc')
-            ->get()
-            ->keyBy('period');
+            ->get();
 
-        // For login activity, generate all periods
-        $allLoginPeriods = $this->generatePeriods($dateFrom, $dateTo, $frequency);
-        $loginActivityTrend = collect($allLoginPeriods)->map(function ($period) use ($loginData, $frequency, $loginLabelFormat) {
+        // Map login data with proper labels (only show periods with data)
+        $loginActivityTrend = $loginData->map(function ($item) use ($frequency, $loginLabelFormat) {
             if ($frequency === 'weekly') {
-                list($year, $week) = explode('-', $period);
+                list($year, $week) = explode('-', $item->period);
                 $date = Carbon::now()->setISODate($year, $week);
                 $label = $date->format($loginLabelFormat);
             } else {
-                $label = Carbon::parse($period . '-01')->format($loginLabelFormat);
+                $label = Carbon::parse($item->period . '-01')->format($loginLabelFormat);
             }
 
             return [
                 'date' => $label,
-                'unique_users' => $loginData->get($period)->unique_users ?? 0,
-                'total_logins' => $loginData->get($period)->total_logins ?? 0,
+                'unique_users' => $item->unique_users,
+                'total_logins' => $item->total_logins,
             ];
         });
 
@@ -344,7 +340,7 @@ class AdminAnalyticsService
         // === COMBINED TRENDS ===
 
         // Combined harvest and yield trends based on frequency
-        $labelFormat = $frequency === 'weekly' ? 'W%W' : 'M';
+        $labelFormat = $frequency === 'weekly' ? 'F d Y' : 'M';
         $harvestPeriodExpr = $this->getDatePeriodExpression('harvest_date', $frequency);
         $yieldPeriodExpr = $this->getDatePeriodExpression('created_at', $frequency);
 
@@ -358,8 +354,7 @@ class AdminAnalyticsService
             )
             ->groupBy('period')
             ->orderBy('period', 'asc')
-            ->get()
-            ->keyBy('period');
+            ->get();
 
         $monthlyYieldData = HydroponicYield::where('is_archived', false)
             ->when($deviceId, function($query) use ($deviceId) {
@@ -372,12 +367,14 @@ class AdminAnalyticsService
             )
             ->groupBy('period')
             ->orderBy('period', 'asc')
-            ->get()
-            ->keyBy('period');
+            ->get();
 
-        // Generate all periods and merge harvest and yield data
-        $allPeriods = $this->generatePeriods($dateFrom, $dateTo, $frequency);
-        $monthlyHarvestTrend = collect($allPeriods)->map(function ($period) use ($monthlyHarvestData, $monthlyYieldData, $frequency, $labelFormat) {
+        // Merge harvest and yield data (only show periods with data)
+        $harvestByPeriod = $monthlyHarvestData->keyBy('period');
+        $yieldByPeriod = $monthlyYieldData->keyBy('period');
+        $allDataPeriods = $monthlyHarvestData->pluck('period')->merge($monthlyYieldData->pluck('period'))->unique()->sort();
+
+        $monthlyHarvestTrend = $allDataPeriods->map(function ($period) use ($harvestByPeriod, $yieldByPeriod, $frequency, $labelFormat) {
             if ($frequency === 'weekly') {
                 list($year, $week) = explode('-', $period);
                 $date = Carbon::now()->setISODate($year, $week);
@@ -388,9 +385,9 @@ class AdminAnalyticsService
 
             return [
                 'month' => $label,
-                'harvested' => $monthlyHarvestData->get($period)->harvested ?? 0,
-                'total_weight' => isset($monthlyYieldData->get($period)->total_weight)
-                    ? round((float) $monthlyYieldData->get($period)->total_weight, 2)
+                'harvested' => $harvestByPeriod->get($period)->harvested ?? 0,
+                'total_weight' => isset($yieldByPeriod->get($period)->total_weight)
+                    ? round((float) $yieldByPeriod->get($period)->total_weight, 2)
                     : 0,
             ];
         })->values();
@@ -493,7 +490,7 @@ class AdminAnalyticsService
             });
 
         // Treatment trends over time based on frequency
-        $labelFormat = $frequency === 'weekly' ? 'W%W' : 'M';
+        $labelFormat = $frequency === 'weekly' ? 'F d Y' : 'M';
         $treatmentPeriodExpr = $this->getDatePeriodExpression('start_time', $frequency);
 
         $treatmentData = TreatmentReport::when($deviceId, fn($query) => $query->where('device_id', $deviceId))
@@ -505,24 +502,22 @@ class AdminAnalyticsService
             )
             ->groupBy('period')
             ->orderBy('period', 'asc')
-            ->get()
-            ->keyBy('period');
+            ->get();
 
-        // Generate all periods and fill with data
-        $allPeriods = $this->generatePeriods($dateFrom, $dateTo, $frequency);
-        $treatmentTrends = collect($allPeriods)->map(function ($period) use ($treatmentData, $frequency, $labelFormat) {
+        // Map treatment data with proper labels (only show periods with data)
+        $treatmentTrends = $treatmentData->map(function ($item) use ($frequency, $labelFormat) {
             if ($frequency === 'weekly') {
-                list($year, $week) = explode('-', $period);
+                list($year, $week) = explode('-', $item->period);
                 $date = Carbon::now()->setISODate($year, $week);
                 $label = $date->format($labelFormat);
             } else {
-                $label = Carbon::parse($period . '-01')->format($labelFormat);
+                $label = Carbon::parse($item->period . '-01')->format($labelFormat);
             }
 
             return [
                 'date' => $label,
-                'cycle_count' => $treatmentData->get($period)->cycle_count ?? 0,
-                'success_count' => $treatmentData->get($period)->success_count ?? 0,
+                'cycle_count' => $item->cycle_count,
+                'success_count' => $item->success_count,
             ];
         });
 
@@ -537,26 +532,22 @@ class AdminAnalyticsService
             )
             ->groupBy('period')
             ->orderBy('period', 'asc')
-            ->get()
-            ->keyBy('period');
+            ->get();
 
-        // Generate all periods for filtration data
-        $weeklyFiltration = collect($allPeriods)->map(function ($period) use ($filtrationData, $frequency, $labelFormat) {
+        // Map filtration data with proper labels (only show periods with data)
+        $weeklyFiltration = $filtrationData->map(function ($item) use ($frequency, $labelFormat) {
             if ($frequency === 'weekly') {
-                list($year, $week) = explode('-', $period);
+                list($year, $week) = explode('-', $item->period);
                 $date = Carbon::now()->setISODate($year, $week);
                 $label = $date->format($labelFormat);
             } else {
-                $label = Carbon::parse($period . '-01')->format($labelFormat);
+                $label = Carbon::parse($item->period . '-01')->format($labelFormat);
             }
-
-            $cycles = $filtrationData->get($period)->cycles ?? 0;
-            $totalWater = $filtrationData->get($period)->total_water ?? 0;
 
             return [
                 'week' => $label,
-                'filtered' => (int) $totalWater,
-                'cycles' => $cycles,
+                'filtered' => (int) ($item->total_water ?? 0),
+                'cycles' => $item->cycles ?? 0,
             ];
         });
 

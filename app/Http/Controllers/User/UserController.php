@@ -17,7 +17,10 @@ class UserController extends Controller
         $filters = $request->only(['search', 'sort', 'direction', 'status', 'per_page']);
 
         $query = User::where('role', '=', 'user')
-                     ->where('is_archived', false);
+                     ->where('is_archived', false)
+                     ->with(['login_histories' => function ($q) {
+                         $q->latest()->limit(1);
+                     }]);
 
         // Apply search filter
         if (!empty($filters['search'])) {
@@ -50,6 +53,14 @@ class UserController extends Controller
             : 10;
 
         $users = $query->paginate($perPage);
+        
+        // Add last_login_at from login_histories to each user
+        $users->getCollection()->transform(function ($user) {
+            $user->last_login_at = $user->login_histories->first()?->created_at;
+            unset($user->login_histories);
+            return $user;
+        });
+        
         $filteredCount = $users->total();
 
         // Only query total count if filters are applied, otherwise use filtered count
@@ -74,7 +85,10 @@ class UserController extends Controller
         $filters = $request->only(['search', 'sort', 'direction', 'per_page']);
 
         $query = User::where('role', '=', 'user')
-                    ->where('is_archived', true);
+                    ->where('is_archived', true)
+                    ->with(['login_histories' => function ($q) {
+                        $q->latest()->limit(1);
+                    }]);
 
         // Apply search filter
         if (!empty($filters['search'])) {
@@ -102,6 +116,14 @@ class UserController extends Controller
             : 10;
 
         $users = $query->paginate($perPage);
+        
+        // Add last_login_at from login_histories to each user
+        $users->getCollection()->transform(function ($user) {
+            $user->last_login_at = $user->login_histories->first()?->created_at;
+            unset($user->login_histories);
+            return $user;
+        });
+        
         $filteredArchivedCount = $users->total();
 
         // Only query total count if filters are applied, otherwise use filtered count
@@ -135,10 +157,13 @@ class UserController extends Controller
                 return redirect()->back()->withErrors(['error' => 'Only inactive users can be archived.']);
             }
 
+            // Get the most recent login from login_histories
+            $lastLogin = $user->login_histories()->latest()->first();
+            
             // Validate archive conditions: user must be inactive for at least 6 months
-            if ($user->last_login_at) {
+            if ($lastLogin) {
                 $sixMonthsAgo = now()->subMonths(6);
-                if ($user->last_login_at > $sixMonthsAgo) {
+                if ($lastLogin->created_at > $sixMonthsAgo) {
                     return redirect()->back()->withErrors(['error' => 'User must be inactive for at least 6 months before archiving.']);
                 }
             }
@@ -165,12 +190,22 @@ class UserController extends Controller
         $sixMonthsAgo = now()->subMonths(6);
 
         // Find users that meet archive conditions
+        // Use a subquery to get the latest login from login_histories
         $eligibleUsers = User::whereIn('id', $validated['ids'])
             ->where('is_archived', false)
             ->where('status', 'inactive')
             ->where(function ($q) use ($sixMonthsAgo) {
-                $q->whereNull('last_login_at')
-                  ->orWhere('last_login_at', '<=', $sixMonthsAgo);
+                // Check if user has no login history
+                $q->whereDoesntHave('login_histories')
+                  // Or if the most recent login is older than 6 months
+                  ->orWhereHas('login_histories', function ($subQuery) use ($sixMonthsAgo) {
+                      $subQuery->whereIn('id', function ($nestedQuery) {
+                          $nestedQuery->selectRaw('MAX(id)')
+                              ->from('login_histories')
+                              ->whereColumn('user_id', 'users.id');
+                      })
+                      ->where('created_at', '<=', $sixMonthsAgo);
+                  });
             })
             ->get();
 

@@ -1,7 +1,7 @@
 import AppLayout from '@/layouts/app-layout'
 import { Head, usePage, router } from '@inertiajs/react'
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart'
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, RadarChart, PolarAngleAxis, PolarGrid, Radar, LineChart, Line, Legend } from 'recharts'
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, RadarChart, PolarAngleAxis, PolarGrid, Radar, LineChart, Line, Legend, AreaChart, Area } from 'recharts'
 import { Users, Cast, Leaf, Waves, TrendingDown, Activity, Filter, FileDown } from 'lucide-react'
 import {
   TextureCardContent,
@@ -75,7 +75,7 @@ export default function Analytics() {
   return (
     <AppLayout title="">
       <Head title="Analytics" />
-      <div className="flex h-full flex-1 flex-col gap-6 rounded-xl p-4 md:p-6">
+      <div className="flex h-full flex-1 flex-col gap-4 rounded-xl p-4 md:p-6">
 
         {/* Header */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -248,7 +248,7 @@ export default function Analytics() {
 
           {/* Users & Devices Tab Content */}
           <TabsContent value="users-devices" className="mt-6">
-            <div className="flex flex-col gap-6">
+            <div className="flex flex-col gap-4">
               {/* Summary Cards */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <Card className="rounded-2xl">
@@ -313,7 +313,7 @@ export default function Analytics() {
               </div>
 
               {/* Charts Row */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 {/* User Registration Trend */}
                 <Card className="rounded-2xl">
                   <CardHeader>
@@ -330,9 +330,9 @@ export default function Analytics() {
                       config={{
                         count: { label: 'Registrations', color: 'hsl(var(--primary))' }
                       }}
-                      className="h-[250px] sm:h-[300px] w-full"
+                      className="h-[200px] w-full"
                     >
-                      <BarChart data={usersDevices.registration_trend}>
+                      <BarChart data={usersDevices.registration_trend} maxBarSize={80}>
                         <CartesianGrid vertical={false} strokeDasharray="3 3" />
                         <XAxis
                           dataKey="month"
@@ -347,7 +347,7 @@ export default function Analytics() {
                           tick={{ fontSize: 12 }}
                         />
                         <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
-                        <Bar dataKey="count" fill="hsl(var(--primary))" radius={8} />
+                        <Bar dataKey="count" fill="hsl(var(--primary))" radius={8} maxBarSize={80} />
                       </BarChart>
                     </ChartContainer>
                   </CardContent>
@@ -368,9 +368,35 @@ export default function Analytics() {
                         unique_users: { label: 'Unique Users', color: 'hsl(var(--primary))' },
                         total_logins: { label: 'Total Logins', color: 'hsl(var(--chart-2))' }
                       }}
-                      className="h-[250px] sm:h-[300px] w-full"
+                      className="h-[200px] w-full"
                     >
-                      <LineChart data={usersDevices.login_activity_trend}>
+                      <AreaChart data={usersDevices.login_activity_trend}>
+                        <defs>
+                          <linearGradient id="fillUniqueUsers" x1="0" y1="0" x2="0" y2="1">
+                            <stop
+                              offset="5%"
+                              stopColor="hsl(var(--primary))"
+                              stopOpacity={0.8}
+                            />
+                            <stop
+                              offset="95%"
+                              stopColor="hsl(var(--primary))"
+                              stopOpacity={0.1}
+                            />
+                          </linearGradient>
+                          <linearGradient id="fillTotalLogins" x1="0" y1="0" x2="0" y2="1">
+                            <stop
+                              offset="5%"
+                              stopColor="hsl(var(--chart-2))"
+                              stopOpacity={0.6}
+                            />
+                            <stop
+                              offset="95%"
+                              stopColor="hsl(var(--chart-2))"
+                              stopOpacity={0.05}
+                            />
+                          </linearGradient>
+                        </defs>
                         <CartesianGrid vertical={false} strokeDasharray="3 3" />
                         <XAxis
                           dataKey="date"
@@ -385,8 +411,20 @@ export default function Analytics() {
                           tick={{ fontSize: 12 }}
                         />
                         <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
-                        <Line type="monotone" dataKey="unique_users" stroke="hsl(var(--primary))" strokeWidth={2} />
-                        <Line type="monotone" dataKey="total_logins" stroke="hsl(var(--chart-2))" strokeWidth={2} />
+                        <Area
+                          dataKey="total_logins"
+                          type="natural"
+                          fill="url(#fillTotalLogins)"
+                          stroke="hsl(var(--chart-2))"
+                          strokeWidth={2}
+                        />
+                        <Area
+                          dataKey="unique_users"
+                          type="natural"
+                          fill="url(#fillUniqueUsers)"
+                          stroke="hsl(var(--primary))"
+                          strokeWidth={2}
+                        />
                         <Legend
                           formatter={(value) => {
                             if (value === 'unique_users') return 'Unique Users';
@@ -394,7 +432,7 @@ export default function Analytics() {
                             return value;
                           }}
                         />
-                      </LineChart>
+                      </AreaChart>
                     </ChartContainer>
                   </CardContent>
                 </Card>
@@ -441,7 +479,7 @@ export default function Analytics() {
 
           {/* Crops, Harvest & Yields Tab Content */}
           <TabsContent value="crops-harvest-yield" className="mt-6">
-            <div className="flex flex-col gap-6">
+            <div className="flex flex-col gap-4">
               {/* Summary Cards */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
                 <TextureCardStyled className="rounded-2xl">
@@ -491,7 +529,7 @@ export default function Analytics() {
               </div>
 
               {/* Row 1: Combined Harvest & Yield Trends + Crop Type Distribution */}
-              <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
                 {/* Combined Harvest & Yield Trends */}
                 <Card className="lg:col-span-3 rounded-2xl">
                   <CardHeader>
@@ -509,9 +547,9 @@ export default function Analytics() {
                         harvested: { label: 'Crops Harvested', color: '#cadbb7' },
                         total_weight: { label: 'Yield Weight (kg)', color: 'hsl(var(--primary))' }
                       }}
-                      className="h-[250px] sm:h-[300px] w-full"
+                      className="h-[220px] w-full"
                     >
-                      <BarChart data={cropsHarvestYield.monthly_harvest_trend} barCategoryGap="8%">
+                      <BarChart data={cropsHarvestYield.monthly_harvest_trend} barCategoryGap="8%" maxBarSize={60}>
                         <CartesianGrid vertical={false} />
                         <XAxis
                           dataKey="month"
@@ -567,7 +605,7 @@ export default function Analytics() {
                       config={{
                         harvested: { label: 'Setups', color: 'hsl(142, 76%, 36%)' }
                       }}
-                      className="mx-auto aspect-square max-h-[300px]"
+                      className="mx-auto aspect-square max-h-[250px]"
                     >
                       <RadarChart data={cropsHarvestYield.crop_type_distribution}>
                         <ChartTooltip
@@ -658,7 +696,7 @@ export default function Analytics() {
               </Card>
 
               {/* Status Distributions */}
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                 {/* Growth Stage Distribution */}
                 <Card className="rounded-2xl">
                   <CardHeader>
@@ -734,7 +772,7 @@ export default function Analytics() {
 
           {/* Water Treatment Tab Content */}
           <TabsContent value="water-treatment" className="mt-6">
-            <div className="flex flex-col gap-6">
+            <div className="flex flex-col gap-4">
               {/* Summary Cards */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <Card className="rounded-2xl">
@@ -775,7 +813,7 @@ export default function Analytics() {
               </div>
 
               {/* Row 1: Filtration Cycle History */}
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                 {/* Filtration Stats Cards */}
                 <FiltrationCyclesCard weeklyFiltration={waterTreatment.weekly_filtration} />
 
@@ -799,9 +837,9 @@ export default function Analytics() {
                       config={{
                         filtered: { label: 'Water Filtered (L)', color: '#60A5FA' }
                       }}
-                      className="h-[200px] sm:h-[240px] w-full aspect-auto"
+                      className="h-[180px] w-full aspect-auto"
                     >
-                      <BarChart data={waterTreatment.weekly_filtration} barCategoryGap="10%">
+                      <BarChart data={waterTreatment.weekly_filtration} barCategoryGap="10%" maxBarSize={80}>
                         <CartesianGrid vertical={false} strokeDasharray="3 3" />
                         <XAxis
                           dataKey="week"
@@ -824,7 +862,7 @@ export default function Analytics() {
                           dataKey="filtered"
                           fill="#60A5FA"
                           radius={12}
-                          barSize={60}
+                          maxBarSize={80}
                         />
                       </BarChart>
                     </ChartContainer>
@@ -845,11 +883,37 @@ export default function Analytics() {
                   <ChartContainer
                     config={{
                       cycle_count: { label: 'Total Cycles', color: 'hsl(var(--primary))' },
-                      success_count: { label: 'Successful', color: 'hsl(var(--chart-2))' }
+                      success_count: { label: 'Successful', color: 'hsl(142, 76%, 36%)' }
                     }}
-                    className="h-[250px] sm:h-[300px] w-full"
+                    className="h-[200px] w-full"
                   >
-                    <LineChart data={waterTreatment.treatment_trends}>
+                    <AreaChart data={waterTreatment.treatment_trends}>
+                      <defs>
+                        <linearGradient id="fillCycleCount" x1="0" y1="0" x2="0" y2="1">
+                          <stop
+                            offset="5%"
+                            stopColor="hsl(var(--primary))"
+                            stopOpacity={0.8}
+                          />
+                          <stop
+                            offset="95%"
+                            stopColor="hsl(var(--primary))"
+                            stopOpacity={0.1}
+                          />
+                        </linearGradient>
+                        <linearGradient id="fillSuccessCount" x1="0" y1="0" x2="0" y2="1">
+                          <stop
+                            offset="5%"
+                            stopColor="hsl(142, 76%, 36%)"
+                            stopOpacity={0.7}
+                          />
+                          <stop
+                            offset="95%"
+                            stopColor="hsl(142, 76%, 36%)"
+                            stopOpacity={0.05}
+                          />
+                        </linearGradient>
+                      </defs>
                       <CartesianGrid vertical={false} strokeDasharray="3 3" />
                       <XAxis
                         dataKey="date"
@@ -864,8 +928,20 @@ export default function Analytics() {
                         tick={{ fontSize: 12 }}
                       />
                       <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
-                      <Line type="monotone" dataKey="cycle_count" stroke="hsl(var(--primary))" strokeWidth={2} />
-                      <Line type="monotone" dataKey="success_count" stroke="hsl(var(--chart-2))" strokeWidth={2} />
+                      <Area
+                        dataKey="cycle_count"
+                        type="natural"
+                        fill="url(#fillCycleCount)"
+                        stroke="hsl(var(--primary))"
+                        strokeWidth={2}
+                      />
+                      <Area
+                        dataKey="success_count"
+                        type="natural"
+                        fill="url(#fillSuccessCount)"
+                        stroke="hsl(142, 76%, 36%)"
+                        strokeWidth={2}
+                      />
                       <Legend
                         formatter={(value) => {
                           if (value === 'cycle_count') return 'Total Cycles';
@@ -873,7 +949,7 @@ export default function Analytics() {
                           return value;
                         }}
                       />
-                    </LineChart>
+                    </AreaChart>
                   </ChartContainer>
                 </CardContent>
               </Card>
