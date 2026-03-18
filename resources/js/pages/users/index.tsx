@@ -118,9 +118,11 @@ export default function Users() {
     /** Archive is only allowed when user is inactive for at least 6 months */
     const canArchive = (user: User): boolean => {
         if (user.status !== 'inactive') return false;
-        if (!user.last_login_at) return true; // never logged in = treat as inactive long enough
+        // If no login history, treat as inactive long enough
+        if (!user.last_login_at) return true;
         const sixMonthsAgo = new Date();
         sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+        // last_login_at now comes from login_histories.created_at
         return new Date(user.last_login_at) <= sixMonthsAgo;
     };
 
